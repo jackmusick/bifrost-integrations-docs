@@ -103,21 +103,24 @@ Bifrost automatically refreshes tokens before they expire. If you see a token ex
 
 **For sync workflows** (execute immediately):
 ```python
-from bifrost import ExecutionContext
+from bifrost import workflow, oauth
 
-async def my_workflow(context: ExecutionContext):
+@workflow(name="my_workflow")
+async def my_workflow(ctx):
     # Token is automatically refreshed here if needed
-    creds = await context.get_oauth_connection("HaloPSA")
+    creds = await oauth.get_connection("HaloPSA")
     # creds.access_token is guaranteed to be fresh
 ```
 
 **For scheduled workflows** (run in background):
 ```python
+from bifrost import workflow, oauth
+
 @workflow(execution_mode="scheduled", schedule="0 9 * * 1")
-async def nightly_sync(context: ExecutionContext):
+async def nightly_sync(ctx):
     # Even with automatic refresh, long workflows might hit timeout
     # Recommendation: Split into smaller pieces
-    creds = await context.get_oauth_connection("HaloPSA")
+    creds = await oauth.get_connection("HaloPSA")
 ```
 
 **If token refresh fails:**
@@ -324,24 +327,28 @@ Some special characters in Client Secret can cause issues:
 
 ```python
 # In a workflow
-from bifrost import ExecutionContext
+from bifrost import workflow, oauth
+import logging
 
-async def check_token(context: ExecutionContext):
+logger = logging.getLogger(__name__)
+
+@workflow(name="check_token")
+async def check_token(ctx):
     try:
-        creds = await context.get_oauth_connection("HaloPSA")
+        creds = await oauth.get_connection("HaloPSA")
 
         # Check expiration
         if creds.is_expired():
-            context.log("warning", "Token is expired")
+            logger.warning("Token is expired")
         else:
-            context.log("info", "Token is valid")
-            context.log("info", f"Expires in: {creds.expires_in} seconds")
+            logger.info("Token is valid")
+            logger.info(f"Expires in: {creds.expires_in} seconds")
 
         # Check scope
-        context.log("info", f"Granted scopes: {creds.scopes}")
+        logger.info(f"Granted scopes: {creds.scopes}")
 
     except Exception as e:
-        context.log("error", f"Failed to get credentials: {str(e)}")
+        logger.error(f"Failed to get credentials: {str(e)}")
 ```
 
 ### Test API Call with Token
@@ -350,10 +357,14 @@ async def check_token(context: ExecutionContext):
 
 ```python
 import aiohttp
-from bifrost import ExecutionContext
+from bifrost import workflow, oauth
+import logging
 
-async def test_api_call(context: ExecutionContext):
-    creds = await context.get_oauth_connection("HaloPSA")
+logger = logging.getLogger(__name__)
+
+@workflow(name="test_api_call")
+async def test_api_call(ctx):
+    creds = await oauth.get_connection("HaloPSA")
 
     async with aiohttp.ClientSession() as session:
         headers = {
@@ -367,13 +378,13 @@ async def test_api_call(context: ExecutionContext):
         ) as response:
             if response.status == 200:
                 data = await response.json()
-                context.log("info", f"API call succeeded: {data}")
+                logger.info(f"API call succeeded: {data}")
             elif response.status == 401:
-                context.log("error", "Token is invalid or expired")
+                logger.error("Token is invalid or expired")
             elif response.status == 403:
-                context.log("error", "Insufficient scope for this API")
+                logger.error("Insufficient scope for this API")
             else:
-                context.log("error", f"API error: {response.status}")
+                logger.error(f"API error: {response.status}")
 ```
 
 ### Check Connection in Production
@@ -420,12 +431,28 @@ Fix: Wait a bit, retry with exponential backoff
 # Example: Assigning E5 features when user has E3
 
 # Check license before operation
-from bifrost import ExecutionContext
+from bifrost import workflow, oauth
+import logging
 
-async def assign_e5_feature(context: ExecutionContext, user_id: str):
+logger = logging.getLogger(__name__)
+
+@workflow(name="assign_e5_feature")
+async def assign_e5_feature(ctx, user_id: str):
     # First verify user has E5 license
-    graph = context.get_integration("msgraph")
-    user = await graph.users.get(user_id)
+    graph_creds = await oauth.get_connection("microsoft-graph")
+
+    # Make API call to get user licenses
+    headers = {
+        "Authorization": f"Bearer {graph_creds['access_token']}",
+        "Content-Type": "application/json"
+    }
+
+    response = await ctx.http_get(
+        f"https://graph.microsoft.com/v1.0/users/{user_id}",
+        headers=headers
+    )
+
+    user = response.json()
 
     if "SPE_E5" not in user.get("assignedLicenses", []):
         raise Exception("User must have E5 license for this feature")
@@ -496,15 +523,13 @@ For testing OAuth locally:
 ```python
 # tests/integration/test_oauth.py
 import pytest
-from bifrost import ExecutionContext
+from bifrost import oauth
 
 @pytest.mark.integration
 async def test_oauth_token_refresh():
     """Verify token auto-refresh works"""
-    context = await get_test_context()
-
     # Should not raise, even if token is near expiration
-    creds = await context.get_oauth_connection("HaloPSA")
+    creds = await oauth.get_connection("HaloPSA")
     assert creds is not None
     assert creds.access_token is not None
     assert not creds.is_expired()

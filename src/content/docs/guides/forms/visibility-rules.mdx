@@ -1,0 +1,296 @@
+---
+title: Visibility Rules
+description: Show and hide form fields conditionally
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+Visibility rules show or hide fields based on other field values using JavaScript expressions.
+
+## Basic Rule
+
+Show field only when checkbox is checked:
+
+```javascript
+context.field.send_notification === true
+```
+
+In form builder:
+1. Select field
+2. **Visibility Expression** → Enter expression
+3. Field shows when expression returns `true`
+
+## Context Object
+
+Access form values via `context.field`:
+
+```javascript
+// Access field by name
+context.field.employee_type
+
+// Compare values
+context.field.employee_type === "full-time"
+
+// Check if exists
+context.field.department !== null
+```
+
+## Common Patterns
+
+### Show if Checkbox Checked
+```javascript
+context.field.is_manager === true
+```
+
+### Show if Specific Value
+```javascript
+context.field.employee_type === "full-time"
+```
+
+### Show if Multiple Values
+```javascript
+["full-time", "part-time"].includes(context.field.employee_type)
+```
+
+### Show if NOT Equal
+```javascript
+context.field.status !== "inactive"
+```
+
+### Show if Field Has Value
+```javascript
+context.field.email && context.field.email.length > 0
+```
+
+### Show if Field Empty
+```javascript
+!context.field.phone || context.field.phone.length === 0
+```
+
+## Numeric Comparisons
+
+```javascript
+// Greater than
+context.field.quantity > 10
+
+// Less than or equal
+context.field.age <= 65
+
+// Between range
+context.field.budget >= 1000 && context.field.budget <= 10000
+```
+
+## String Operations
+
+```javascript
+// Contains text
+context.field.email.includes("@example.com")
+
+// Starts with
+context.field.username.startsWith("admin_")
+
+// Ends with
+context.field.domain.endsWith(".com")
+
+// Case insensitive
+context.field.country.toLowerCase() === "usa"
+```
+
+## Multiple Conditions (AND)
+
+Show if BOTH conditions true:
+
+```javascript
+context.field.employee_type === "full-time" && context.field.department === "engineering"
+```
+
+## Multiple Conditions (OR)
+
+Show if EITHER condition true:
+
+```javascript
+context.field.role === "admin" || context.field.role === "manager"
+```
+
+## Complex Logic
+
+Combine AND/OR with parentheses:
+
+```javascript
+(context.field.role === "admin" || context.field.role === "manager") &&
+context.field.department === "engineering"
+```
+
+## Array/Multi-Select Fields
+
+Check if array contains value:
+
+```javascript
+// Single value
+context.field.permissions.includes("admin")
+
+// Multiple values
+context.field.permissions.includes("admin") &&
+context.field.permissions.includes("write")
+
+// Any of several
+["admin", "manager"].some(role => context.field.permissions.includes(role))
+```
+
+## Null/Undefined Checks
+
+Always check for null/undefined with optional fields:
+
+```javascript
+// Safe null check
+context.field.manager_email !== null &&
+context.field.manager_email !== undefined &&
+context.field.manager_email.length > 0
+
+// Shorthand
+context.field.manager_email?.length > 0
+
+// Default value
+(context.field.priority || "normal") === "high"
+```
+
+## Date Comparisons
+
+```javascript
+// Check if date is set
+context.field.start_date !== null
+
+// Compare dates (strings in ISO format)
+context.field.end_date > context.field.start_date
+
+// Check if date is in future
+new Date(context.field.event_date) > new Date()
+```
+
+## Cascading Visibility
+
+Create dependent field chains:
+
+**Field 1**: `employee_type` (always visible)
+
+**Field 2**: `full_time_benefits`
+```javascript
+context.field.employee_type === "full-time"
+```
+
+**Field 3**: `health_insurance_plan`
+```javascript
+context.field.employee_type === "full-time" &&
+context.field.full_time_benefits === true
+```
+
+## Dynamic Required Fields
+
+Use visibility to make fields conditionally required:
+
+1. Set field as **not required** in settings
+2. Add visibility rule to show when needed
+3. Add validation in workflow to check if needed value is present
+
+```python
+@workflow(name="example")
+async def example(context, employee_type: str, benefits: str = None):
+    if employee_type == "full-time" and not benefits:
+        return {"success": False, "error": "Benefits required for full-time"}
+    # ...
+```
+
+## Common Use Cases
+
+### Employee Onboarding
+```javascript
+// Show manager field only for management roles
+["manager", "director", "vp"].includes(context.field.role)
+
+// Show equipment request for office workers
+context.field.work_location === "office"
+
+// Show parking pass for on-site
+context.field.work_location !== "remote"
+```
+
+### License Assignment
+```javascript
+// Show license options only if needs license
+context.field.requires_license === true
+
+// Show specific license types based on role
+context.field.role === "developer" && context.field.requires_license === true
+```
+
+### Conditional Approvals
+```javascript
+// Show approver field only for high budget
+context.field.budget > 10000
+
+// Require manager approval for sensitive access
+["admin", "privileged"].includes(context.field.access_level)
+```
+
+## Debugging Rules
+
+<Aside type="tip">
+**Testing**: Use browser console to test expressions. Open DevTools → Console → Type `context.field` to inspect values.
+</Aside>
+
+### Check Current Values
+```javascript
+// Add temporary field with this expression to see all values
+JSON.stringify(context.field, null, 2)
+```
+
+### Common Errors
+
+❌ **Missing null check**
+```javascript
+context.field.email.includes("@")  // Fails if email is null
+```
+
+✅ **Safe null check**
+```javascript
+context.field.email && context.field.email.includes("@")
+```
+
+❌ **Type mismatch**
+```javascript
+context.field.quantity === "10"  // String vs number
+```
+
+✅ **Correct type**
+```javascript
+context.field.quantity === 10  // Number comparison
+```
+
+## Performance Tips
+
+1. **Keep Rules Simple**: Complex rules slow down form
+2. **Minimize Dependencies**: Don't reference many fields
+3. **Cache Expensive Checks**: Use computed fields if needed
+
+## Testing
+
+Test visibility rules with different scenarios:
+
+1. Fill form with different combinations
+2. Verify fields show/hide correctly
+3. Check required field validation
+4. Test edge cases (null, empty, special chars)
+
+## Best Practices
+
+1. **Document Complex Rules**: Add comments in form description
+2. **Test All Paths**: Verify every condition shows/hides correctly
+3. **Handle Nulls**: Always check for null/undefined
+4. **Use Meaningful Names**: Clear field names make rules readable
+5. **Keep It Simple**: If rule is too complex, simplify form design
+
+## Next Steps
+
+- [Data Providers](/guides/forms/data-providers) - Dynamic dropdown options
+- [Context Field References](/guides/forms/context-field-references) - Access form context
+- [Creating Forms Tutorial](/tutorials/creating-forms) - Build complete form

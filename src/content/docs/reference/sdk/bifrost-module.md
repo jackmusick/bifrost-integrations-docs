@@ -238,19 +238,30 @@ async def get_users_by_dept(context: ExecutionContext, department: str) -> list[
 
 ```python
 class ExecutionContext:
-    """Context object passed to all workflows and data providers."""
+    """
+    Context object passed to all workflows and data providers.
 
-    # Properties
+    Provides access to:
+    - Organization information (id, name, is_active)
+    - User information (user_id, email, name)
+    - Execution metadata (execution_id, scope)
+    - Authorization flags (is_platform_admin, is_function_key)
+
+    For configuration, secrets, OAuth, and file operations, use the SDK:
+    - from bifrost import config, secrets, oauth, files
+    """
+
+    # Core properties
     user_id: str                      # ID of user who triggered workflow
     email: str                        # Email of triggering user
     name: str                         # Display name of triggering user
     scope: str                        # "GLOBAL" or organization ID
-    organization: Organization | None # Organization object
+    organization: Organization | None # Organization object (with id, name, is_active)
     is_platform_admin: bool           # True if user is admin
     is_function_key: bool             # True if called via API key
     execution_id: str                 # Unique execution ID
 
-    # Properties (derived)
+    # Computed properties
     @property
     def org_id(self) -> str | None:
         """Organization ID (None for platform admins in global scope)."""
@@ -277,110 +288,7 @@ class ExecutionContext:
         """Alias for name."""
 ```
 
-### Methods
-
-#### Logging
-
-```python
-def log(level: str, message: str, data: dict[str, Any] | None = None) -> None
-```
-
-Log a message with context. Data is automatically sanitized to remove sensitive information.
-
-**Log Levels:** `"debug"`, `"info"`, `"warning"`, `"error"`
-
-**Example:**
-
-```python
-context.log("info", "User created successfully", {
-    "user_id": user["id"],
-    "email_domain": email.split("@")[1]
-})
-
-context.log("error", "API call failed", {
-    "endpoint": "/users",
-    "status_code": 500
-})
-```
-
-#### Configuration
-
-```python
-def get_config(key: str, default: Any = None) -> Any
-```
-
-Get configuration value with automatic secret resolution. Configuration values can reference Azure Key Vault secrets using `secret_ref` type.
-
-```python
-def has_config(key: str) -> bool
-```
-
-Check if configuration key exists.
-
-**Example:**
-
-```python
-api_url = context.get_config("api_url", default="https://api.example.com")
-if context.has_config("slack_webhook"):
-    webhook_url = context.get_config("slack_webhook")
-```
-
-#### Secrets and OAuth
-
-```python
-async def get_secret(key: str) -> str
-```
-
-Get a secret from Azure Key Vault. Secrets are organization-scoped: `{org_id}--{key}`.
-
-```python
-async def get_oauth_connection(connection_name: str) -> OAuthCredentials
-```
-
-Get OAuth credentials for a connection. Automatically handles token refresh.
-
-**Example:**
-
-```python
-# Get secret
-api_key = await context.get_secret("github_api_key")
-
-# Get OAuth credentials
-creds = await context.get_oauth_connection("microsoft_graph")
-auth_header = creds.get_auth_header()  # "Bearer {token}"
-
-# Use in API call
-headers = {"Authorization": auth_header}
-response = await session.get("https://graph.microsoft.com/v1.0/me", headers=headers)
-```
-
-#### State Tracking
-
-```python
-def save_checkpoint(name: str, data: dict[str, Any]) -> None
-```
-
-Save a state checkpoint during workflow execution. Checkpoints appear in execution logs and help debug issues.
-
-```python
-async def finalize_execution() -> dict[str, Any]
-```
-
-Get final execution state for persistence. Called automatically at workflow completion.
-
-**Example:**
-
-```python
-context.save_checkpoint("validation_complete", {
-    "email": email,
-    "is_valid": True
-})
-
-context.save_checkpoint("api_call_complete", {
-    "status_code": 201,
-    "user_id": user["id"]
-})
-```
+**Note:** ExecutionContext is intentionally minimal. All functionality (config, secrets, OAuth, files) is provided through SDK modules, not context methods.
 
 ## SDK Modules
 
@@ -393,6 +301,12 @@ def get(key: str, default: Any = None) -> Any
 ```
 
 Get configuration value. Automatically resolves secrets from Key Vault if configured as secret_ref.
+
+```python
+def has(key: str) -> bool
+```
+
+Check if configuration key exists.
 
 ```python
 def set(key: str, value: Any) -> None
@@ -419,6 +333,10 @@ from bifrost import config
 
 # Get config
 api_url = config.get("api_url", default="https://example.com")
+
+# Check if key exists
+if config.has("api_url"):
+    api_url = config.get("api_url")
 
 # Set config
 config.set("api_url", "https://api.example.com")
@@ -472,10 +390,10 @@ secrets.delete("old_secret")
 OAuth connection management.
 
 ```python
-def get_connection(connection_name: str) -> OAuthCredentials
+def get_oauth_connection(connection_name: str) -> OAuthCredentials
 ```
 
-Get OAuth credentials for a connection.
+Get OAuth credentials for a connection. Automatically handles token refresh.
 
 ```python
 def create_connection(name: str, provider: str, scopes: list[str]) -> dict
@@ -495,7 +413,11 @@ Delete an OAuth connection.
 from bifrost import oauth
 
 # Get credentials
-creds = oauth.get_connection("github")
+creds = oauth.get_oauth_connection("github")
+auth_header = creds.get_auth_header()  # "Bearer {token}"
+
+# Use in API call
+headers = {"Authorization": auth_header}
 
 # Create connection
 oauth.create_connection("my_github", "github", ["repo", "user"])
@@ -870,6 +792,9 @@ from bifrost import (
 )
 from typing import Dict, List, Any
 import aiohttp
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Data provider
 @data_provider(
@@ -885,7 +810,7 @@ async def get_departments(context: ExecutionContext) -> List[Dict[str, str]]:
         {"label": "Support", "value": "support"}
     ]
 
-# Workflow using data provider
+# Workflow using data provider and SDK modules
 @workflow(
     name="create_user",
     description="Create a new user in the system",
@@ -904,18 +829,19 @@ async def create_user(
     """Create a new user with validation and API integration."""
 
     # Log execution start
-    context.log("info", "Creating user", {
+    logger.info("Creating user", extra={
         "email": email,
-        "department": department
+        "department": department,
+        "org_id": context.org_id
     })
 
     try:
-        # Get configuration and secrets
-        api_url = context.get_config("api_url", default="https://api.example.com")
-        api_key = await context.get_secret("api_key")
+        # Get configuration and secrets using SDK
+        api_url = config.get("api_url", default="https://api.example.com")
+        api_key = secrets.get("api_key")
 
         # Get OAuth credentials if needed
-        creds = await context.get_oauth_connection("oauth_provider")
+        creds = oauth.get_oauth_connection("oauth_provider")
 
         # Make API call
         headers = {
@@ -930,11 +856,6 @@ async def create_user(
                 "department": department
             }
 
-            context.save_checkpoint("api_call_start", {
-                "endpoint": "/users",
-                "email": email
-            })
-
             async with session.post(
                 f"{api_url}/users",
                 json=payload,
@@ -942,7 +863,7 @@ async def create_user(
             ) as response:
                 if response.status == 201:
                     user = await response.json()
-                    context.log("info", "User created successfully", {
+                    logger.info("User created successfully", extra={
                         "user_id": user["id"]
                     })
                     return {
@@ -952,13 +873,13 @@ async def create_user(
                     }
                 else:
                     error = await response.text()
-                    context.log("error", "API error", {
+                    logger.error("API error", extra={
                         "status": response.status
                     })
                     raise Exception(f"API error: {response.status}")
 
     except Exception as e:
-        context.log("error", "User creation failed", {
+        logger.error("User creation failed", extra={
             "error": str(e),
             "email": email
         })
@@ -971,8 +892,8 @@ async def create_user(
 2. **Add documentation**: Use docstrings to describe workflows and data providers
 3. **Validate inputs**: Validate all parameters before using them
 4. **Handle errors**: Always catch and log exceptions
-5. **Never log secrets**: Use `context.log()` safely without PII or credentials
-6. **Use checkpoints**: Mark progress through multi-step workflows
+5. **Never log secrets**: Use Python's logging module safely without PII or credentials
+6. **Use SDK modules**: Import `config`, `secrets`, `oauth`, `files` for functionality
 7. **Cache appropriately**: Set `cache_ttl_seconds` based on data freshness needs
 8. **Make it async**: Use async/await for I/O operations
 9. **Test locally**: Run tests before deployment

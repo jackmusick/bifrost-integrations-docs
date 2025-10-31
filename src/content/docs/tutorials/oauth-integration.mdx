@@ -1,0 +1,168 @@
+---
+title: Set Up OAuth Integration
+description: Connect to external APIs with OAuth in 20 minutes
+---
+
+import { Steps, Aside } from "@astrojs/starlight/components";
+
+Learn by setting up Microsoft Graph OAuth and using it in a workflow.
+
+## What You'll Build
+
+An OAuth connection to Microsoft Graph for reading user information.
+
+## Prerequisites
+
+-   [Installation complete](/guides/installation)
+-   Azure AD access (for Microsoft Graph example)
+-   Administrator permissions in Bifrost
+
+## Create Azure AD App Registration
+
+<Steps>
+
+1. Go to [Azure Portal](https://portal.azure.com) → **Azure AD** → **App registrations**
+
+2. Click **+ New registration**:
+
+    - **Name**: "Bifrost Integration"
+    - **Redirect URI**: `https://your-domain.com/oauth/callback/microsoft-graph`
+    - (For local dev: `http://localhost:5173/oauth/callback/microsoft-graph`)
+
+3. Copy **Application (client) ID** and **Tenant ID**
+
+4. Go to **Certificates & secrets** → **+ New client secret**:
+
+    - Set expiration to 24 months
+    - Copy secret value immediately
+
+5. Go to **API permissions**:
+    - Click **+ Add permission** → **Microsoft Graph** → **Delegated**
+    - Add `User.Read`, `User.ReadBasic.All`
+    - Click **Grant admin consent**
+
+</Steps>
+
+<Aside type="caution">
+    Save your Client ID, Client Secret, and Tenant ID - you'll need them next.
+</Aside>
+
+## Create OAuth Connection in Bifrost
+
+<Steps>
+
+1. Navigate to **Settings** → **Integrations** → **OAuth Connections**
+
+2. Click **+ Add Connection**
+
+3. Fill in details:
+
+    - **Name**: `microsoft-graph`
+    - **Provider**: Microsoft Graph
+    - **Client ID**: [from Azure]
+    - **Client Secret**: [from Azure]
+    - **Tenant ID**: [from Azure]
+    - **Scopes**: `User.Read User.ReadBasic.All`
+
+4. Click **Create**
+
+</Steps>
+
+## Authorize the Connection
+
+<Steps>
+
+1. Click your new connection
+
+2. Click **Authorize**
+
+3. Sign in with Microsoft and consent to permissions
+
+4. You'll be redirected back to Bifrost
+
+5. Connection status changes to **Active**
+
+</Steps>
+
+## Use OAuth in Workflow
+
+Create `workspace/workflows/get_user.py`:
+
+```python
+from bifrost import workflow, param, oauth, ExecutionContext
+import aiohttp
+import logging
+
+logger = logging.getLogger(__name__)
+
+@workflow(
+    name="get_user_info",
+    description="Get user info from Microsoft Graph",
+    category="Examples"
+)
+@param("user_id", type="string", label="User Principal Name", required=True)
+async def get_user_info(context: ExecutionContext, user_id: str):
+    """Fetch user information from Microsoft Graph."""
+
+    # Get OAuth credentials
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    # Build request
+    url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    headers = {"Authorization": creds.get_auth_header()}
+
+    # Call API
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                user = await response.json()
+                logger.info(f"Retrieved user: {user['displayName']}")
+                return {
+                    "success": True,
+                    "user": {
+                        "name": user["displayName"],
+                        "email": user["mail"],
+                        "id": user["id"]
+                    }
+                }
+            else:
+                error = await response.text()
+                logger.error(f"API error: {response.status}")
+                return {"success": False, "error": error}
+```
+
+<Steps>
+
+1. Save the file
+
+2. Restart API to discover workflow
+
+3. Navigate to **Workflows** → **Examples** → **Get User Info**
+
+4. Execute with a UPN (e.g., `user@domain.com`)
+
+</Steps>
+
+## Token Refresh
+
+Bifrost automatically refreshes expired tokens. No additional code needed!
+
+```python
+# This automatically handles token refresh
+creds = oauth.get_oauth_connection("microsoft-graph")
+auth_header = creds.get_auth_header()  # Always returns valid token
+```
+
+## Multiple Organizations
+
+OAuth connections are organization-scoped:
+
+-   Each org can have its own `microsoft-graph` connection
+-   Workflows automatically use the executing org's credentials
+-   No code changes needed for multi-tenancy
+
+## Next Steps
+
+-   [OAuth Setup Guide](/guides/integrations/oauth-setup) - Advanced OAuth patterns
+-   [Secrets Management](/guides/integrations/secrets-management) - Secure credential storage
+-   [Microsoft Graph Guide](/guides/integrations/microsoft-graph) - Common Graph API patterns

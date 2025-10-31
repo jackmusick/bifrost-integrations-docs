@@ -20,6 +20,10 @@ This guide covers all these aspects.
 Validate parameters early before doing any work:
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 @workflow(name="validate_example")
 @param("email", type="email", required=True)
 @param("count", type="int", required=True)
@@ -28,7 +32,7 @@ async def validate_example(context: ExecutionContext, email: str, count: int):
 
     # Validate count
     if count < 1:
-        context.log("error", "Invalid count", {"count": count})
+        logger.error("Invalid count", extra={"count": count})
         return {
             "success": False,
             "error": "count must be >= 1",
@@ -36,12 +40,12 @@ async def validate_example(context: ExecutionContext, email: str, count: int):
         }
 
     if count > 1000:
-        context.log("warning", "Large count requested", {"count": count})
+        logger.warning("Large count requested", extra={"count": count})
 
     # Email validation happens automatically because type="email"
     # But you can add custom validation:
     if not email.endswith("@company.com"):
-        context.log("error", "Invalid email domain", {"email": email})
+        logger.error("Invalid email domain", extra={"email": email})
         return {
             "success": False,
             "error": "Email must use company domain",
@@ -71,18 +75,22 @@ These validations happen **before** your workflow function executes. Invalid inp
 Catch expected exceptions and handle them gracefully:
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 @workflow(name="safe_api_call")
 @param("user_id", type="string", required=True)
 async def safe_api_call(context: ExecutionContext, user_id: str):
     """API call with error handling."""
 
     try:
-        context.log("info", f"Fetching user: {user_id}")
+        logger.info(f"Fetching user: {user_id}")
 
         # Make API call (could fail in many ways)
         user = await fetch_user_from_api(user_id)
 
-        context.log("info", f"User found: {user['email']}")
+        logger.info(f"User found: {user['email']}")
 
         return {
             "success": True,
@@ -91,7 +99,7 @@ async def safe_api_call(context: ExecutionContext, user_id: str):
 
     except UserNotFoundError as e:
         # Known error type - handle specifically
-        context.log("warning", f"User not found: {user_id}")
+        logger.warning(f"User not found: {user_id}")
 
         return {
             "success": False,
@@ -102,7 +110,7 @@ async def safe_api_call(context: ExecutionContext, user_id: str):
 
     except APITimeoutError as e:
         # Network/timeout error
-        context.log("error", "API timeout during user fetch", {
+        logger.error( "API timeout during user fetch", {
             "user_id": user_id,
             "error": str(e)
         })
@@ -116,7 +124,7 @@ async def safe_api_call(context: ExecutionContext, user_id: str):
 
     except Exception as e:
         # Unexpected error
-        context.log("error", "Unexpected error during user fetch", {
+        logger.error( "Unexpected error during user fetch", {
             "user_id": user_id,
             "error": str(e),
             "error_type": type(e).__name__
@@ -218,19 +226,19 @@ async def logging_example(context: ExecutionContext):
 
     except ValueError as e:
         # Good - log with context
-        context.log("error", "Value error in operation", {
+        logger.error( "Value error in operation", {
             "error": str(e),
             "error_type": type(e).__name__,
             "timestamp": datetime.utcnow().isoformat()
         })
 
         # Bad - log with minimal info
-        # context.log("error", "Error occurred")
+        # logger.error( "Error occurred")
 
     except Exception as e:
         # Good - log complete exception info
         import traceback
-        context.log("error", "Unexpected error", {
+        logger.error( "Unexpected error", {
             "error": str(e),
             "error_type": type(e).__name__,
             "traceback": traceback.format_exc()
@@ -254,7 +262,7 @@ async def checkpoint_debugging(context: ExecutionContext, items: list):
     """Process items with checkpoint tracking."""
 
     # Save checkpoint at start
-    context.save_checkpoint("start", {
+    # Removed: checkpoint feature"start", {
         "total_items": len(items),
         "timestamp": datetime.utcnow().isoformat()
     })
@@ -270,7 +278,7 @@ async def checkpoint_debugging(context: ExecutionContext, items: list):
 
             # Save checkpoint every 10 items
             if (i + 1) % 10 == 0:
-                context.save_checkpoint(f"progress_{i+1}", {
+                # Removed: checkpoint featuref"progress_{i+1}", {
                     "processed": i + 1,
                     "successful": successful,
                     "failed": failed
@@ -278,14 +286,14 @@ async def checkpoint_debugging(context: ExecutionContext, items: list):
 
         except Exception as e:
             failed += 1
-            context.log("error", f"Failed to process item {i}", {
+            logger.error( f"Failed to process item {i}", {
                 "item": item,
                 "error": str(e),
                 "index": i
             })
 
             # Save checkpoint on failure
-            context.save_checkpoint(f"failure_{i}", {
+            # Removed: checkpoint featuref"failure_{i}", {
                 "failed_item": item,
                 "index": i,
                 "error": str(e),
@@ -293,7 +301,7 @@ async def checkpoint_debugging(context: ExecutionContext, items: list):
             })
 
     # Final checkpoint
-    context.save_checkpoint("complete", {
+    # Removed: checkpoint feature"complete", {
         "total": len(items),
         "successful": successful,
         "failed": failed,
@@ -320,7 +328,7 @@ When debugging in the UI:
 
 ```python
 if not email or "@" not in email:
-    context.log("error", "Invalid email", {"email": email})
+    logger.error( "Invalid email", {"email": email})
     return {
         "success": False,
         "error": "Email format is invalid",
@@ -333,7 +341,7 @@ if not email or "@" not in email:
 ```python
 user = await get_user(user_id)
 if not user:
-    context.log("warning", f"User not found: {user_id}")
+    logger.warning( f"User not found: {user_id}")
     return {
         "success": False,
         "error": f"User {user_id} not found",
@@ -345,7 +353,7 @@ if not user:
 
 ```python
 if not context.is_platform_admin:
-    context.log("warning", f"Unauthorized access attempt: {context.user_id}")
+    logger.warning( f"Unauthorized access attempt: {context.user_id}")
     return {
         "success": False,
         "error": "You don't have permission to perform this action",
@@ -357,7 +365,7 @@ if not context.is_platform_admin:
 
 ```python
 if user["status"] == "deleted":
-    context.log("warning", f"Cannot modify deleted user: {user_id}")
+    logger.warning( f"Cannot modify deleted user: {user_id}")
     return {
         "success": False,
         "error": "Cannot perform operation on deleted user",
@@ -376,7 +384,7 @@ try:
         timeout=30.0
     )
 except asyncio.TimeoutError:
-    context.log("error", "Operation timed out after 30 seconds")
+    logger.error( "Operation timed out after 30 seconds")
     return {
         "success": False,
         "error": "Operation timed out",
@@ -461,26 +469,26 @@ async def bulk_operation(context: ExecutionContext, items: list):
 ### 1. Add Detailed Logging
 
 ```python
-context.log("info", "Starting operation", {
+logger.info( "Starting operation", {
     "input": param_value,
     "org_id": context.org_id,
     "user_id": context.user_id
 })
 ```
 
-### 2. Save State at Key Points
+### 2. Log State at Key Points
 
 ```python
-context.save_checkpoint("before_api_call", {
+logger.info("About to make API call", extra={
     "prepared_data": data,
     "timestamp": datetime.utcnow().isoformat()
 })
 
 result = await api_call(data)
 
-context.save_checkpoint("after_api_call", {
-    "response": result,
-    "status_code": result.get("status")
+logger.info("API call complete", extra={
+    "status_code": result.get("status"),
+    "success": result.get("success")
 })
 ```
 
@@ -568,7 +576,7 @@ result = await retry_with_backoff(api_call)
 # Try primary source, fallback to secondary
 result = await fetch_from_primary_api()
 if not result:
-    context.log("warning", "Primary API unavailable, using fallback")
+    logger.warning( "Primary API unavailable, using fallback")
     result = await fetch_from_fallback_api()
 
 if not result:
@@ -593,7 +601,7 @@ user = await create_user(email, name)  # Fails if email invalid
 ```python
 # Good
 except Exception as e:
-    context.log("error", "Failed", {"error": str(e)})
+    logger.error( "Failed", {"error": str(e)})
     return {"error": "Operation failed"}
 
 # Bad - silent failure
@@ -630,15 +638,9 @@ return {
 
 ### Error logs don't appear
 
-1. Verify you're calling `context.log()`
+1. Verify you're using Python's logging module: `logger.error()`, `logger.info()`, etc.
 2. Check execution completed (errors in pending executions don't show logs)
 3. Look in execution detail view, not just summary
-
-### Checkpoint data not showing
-
-1. Ensure `context.save_checkpoint()` is called
-2. Workflow must complete (even with errors)
-3. View in execution detail → Checkpoints tab
 
 ### Exception not caught
 

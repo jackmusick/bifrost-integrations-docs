@@ -14,27 +14,30 @@ Bifrost provides HTTP client methods for all request types.
 Fetch data from an API:
 
 ```python
-from bifrost import workflow, context
+from bifrost import workflow
+import logging
+
+logger = logging.getLogger(__name__)
 
 @workflow(
     name="fetch_json_api",
     description="Fetch data from custom JSON API"
 )
-async def fetch_json_api(ctx: context.WorkflowContext):
+async def fetch_json_api(ctx):
     """Get data from any REST API."""
-    
+
     response = await ctx.http_get(
         "https://api.example.com/data",
         headers={"Authorization": "Bearer your-token"},
         params={"page": 1, "limit": 100}
     )
-    
+
     if response.status_code == 200:
         data = response.json()
-        ctx.log("info", f"Retrieved {len(data)} items")
+        logger.info(f"Retrieved {len(data)} items")
         return data
     else:
-        ctx.log("error", f"API error: {response.status_code}")
+        logger.error(f"API error: {response.status_code}")
         raise Exception(f"Failed to fetch data: {response.status_code}")
 ```
 
@@ -93,13 +96,17 @@ response = await ctx.http_patch(
 Remove resources:
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 response = await ctx.http_delete(
     "https://api.example.com/items/123",
     headers={"Authorization": "Bearer token"}
 )
 
 if response.status_code == 204:
-    ctx.log("info", "Item deleted successfully")
+    logger.info("Item deleted successfully")
 ```
 
 ## Authentication Patterns
@@ -107,9 +114,11 @@ if response.status_code == 204:
 ### API Key in Header
 
 ```python
+from bifrost import secrets
+
 async def with_api_key(ctx):
-    api_key = await ctx.get_secret("api_key")
-    
+    api_key = await secrets.get("api_key")
+
     response = await ctx.http_get(
         "https://api.example.com/data",
         headers={"X-API-Key": api_key}
@@ -119,9 +128,11 @@ async def with_api_key(ctx):
 ### Bearer Token
 
 ```python
+from bifrost import secrets
+
 async def with_bearer_token(ctx):
-    token = await ctx.get_secret("api_token")
-    
+    token = await secrets.get("api_token")
+
     response = await ctx.http_get(
         "https://api.example.com/data",
         headers={"Authorization": f"Bearer {token}"}
@@ -132,14 +143,15 @@ async def with_bearer_token(ctx):
 
 ```python
 import base64
+from bifrost import secrets
 
 async def with_basic_auth(ctx):
-    username = await ctx.get_secret("api_username")
-    password = await ctx.get_secret("api_password")
-    
+    username = await secrets.get("api_username")
+    password = await secrets.get("api_password")
+
     # Encode credentials
     credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
-    
+
     response = await ctx.http_get(
         "https://api.example.com/data",
         headers={"Authorization": f"Basic {credentials}"}
@@ -149,10 +161,14 @@ async def with_basic_auth(ctx):
 ### Custom Headers
 
 ```python
+import time
+import uuid
+from bifrost import secrets
+
 async def with_custom_headers(ctx):
-    api_key = await ctx.get_secret("api_key")
+    api_key = await secrets.get("api_key")
     timestamp = time.time()
-    
+
     response = await ctx.http_get(
         "https://api.example.com/data",
         headers={
@@ -209,12 +225,16 @@ if response.status_code == 200:
 ### Error Responses
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 response = await ctx.http_get("https://api.example.com/data")
 
 if response.status_code >= 400:
     error_body = response.json()
     error_message = error_body.get("error", {}).get("message", "Unknown error")
-    ctx.log("error", f"API error: {error_message}")
+    logger.error(f"API error: {error_message}")
     raise Exception(error_message)
 ```
 
@@ -344,37 +364,40 @@ Handle temporary failures gracefully:
 
 ```python
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def make_request_with_retry(ctx, url: str, max_retries: int = 3):
     """Make request with exponential backoff retry."""
-    
+
     for attempt in range(max_retries):
         try:
             response = await ctx.http_get(url)
-            
+
             # Retry on 429 (rate limit) or 5xx errors
             if response.status_code in [429, 500, 502, 503, 504]:
                 if attempt < max_retries - 1:
                     # Exponential backoff: 1s, 2s, 4s
                     wait_time = 2 ** attempt
-                    ctx.log("warning", f"Retrying after {wait_time}s", {
+                    logger.warning(f"Retrying after {wait_time}s", extra={
                         "status_code": response.status_code,
                         "attempt": attempt + 1
                     })
                     await asyncio.sleep(wait_time)
                     continue
-            
+
             # Success or non-retryable error
             return response
-            
+
         except Exception as e:
             if attempt < max_retries - 1:
                 wait_time = 2 ** attempt
-                ctx.log("warning", f"Request failed, retrying: {str(e)}")
+                logger.warning(f"Request failed, retrying: {str(e)}")
                 await asyncio.sleep(wait_time)
             else:
                 raise
-    
+
     raise Exception(f"Failed after {max_retries} retries")
 ```
 
@@ -451,72 +474,81 @@ async def create_single_item(ctx, item):
 
 ## Caching API Responses
 
-Cache expensive API calls:
+Consider implementing caching at the application level (e.g., using Redis or in-memory storage) for expensive API calls. Here's a simple example using a dictionary:
 
 ```python
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Simple in-memory cache (for single-instance deployments)
+_cache = {}
 
 async def get_with_cache(ctx, cache_key: str, api_url: str, ttl_seconds: int = 300):
     """Get data with caching."""
-    
+
     # Try to get from cache
-    cached = ctx.get_variable(f"cache_{cache_key}")
-    
-    if cached:
+    if cache_key in _cache:
+        cached = _cache[cache_key]
         cache_time = cached.get("timestamp", 0)
         age = (datetime.now().timestamp() - cache_time)
-        
+
         if age < ttl_seconds:
-            ctx.log("info", "Using cached data", {"key": cache_key, "age_seconds": age})
+            logger.info(f"Using cached data: {cache_key} (age: {age}s)")
             return cached["data"]
-    
+
     # Cache miss - fetch from API
     response = await ctx.http_get(api_url)
     data = response.json()
-    
+
     # Store in cache
-    ctx.set_variable(f"cache_{cache_key}", {
+    _cache[cache_key] = {
         "data": data,
         "timestamp": datetime.now().timestamp()
-    })
-    
+    }
+
     return data
 ```
 
 ## Error Handling Examples
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 async def robust_api_call(ctx, url: str):
     """Example with comprehensive error handling."""
-    
+
     try:
         response = await ctx.http_get(url, headers={"Authorization": "Bearer token"})
-        
+
         # Handle HTTP errors
         if response.status_code == 404:
-            ctx.log("warning", "Resource not found")
+            logger.warning("Resource not found")
             return None
-        
+
         if response.status_code == 401:
-            ctx.log("error", "Authentication failed - check token")
+            logger.error("Authentication failed - check token")
             raise Exception("Invalid authentication")
-        
+
         if response.status_code == 429:
-            ctx.log("warning", "Rate limited - retry later")
+            logger.warning("Rate limited - retry later")
             raise Exception("API rate limit exceeded")
-        
+
         if response.status_code >= 500:
-            ctx.log("error", "Server error - retry later")
+            logger.error("Server error - retry later")
             raise Exception("API server error")
-        
+
         if response.status_code >= 400:
             error_msg = response.json().get("message", "Unknown error")
             raise Exception(f"API error: {error_msg}")
-        
+
         return response.json()
-    
+
     except Exception as e:
-        ctx.log("error", "API request failed", {"error": str(e), "url": url})
+        logger.error("API request failed", extra={"error": str(e), "url": url})
         raise
 ```
 

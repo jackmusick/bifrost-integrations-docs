@@ -3,21 +3,31 @@ title: ExecutionContext API
 description: Complete reference for the ExecutionContext object passed to workflows
 ---
 
-The `ExecutionContext` object provides access to organization data, user information, secrets, configuration, and execution state. Every workflow receives this object as its first parameter.
+The `ExecutionContext` object provides access to organization data, user information, and execution metadata. Every workflow receives this object as its first parameter.
+
+For configuration, secrets, OAuth, and file operations, use the SDK modules:
+```python
+from bifrost import config, secrets, oauth, files
+```
 
 ## Properties
 
 ### Organization Properties
 
 ```python
-context.org_id: str
+context.organization: Organization | None
+```
+The organization object (with `id`, `name`, `is_active`). None for global scope.
+
+```python
+context.org_id: str | None
 ```
 The ID of the organization executing the workflow. None for global scope.
 
 ```python
-context.org_name: str
+context.org_name: str | None
 ```
-The display name of the organization.
+The display name of the organization. None for global scope.
 
 ### User Properties
 
@@ -58,19 +68,93 @@ context.is_function_key: bool
 ```
 Whether the request was authenticated via function key (vs user authentication).
 
-## Methods
+```python
+context.is_global_scope: bool
+```
+True if executing in GLOBAL scope (no organization).
 
-### Logging
+## Backwards Compatibility
 
-Use Python's built-in logging module for logging in workflows:
+For backwards compatibility, the context also provides:
 
 ```python
-import logging
-
-logger = logging.getLogger(__name__)
+context.executed_by: str           # Alias for context.user_id
+context.executed_by_email: str     # Alias for context.email
+context.executed_by_name: str      # Alias for context.name
 ```
 
-**Example:**
+## SDK Modules
+
+The ExecutionContext is intentionally minimal - it only provides identity, organization, and execution metadata. All functionality (config, secrets, OAuth, files) is provided through SDK modules:
+
+### Configuration
+
+```python
+from bifrost import config
+
+# Get configuration value
+api_base_url = config.get("api_base_url", default="https://api.example.com")
+
+# Set configuration
+config.set("api_base_url", "https://api.example.com")
+
+# List all config
+all_config = config.list()
+
+# Delete config
+config.delete("old_key")
+```
+
+### Secrets
+
+```python
+from bifrost import secrets
+
+# Get secret from Key Vault (org-scoped: {org_id}--{key})
+api_key = secrets.get("github_api_key")
+
+# Set secret
+secrets.set("github_api_key", "secret_value")
+
+# Delete secret
+secrets.delete("old_secret")
+```
+
+### OAuth
+
+```python
+from bifrost import oauth
+
+# Get OAuth credentials
+creds = oauth.get_oauth_connection("microsoft_graph")
+auth_header = creds.get_auth_header()  # "Bearer {access_token}"
+
+# Use in API call
+headers = {"Authorization": auth_header}
+response = await session.get("https://graph.microsoft.com/v1.0/me", headers=headers)
+```
+
+### Files
+
+```python
+from bifrost import files
+
+# Write file
+files.write("data/users.csv", "id,name\n1,Alice\n")
+
+# Read file
+content = files.read("data/users.csv")
+
+# List directory
+items = files.list_dir("data/")
+
+# Delete file
+files.delete("data/old.csv")
+```
+
+## Logging
+
+Use Python's built-in logging module for logging in workflows:
 
 ```python
 import logging
@@ -93,109 +177,13 @@ logger.error("API call failed", extra={
 
 **Important**: Never log sensitive data like passwords, API keys, or tokens.
 
-### Configuration
-
-```python
-context.get_config(key: str, default: Any = None) -> Any
-```
-
-Get configuration value with automatic secret resolution.
-
-Configuration values can reference secrets using the `secret_ref` pattern:
-
-```python
-# Get a simple config value
-api_base_url = context.get_config("api_base_url")
-
-# Get a secret (stored as {org_id}--secret_name in Key Vault)
-api_key = context.get_config("api_key_ref")
-
-# Get with default value
-timeout = context.get_config("timeout", default=30)
-```
-
-```python
-context.has_config(key: str) -> bool
-```
-
-Check if configuration key exists.
-
-```python
-if context.has_config("slack_webhook_url"):
-    slack_url = context.get_config("slack_webhook_url")
-```
-
-### Secrets and Credentials
-
-```python
-async def get_secret(key: str) -> str
-```
-
-Get a secret from Azure Key Vault. Secrets are org-scoped: `{org_id}--{key}`.
-
-```python
-# Get API key from Key Vault
-api_key = await context.get_secret("github_api_key")
-
-# Key Vault retrieves: {org_id}--github_api_key
-```
-
-```python
-async def get_oauth_connection(connection_name: str) -> OAuthCredentials
-```
-
-Get OAuth credentials for a connection. Automatically handles token refresh.
-
-```python
-# Get Microsoft Graph OAuth credentials
-graph_creds = await context.get_oauth_connection("microsoft_graph")
-auth_header = graph_creds.get_auth_header()  # "Bearer {access_token}"
-
-# Use in API call
-headers = {"Authorization": auth_header}
-response = await client.get("https://graph.microsoft.com/v1.0/me", headers=headers)
-```
-
-### State Tracking
-
-```python
-context.save_checkpoint(name: str, data: dict[str, Any]) -> None
-```
-
-Save a state checkpoint during workflow execution. Useful for debugging and understanding execution flow.
-
-```python
-# Track progress through different steps
-context.save_checkpoint("validation_complete", {
-    "email": email,
-    "status": "valid"
-})
-
-context.save_checkpoint("api_call_complete", {
-    "status_code": 201,
-    "user_id": "123"
-})
-
-context.save_checkpoint("notification_sent", {
-    "recipient": email,
-    "timestamp": datetime.now().isoformat()
-})
-```
-
-Checkpoints appear in execution logs and help debug issues.
-
-```python
-async def finalize_execution() -> dict[str, Any]
-```
-
-Get final execution state for persistence. Called automatically at workflow completion.
-
 ## Usage Examples
 
 ### Basic Workflow
 
 ```python
 import logging
+from bifrost import config, secrets
 
 logger = logging.getLogger(__name__)
 
@@ -208,10 +196,10 @@ async def example(context: ExecutionContext):
     })
 
     # Get configuration
-    api_base_url = context.get_config("api_base_url")
+    api_base_url = config.get("api_base_url")
 
     # Get secret
-    api_key = await context.get_secret("api_key")
+    api_key = secrets.get("api_key")
 
     # Use in API call
     headers = {"Authorization": f"Bearer {api_key}"}
@@ -223,36 +211,7 @@ async def example(context: ExecutionContext):
     }
 ```
 
-### With Checkpoints
-
-```python
-@workflow(name="multi_step_workflow")
-async def multi_step(context: ExecutionContext):
-    # Step 1: Fetch data
-    context.save_checkpoint("step_1_start", {})
-    data = await fetch_data()
-    context.save_checkpoint("step_1_complete", {
-        "records": len(data)
-    })
-
-    # Step 2: Transform data
-    context.save_checkpoint("step_2_start", {})
-    transformed = transform_data(data)
-    context.save_checkpoint("step_2_complete", {
-        "records": len(transformed)
-    })
-
-    # Step 3: Upload results
-    context.save_checkpoint("step_3_start", {})
-    result = await upload_results(transformed)
-    context.save_checkpoint("step_3_complete", {
-        "upload_id": result["id"]
-    })
-
-    return {"success": True}
-```
-
-### Error Handling with Context
+### Error Handling
 
 ```python
 import logging
@@ -288,6 +247,7 @@ async def resilient(context: ExecutionContext):
 
 ```python
 import logging
+from bifrost import oauth
 
 logger = logging.getLogger(__name__)
 
@@ -295,7 +255,7 @@ logger = logging.getLogger(__name__)
 async def sync_with_graph(context: ExecutionContext):
     try:
         # Get OAuth credentials
-        creds = await context.get_oauth_connection("microsoft_graph")
+        creds = oauth.get_oauth_connection("microsoft_graph")
 
         # Check if credentials are valid
         if creds.is_expired():
@@ -328,21 +288,25 @@ async def sync_with_graph(context: ExecutionContext):
 Use the ExecutionContext type hint for IDE autocomplete:
 
 ```python
-from bifrost import workflow, ExecutionContext
+from bifrost import workflow, ExecutionContext, config, secrets, oauth
 
 @workflow(name="typed_example")
 async def typed_example(context: ExecutionContext, param: str):
-    # IDE will autocomplete context methods
-    context.get_config(...)
-    await context.get_secret(...)
-    await context.get_oauth_connection(...)
+    # Access context properties
+    org_id = context.org_id
+    user_id = context.user_id
+
+    # Use SDK modules for functionality
+    api_url = config.get("api_url")
+    api_key = secrets.get("api_key")
+    creds = oauth.get_oauth_connection("provider")
 ```
 
 ## Security Considerations
 
 **✅ DO:**
 - Log only non-sensitive data
-- Use `context.get_secret()` for passwords and tokens
+- Use `secrets.get()` for passwords and tokens
 - Store organization-scoped secrets
 - Check `context.org_id` for authorization
 - Use `context.is_platform_admin` for admin checks
@@ -354,21 +318,10 @@ async def typed_example(context: ExecutionContext, param: str):
 - Bypass organization checks
 - Access data from other organizations
 
-## Backwards Compatibility
-
-For backwards compatibility, the context also provides:
-
-```python
-context.executed_by: str           # Alias for context.user_id
-context.executed_by_email: str     # Alias for context.email
-context.executed_by_name: str      # Alias for context.name
-context.is_global_scope: bool      # True if no organization
-```
-
 ## Complete Example
 
 ```python
-from bifrost import workflow, param, ExecutionContext
+from bifrost import workflow, param, ExecutionContext, config, secrets
 from datetime import datetime
 import aiohttp
 import logging
@@ -377,11 +330,11 @@ logger = logging.getLogger(__name__)
 
 @workflow(
     name="comprehensive_example",
-    description="Demonstrates all context features"
+    description="Demonstrates all context and SDK features"
 )
 @param("email", "email", required=True)
 async def comprehensive(context: ExecutionContext, email: str):
-    """Complete example using all context features."""
+    """Complete example using context and SDK modules."""
 
     # Log execution start
     logger.info("Starting comprehensive workflow", extra={
@@ -392,28 +345,22 @@ async def comprehensive(context: ExecutionContext, email: str):
     })
 
     try:
-        # Step 1: Validate configuration
-        context.save_checkpoint("step_1_validate_config", {})
-
-        if not context.has_config("api_base_url"):
+        # Step 1: Get configuration
+        api_base_url = config.get("api_base_url")
+        if not api_base_url:
             raise ValueError("Missing required configuration: api_base_url")
 
-        api_base_url = context.get_config("api_base_url")
         logger.info("Configuration validated", extra={
             "api_base_url": api_base_url
         })
 
         # Step 2: Get credentials
-        context.save_checkpoint("step_2_get_credentials", {})
-
-        api_key = await context.get_secret("api_key")
+        api_key = secrets.get("api_key")
         headers = {"Authorization": f"Bearer {api_key}"}
 
         logger.info("Credentials retrieved")
 
         # Step 3: Make API call
-        context.save_checkpoint("step_3_api_call", {})
-
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"{api_base_url}/users",
@@ -430,12 +377,6 @@ async def comprehensive(context: ExecutionContext, email: str):
         logger.info("User created via API", extra={
             "user_id": user_id,
             "email": email
-        })
-
-        # Step 4: Complete
-        context.save_checkpoint("step_4_complete", {
-            "user_id": user_id,
-            "timestamp": datetime.now().isoformat()
         })
 
         return {

@@ -1,0 +1,353 @@
+---
+title: Microsoft Graph
+description: Common Microsoft Graph API patterns for user, group, and license management
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+Microsoft Graph provides unified access to Microsoft 365 data. This guide shows common patterns for MSP automation.
+
+## Prerequisites
+
+- [OAuth connection configured](/guides/integrations/oauth-setup) for Microsoft Graph
+- Required scopes for operations
+
+## Basic Pattern
+
+```python
+from bifrost import workflow, oauth, ExecutionContext
+import aiohttp
+
+@workflow(name="graph_api_call")
+async def graph_api_call(context: ExecutionContext):
+    # Get OAuth credentials
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    # Build request
+    url = "https://graph.microsoft.com/v1.0/users"
+    headers = {"Authorization": creds.get_auth_header()}
+
+    # Call API
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            return await resp.json()
+```
+
+## User Management
+
+### List Users
+```python
+@workflow(name="list_users")
+async def list_users(context):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = "https://graph.microsoft.com/v1.0/users"
+    headers = {"Authorization": creds.get_auth_header()}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            data = await resp.json()
+            return {"users": data.get("value", [])}
+```
+
+### Get Single User
+```python
+@workflow(name="get_user")
+@param("user_id", type="string", required=True)
+async def get_user(context, user_id: str):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    headers = {"Authorization": creds.get_auth_header()}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status == 200:
+                return {"user": await resp.json()}
+            else:
+                return {"error": await resp.text()}
+```
+
+### Create User
+```python
+@workflow(name="create_user")
+@param("email", type="email", required=True)
+@param("display_name", type="string", required=True)
+@param("password", type="string", required=True)
+async def create_user(context, email: str, display_name: str, password: str):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = "https://graph.microsoft.com/v1.0/users"
+    headers = {
+        "Authorization": creds.get_auth_header(),
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "accountEnabled": True,
+        "displayName": display_name,
+        "mailNickname": email.split("@")[0],
+        "userPrincipalName": email,
+        "passwordProfile": {
+            "forceChangePasswordNextSignIn": True,
+            "password": password
+        }
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=payload) as resp:
+            if resp.status == 201:
+                user = await resp.json()
+                return {"success": True, "user_id": user["id"]}
+            else:
+                error = await resp.text()
+                return {"success": False, "error": error}
+```
+
+### Update User
+```python
+@workflow(name="update_user")
+@param("user_id", type="string", required=True)
+@param("display_name", type="string", required=False)
+@param("job_title", type="string", required=False)
+async def update_user(context, user_id: str, display_name: str = None, job_title: str = None):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    headers = {
+        "Authorization": creds.get_auth_header(),
+        "Content-Type": "application/json"
+    }
+
+    # Build payload with provided values
+    payload = {}
+    if display_name:
+        payload["displayName"] = display_name
+    if job_title:
+        payload["jobTitle"] = job_title
+
+    async with aiohttp.ClientSession() as session:
+        async with session.patch(url, headers=headers, json=payload) as resp:
+            if resp.status == 204:
+                return {"success": True}
+            else:
+                return {"success": False, "error": await resp.text()}
+```
+
+## Group Management
+
+### List Groups
+```python
+@workflow(name="list_groups")
+async def list_groups(context):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = "https://graph.microsoft.com/v1.0/groups"
+    headers = {"Authorization": creds.get_auth_header()}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            data = await resp.json()
+            return {"groups": data.get("value", [])}
+```
+
+### Add User to Group
+```python
+@workflow(name="add_user_to_group")
+@param("user_id", type="string", required=True)
+@param("group_id", type="string", required=True)
+async def add_user_to_group(context, user_id: str, group_id: str):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = f"https://graph.microsoft.com/v1.0/groups/{group_id}/members/$ref"
+    headers = {
+        "Authorization": creds.get_auth_header(),
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "@odata.id": f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=payload) as resp:
+            if resp.status == 204:
+                return {"success": True}
+            else:
+                return {"success": False, "error": await resp.text()}
+```
+
+## License Management
+
+### List Available Licenses
+```python
+@workflow(name="list_licenses")
+async def list_licenses(context):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = "https://graph.microsoft.com/v1.0/subscribedSkus"
+    headers = {"Authorization": creds.get_auth_header()}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            data = await resp.json()
+
+            licenses = []
+            for sku in data.get("value", []):
+                licenses.append({
+                    "sku_id": sku["skuId"],
+                    "sku_part_number": sku["skuPartNumber"],
+                    "available": sku["prepaidUnits"]["enabled"] - sku["consumedUnits"]
+                })
+
+            return {"licenses": licenses}
+```
+
+### Assign License
+```python
+@workflow(name="assign_license")
+@param("user_id", type="string", required=True)
+@param("sku_id", type="string", required=True)
+async def assign_license(context, user_id: str, sku_id: str):
+    creds = oauth.get_oauth_connection("microsoft-graph")
+
+    url = f"https://graph.microsoft.com/v1.0/users/{user_id}/assignLicense"
+    headers = {
+        "Authorization": creds.get_auth_header(),
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "addLicenses": [{
+            "skuId": sku_id
+        }],
+        "removeLicenses": []
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=payload) as resp:
+            if resp.status == 200:
+                return {"success": True}
+            else:
+                return {"success": False, "error": await resp.text()}
+```
+
+## Pagination
+
+Handle large result sets:
+
+```python
+async def get_all_users(creds):
+    users = []
+    url = "https://graph.microsoft.com/v1.0/users?$top=100"
+
+    async with aiohttp.ClientSession() as session:
+        while url:
+            headers = {"Authorization": creds.get_auth_header()}
+
+            async with session.get(url, headers=headers) as resp:
+                data = await resp.json()
+                users.extend(data.get("value", []))
+
+                # Get next page URL
+                url = data.get("@odata.nextLink")
+
+    return users
+```
+
+## Filtering & Querying
+
+Use OData query parameters:
+
+```python
+# Filter users by department
+url = "https://graph.microsoft.com/v1.0/users?$filter=department eq 'Sales'"
+
+# Select specific properties
+url = "https://graph.microsoft.com/v1.0/users?$select=displayName,mail,jobTitle"
+
+# Top N results
+url = "https://graph.microsoft.com/v1.0/users?$top=50"
+
+# Combine filters
+url = "https://graph.microsoft.com/v1.0/users?$filter=department eq 'Sales'&$select=displayName,mail&$top=50"
+```
+
+## Error Handling
+
+```python
+@workflow(name="safe_graph_call")
+async def safe_graph_call(context, user_id: str):
+    try:
+        creds = oauth.get_oauth_connection("microsoft-graph")
+    except oauth.OAuthConnectionNotFound:
+        return {
+            "success": False,
+            "error": "Microsoft Graph OAuth not configured"
+        }
+
+    url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    headers = {"Authorization": creds.get_auth_header()}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status == 200:
+                return {"success": True, "user": await resp.json()}
+            elif resp.status == 404:
+                return {"success": False, "error": "User not found"}
+            elif resp.status == 403:
+                return {"success": False, "error": "Insufficient permissions"}
+            else:
+                return {"success": False, "error": await resp.text()}
+```
+
+## Common Scopes Required
+
+| Operation | Scope |
+|-----------|-------|
+| List users | `User.Read.All` |
+| Create user | `User.ReadWrite.All` |
+| Update user | `User.ReadWrite.All` |
+| List groups | `Group.Read.All` |
+| Add to group | `GroupMember.ReadWrite.All` |
+| List licenses | `Organization.Read.All` |
+| Assign license | `Organization.ReadWrite.All` |
+
+<Aside type="tip">
+**Delegated vs Application**: Use delegated permissions for user-context operations. Use application permissions for service-to-service.
+</Aside>
+
+## Rate Limiting
+
+Graph API has rate limits. Handle throttling:
+
+```python
+import asyncio
+
+async def call_with_retry(url, headers, max_retries=3):
+    async with aiohttp.ClientSession() as session:
+        for attempt in range(max_retries):
+            async with session.get(url, headers=headers) as resp:
+                if resp.status == 429:  # Rate limited
+                    retry_after = int(resp.headers.get("Retry-After", 60))
+                    await asyncio.sleep(retry_after)
+                    continue
+
+                return await resp.json()
+
+        raise Exception("Max retries exceeded")
+```
+
+## Best Practices
+
+1. **Use Batch Requests**: Combine multiple operations
+2. **Select Only Needed Fields**: Use `$select` to reduce payload
+3. **Cache Results**: Cache frequently accessed data
+4. **Handle Rate Limits**: Implement retry logic
+5. **Check Permissions**: Verify scopes before deployment
+
+## Next Steps
+
+- [OAuth Setup](/guides/integrations/oauth-setup) - Configure Microsoft Graph OAuth
+- [OAuth Tutorial](/tutorials/oauth-integration) - Step-by-step integration
+- [Custom APIs](/guides/integrations/custom-apis) - General API patterns

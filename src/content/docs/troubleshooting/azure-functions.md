@@ -349,7 +349,7 @@ az functionapp update --resource-group <rg> --name <name> \
     expose_in_forms=False
 )
 async def keep_alive(context):
-    context.log("info", "Keep-alive ping")
+    logger.info( "Keep-alive ping")
     return {"status": "alive"}
 ```
 

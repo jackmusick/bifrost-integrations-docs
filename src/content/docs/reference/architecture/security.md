@@ -170,11 +170,15 @@ All data in motion is encrypted:
 Secrets never appear in logs or responses:
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Bad: Secret in log
-ctx.log("info", f"API Key: {api_key}")  # NEVER DO THIS
+logger.info(f"API Key: {api_key}")  # NEVER DO THIS
 
 # Good: Only log metadata
-ctx.log("info", "API call successful", {
+logger.info("API call successful", extra={
     "endpoint": "/users",
     "has_api_key": bool(api_key)
 })
@@ -384,13 +388,17 @@ config = {"api_key": {"secret_ref": "external_api_key"}}
 Never log sensitive data:
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Bad
-ctx.log("info", f"Password: {password}")
-ctx.log("info", f"API Key: {api_key}")
-ctx.log("debug", f"OAuth response: {oauth_response}")
+logger.info(f"Password: {password}")
+logger.info(f"API Key: {api_key}")
+logger.debug(f"OAuth response: {oauth_response}")
 
 # Good
-ctx.log("info", "Authentication successful", {
+logger.info("Authentication successful", extra={
     "user_id": user_id,
     "method": "azure_ad"
 })

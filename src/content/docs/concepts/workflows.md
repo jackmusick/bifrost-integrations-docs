@@ -29,7 +29,7 @@ async def create_user(context: ExecutionContext, email: str, first_name: str):
     """Create a new user with the provided email."""
 
     # Log the start
-    context.log("info", f"Creating user: {email}")
+    logger.info( f"Creating user: {email}")
 
     # Your business logic
     user = await create_m365_user(email, first_name)
@@ -260,24 +260,51 @@ context.scope         # Global vs organization scope
 ### Configuration Access
 
 ```python
-api_url = context.get_config("api_url", default="...")
-api_key = context.get_config("api_key")  # Secrets auto-resolved
+api_url = config.get("api_url", default="...")
+api_key = config.get("api_key")  # Secrets auto-resolved
 ```
 
-### State Tracking
+### State Tracking via Logging
+
+Use Python's logging module to track important state:
 
 ```python
-context.log("info", "Message", {"data": "value"})
-context.save_checkpoint("name", {"state": "data"})
-context.set_variable("counter", 42)
-context.get_variable("counter", default=0)
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info("Processing started", extra={
+    "total_items": 1000,
+    "timestamp": datetime.utcnow().isoformat()
+})
+
+# ... processing ...
+
+logger.info("Processing complete", extra={
+    "processed": 1000,
+    "duration_seconds": 45
+})
 ```
 
-### Integrations
+### Integrations and OAuth
+
+Access external services via OAuth connections:
 
 ```python
-graph = context.get_integration("msgraph")  # Microsoft Graph
-halo = context.get_integration("halopsa")   # HaloPSA
+from bifrost import oauth
+
+# Get OAuth credentials for Microsoft Graph
+graph_creds = await oauth.get_connection("microsoft-graph")
+auth_header = graph_creds.get_auth_header()
+
+# Use in API calls
+import aiohttp
+async with aiohttp.ClientSession() as session:
+    async with session.get(
+        "https://graph.microsoft.com/v1.0/me",
+        headers={"Authorization": auth_header}
+    ) as resp:
+        user = await resp.json()
 ```
 
 ## Parameters and Validation
@@ -393,9 +420,9 @@ Logging serves multiple purposes:
 Track what happens during execution:
 
 ```python
-context.log("info", "Starting user creation", {"email": email})
-context.log("info", "User created", {"user_id": user_id})
-context.log("info", "License assigned", {"sku": license_sku})
+logger.info( "Starting user creation", {"email": email})
+logger.info( "User created", {"user_id": user_id})
+logger.info( "License assigned", {"sku": license_sku})
 ```
 
 ### Issue Investigation
@@ -403,7 +430,7 @@ context.log("info", "License assigned", {"sku": license_sku})
 When something goes wrong:
 
 ```python
-context.log("error", "Failed to create user", {
+logger.error( "Failed to create user", {
     "email": email,
     "error": str(e),
     "error_type": type(e).__name__
@@ -417,32 +444,24 @@ Logs are searchable and visible in execution history.
 Save state snapshots during execution:
 
 ```python
-context.save_checkpoint("processing_start", {
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info("Processing started", extra={
     "total_items": 1000,
     "timestamp": datetime.utcnow().isoformat()
 })
 
 # Process items...
 
-context.save_checkpoint("processing_complete", {
+logger.info("Processing complete", extra={
     "processed": 1000,
     "duration_seconds": 45
 })
 ```
 
 Checkpoints let you understand exactly what happened at each step.
-
-### Variables for Metrics
-
-Track metrics visible in execution record:
-
-```python
-context.set_variable("processed_count", 100)
-context.set_variable("failed_emails", ["user1@example.com"])
-context.set_variable("success_rate", 98.5)
-```
-
-Variables appear in execution detail view.
 
 ## Sync vs Async Decision
 
@@ -539,11 +558,11 @@ Bifrost supports multiple organizations (tenants) on a single platform:
 ```python
 # Organization A's execution
 context.org_id = "org-a"
-await context.get_config("api_key")  # Gets org-a's key
+await config.get("api_key")  # Gets org-a's key
 
 # Organization B's execution  
 context.org_id = "org-b"
-await context.get_config("api_key")  # Gets org-b's key
+await config.get("api_key")  # Gets org-b's key
 
 # Same workflow code, different organizations' data
 ```
@@ -628,9 +647,9 @@ async def user_onboarding(...):
 ### 3. Comprehensive Logging
 
 ```python
-context.log("info", "Starting operation", {"inputs": {...}})
+logger.info( "Starting operation", {"inputs": {...}})
 # ... work ...
-context.log("info", "Operation complete", {"results": {...}})
+logger.info( "Operation complete", {"results": {...}})
 ```
 
 ### 4. Graceful Error Handling
@@ -639,7 +658,7 @@ context.log("info", "Operation complete", {"results": {...}})
 try:
     result = await operation()
 except Exception as e:
-    context.log("error", "Operation failed", {"error": str(e)})
+    logger.error( "Operation failed", {"error": str(e)})
     return {"success": False, "error": str(e)}
 ```
 

@@ -318,7 +318,7 @@ from bifrost import workflow, param, ExecutionContext
 @param("department", type="string", label="Department", required=True)
 @param("limit", type="int", label="Max Users", default_value=50)
 async def sync_users_from_halo(context: ExecutionContext, department: str, limit: int = 50):
-    context.log("info", f"Starting sync for {department}")
+    logger.info( f"Starting sync for {department}")
     return {"users_synced": 12}
 ```
 

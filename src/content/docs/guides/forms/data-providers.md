@@ -34,22 +34,35 @@ async def get_departments(context: ExecutionContext):
     ]
 ```
 
-### Provider with Integration
+### Provider with OAuth Integration
 
 ```python
+from bifrost import oauth
+import aiohttp
+
 @data_provider(name="get_active_users")
 async def get_active_users(context: ExecutionContext):
     """Get active users from Microsoft Graph."""
-    graph = context.get_integration("msgraph")
-    users_response = await graph.get_users(filter="accountEnabled eq true")
-    
+    # Get OAuth credentials
+    creds = await oauth.get_connection("microsoft-graph")
+    auth_header = creds.get_auth_header()
+
+    # Make API request
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://graph.microsoft.com/v1.0/users",
+            headers={"Authorization": auth_header},
+            params={"$filter": "accountEnabled eq true"}
+        ) as resp:
+            users_response = await resp.json()
+
     return [
         {
-            "label": user.display_name,
-            "value": user.id,
-            "metadata": {"email": user.mail}
+            "label": user["displayName"],
+            "value": user["id"],
+            "metadata": {"email": user.get("mail")}
         }
-        for user in users_response.value
+        for user in users_response.get("value", [])
     ]
 ```
 
@@ -81,21 +94,33 @@ Provider parameters can be provided by forms in three ways:
 ### Provider with Caching
 
 ```python
+from bifrost import oauth
+import aiohttp
+
 @data_provider(
     name="get_licenses",
     cache_ttl_seconds=300  # Cache for 5 minutes
 )
 async def get_licenses(context: ExecutionContext):
     """Get available Microsoft 365 licenses (cached)."""
-    graph = context.get_integration("msgraph")
-    skus = await graph.get_subscribed_skus()
-    
+    # Get OAuth credentials
+    creds = await oauth.get_connection("microsoft-graph")
+    auth_header = creds.get_auth_header()
+
+    # Fetch subscribed SKUs
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://graph.microsoft.com/v1.0/subscribedSkus",
+            headers={"Authorization": auth_header}
+        ) as resp:
+            skus_response = await resp.json()
+
     return [
         {
-            "label": f"{sku.sku_part_number} ({sku.prepaid_units.enabled} available)",
-            "value": sku.sku_id
+            "label": f"{sku['skuPartNumber']} ({sku['prepaidUnits'].get('enabled', 0)} available)",
+            "value": sku['skuId']
         }
-        for sku in skus.value
+        for sku in skus_response.get("value", [])
     ]
 ```
 

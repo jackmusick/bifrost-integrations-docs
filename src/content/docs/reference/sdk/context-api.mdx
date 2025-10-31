@@ -1,0 +1,264 @@
+---
+title: ExecutionContext API
+description: Complete reference for the ExecutionContext object
+---
+
+## Overview
+
+`ExecutionContext` provides access to organization, user, and execution information in every workflow and data provider.
+
+```python
+from bifrost import workflow, ExecutionContext
+
+@workflow(name="example")
+async def example(context: ExecutionContext):
+    # Access context properties
+    org_id = context.org_id
+    user_id = context.user_id
+```
+
+## Properties
+
+### User Information
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `user_id` | str | Current user's ID | `"user-123"` |
+| `email` | str | User's email address | `"alice@example.com"` |
+| `name` | str | User's display name | `"Alice Smith"` |
+
+### Organization Information
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `org_id` | str \| None | Organization ID | `"org-456"` |
+| `org_name` | str \| None | Organization name | `"Acme Corp"` |
+| `organization` | Organization \| None | Full organization object | See Organization type |
+| `scope` | str | Scope identifier | `"org-456"` or `"GLOBAL"` |
+
+### Execution Information
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `execution_id` | str | Unique execution ID | `"exec-789"` |
+
+### Authorization Flags
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `is_platform_admin` | bool | User is platform administrator |
+| `is_function_key` | bool | Called via API key (not user) |
+| `is_global_scope` | bool | Executing in global scope (no org) |
+
+## Computed Properties
+
+### org_id
+
+Returns organization ID or None for global scope.
+
+```python
+org_id: str | None = context.org_id
+
+if context.org_id:
+    # Organization-scoped operation
+    users = await get_org_users(context.org_id)
+else:
+    # Global operation
+    all_orgs = await get_all_organizations()
+```
+
+### org_name
+
+Returns organization display name.
+
+```python
+org_name: str | None = context.org_name
+
+logger.info(f"Executing for {context.org_name}")
+```
+
+### is_global_scope
+
+Check if executing in global (platform-wide) scope.
+
+```python
+if context.is_global_scope:
+    # Platform-level operation
+    pass
+else:
+    # Organization-level operation
+    pass
+```
+
+## Organization Object
+
+When `context.organization` is not None:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | str | Organization ID |
+| `name` | str | Display name |
+| `is_active` | bool | Organization is active |
+
+```python
+if context.organization:
+    org_name = context.organization.name
+    is_active = context.organization.is_active
+```
+
+## Common Patterns
+
+### Check User Permissions
+
+```python
+@workflow(name="admin_task")
+async def admin_task(context: ExecutionContext):
+    if not context.is_platform_admin:
+        return {
+            "success": False,
+            "error": "Admin privileges required"
+        }
+
+    # Perform admin operation
+    return {"success": True}
+```
+
+### Organization-Scoped Query
+
+```python
+@workflow(name="get_org_data")
+async def get_org_data(context: ExecutionContext):
+    if not context.org_id:
+        return {"error": "Organization context required"}
+
+    data = await db.query(
+        "SELECT * FROM data WHERE org_id = ?",
+        context.org_id
+    )
+
+    return {"data": data}
+```
+
+### Log with Context
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+@workflow(name="example")
+async def example(context: ExecutionContext):
+    logger.info("Workflow started", extra={
+        "org_id": context.org_id,
+        "user_id": context.user_id,
+        "execution_id": context.execution_id
+    })
+```
+
+### Global vs Organization Scope
+
+```python
+@workflow(name="flexible_query")
+async def flexible_query(context: ExecutionContext):
+    if context.is_global_scope:
+        # Platform admin viewing all data
+        results = await db.query("SELECT * FROM resources")
+    else:
+        # Organization user viewing their data
+        results = await db.query(
+            "SELECT * FROM resources WHERE org_id = ?",
+            context.org_id
+        )
+
+    return {"results": results}
+```
+
+### Check Function Key Auth
+
+```python
+@workflow(name="api_endpoint")
+async def api_endpoint(context: ExecutionContext):
+    if context.is_function_key:
+        # Called via API key - automated system
+        logger.info("API key authentication")
+    else:
+        # Called by user - interactive
+        logger.info(f"User authentication: {context.email}")
+```
+
+## Context in Data Providers
+
+Data providers receive the same context:
+
+```python
+from bifrost import data_provider, ExecutionContext
+
+@data_provider(name="get_org_users")
+async def get_org_users(context: ExecutionContext):
+    # Filter users by organization
+    users = await db.query(
+        "SELECT id, name FROM users WHERE org_id = ?",
+        context.org_id
+    )
+
+    return [
+        {"label": u["name"], "value": u["id"]}
+        for u in users
+    ]
+```
+
+## Backward Compatibility
+
+Legacy properties (deprecated but still available):
+
+| Old Property | New Property |
+|-------------|--------------|
+| `executed_by` | `user_id` |
+| `executed_by_email` | `email` |
+| `executed_by_name` | `name` |
+
+Use new properties in new code.
+
+## Type Definition
+
+```python
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class ExecutionContext:
+    user_id: str
+    email: str
+    name: str
+    scope: str
+    organization: Organization | None
+    is_platform_admin: bool
+    is_function_key: bool
+    execution_id: str
+
+    @property
+    def org_id(self) -> str | None:
+        return self.organization.id if self.organization else None
+
+    @property
+    def org_name(self) -> str | None:
+        return self.organization.name if self.organization else None
+
+    @property
+    def is_global_scope(self) -> bool:
+        return self.scope == "GLOBAL"
+```
+
+## Best Practices
+
+1. **Always Check org_id**: Verify org context before org-scoped operations
+2. **Log Context**: Include context in log messages for debugging
+3. **Type Hints**: Always use `ExecutionContext` type hint
+4. **Don't Mutate**: Context is read-only, don't try to modify it
+5. **Use Properties**: Use `context.org_id` not `context.organization.id`
+
+## Next Steps
+
+- [bifrost Module Reference](/reference/sdk/bifrost-module) - Full SDK reference
+- [Decorators Reference](/reference/sdk/decorators) - Decorator parameters
+- [Writing Workflows](/guides/workflows/writing-workflows) - Practical guide

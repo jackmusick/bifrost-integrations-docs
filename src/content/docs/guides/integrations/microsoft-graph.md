@@ -35,41 +35,44 @@ Quick version:
 Get all users in your organization:
 
 ```python
-from bifrost import workflow, context
+from bifrost import workflow, oauth
+import logging
+
+logger = logging.getLogger(__name__)
 
 @workflow(
     name="list_all_users",
     description="List all users in organization",
     category="user_management"
 )
-async def list_all_users(ctx: context.WorkflowContext):
+async def list_all_users(ctx):
     """Get all users using Microsoft Graph."""
-    
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
-    
+
+    oauth_conn = await oauth.get_connection("microsoft-graph")
+
     headers = {
-        "Authorization": f"Bearer {oauth['access_token']}",
+        "Authorization": f"Bearer {oauth_conn['access_token']}",
         "Content-Type": "application/json"
     }
-    
+
     # Paginate through all users
     all_users = []
     url = "https://graph.microsoft.com/v1.0/users"
-    
+
     while url:
         response = await ctx.http_get(url, headers=headers)
-        
+
         if response.status_code != 200:
-            ctx.log("error", f"Graph API error: {response.status_code}")
+            logger.error(f"Graph API error: {response.status_code}")
             raise Exception(f"Failed to list users: {response.status_code}")
-        
+
         data = response.json()
         all_users.extend(data.get("value", []))
-        
+
         # Check if more pages exist
         url = data.get("@odata.nextLink")
-    
-    ctx.log("info", f"Retrieved {len(all_users)} total users")
+
+    logger.info(f"Retrieved {len(all_users)} total users")
     return {"users": all_users, "count": len(all_users)}
 ```
 
@@ -79,21 +82,25 @@ Create a new user in Azure AD:
 
 ```python
 import json
+from bifrost import oauth, config
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def create_user(ctx, email: str, first_name: str, last_name: str):
     """Create new user in Azure AD."""
-    
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
-    
+
+    oauth_conn = await oauth.get_connection("microsoft-graph")
+
     headers = {
-        "Authorization": f"Bearer {oauth['access_token']}",
+        "Authorization": f"Bearer {oauth_conn['access_token']}",
         "Content-Type": "application/json"
     }
-    
+
     # Get tenant ID from config
-    tenant_id = ctx.get_config("microsoft_tenant_id")
+    tenant_id = config.get("microsoft_tenant_id")
     domain = tenant_id.split('.')[0] if '.' in tenant_id else "yourdomain"
-    
+
     body = {
         "accountEnabled": True,
         "displayName": f"{first_name} {last_name}",
@@ -106,20 +113,20 @@ async def create_user(ctx, email: str, first_name: str, last_name: str):
             "password": "Temp@Pass123!"  # User must change on first login
         }
     }
-    
+
     response = await ctx.http_post(
         "https://graph.microsoft.com/v1.0/users",
         headers=headers,
         body=json.dumps(body)
     )
-    
+
     if response.status_code == 201:
         user = response.json()
-        ctx.log("info", f"Created user: {email}", {"user_id": user["id"]})
+        logger.info(f"Created user: {email}", extra={"user_id": user["id"]})
         return {"status": "created", "user_id": user["id"], "email": email}
     else:
         error = response.json()
-        ctx.log("error", f"Failed to create user: {error}")
+        logger.error(f"Failed to create user: {error}")
         raise Exception(f"User creation failed: {error}")
 ```
 
@@ -128,33 +135,39 @@ async def create_user(ctx, email: str, first_name: str, last_name: str):
 Assign Microsoft 365 license to user:
 
 ```python
+import json
+from bifrost import oauth
+import logging
+
+logger = logging.getLogger(__name__)
+
 async def assign_license(ctx, user_id: str, sku_id: str):
     """Assign M365 license to user."""
-    
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
-    
+
+    oauth_conn = await oauth.get_connection("microsoft-graph")
+
     headers = {
-        "Authorization": f"Bearer {oauth['access_token']}",
+        "Authorization": f"Bearer {oauth_conn['access_token']}",
         "Content-Type": "application/json"
     }
-    
+
     # Get list of subscribed SKUs to find the ID
     response = await ctx.http_get(
         "https://graph.microsoft.com/v1.0/subscribedSkus",
         headers=headers
     )
-    
+
     skus = response.json()["value"]
     target_sku = None
-    
+
     for sku in skus:
         if sku["skuPartNumber"] == sku_id:  # e.g., "ENTERPRISEPACK"
             target_sku = sku["skuId"]
             break
-    
+
     if not target_sku:
         raise ValueError(f"SKU not found: {sku_id}")
-    
+
     body = {
         "addLicenses": [
             {
@@ -163,15 +176,15 @@ async def assign_license(ctx, user_id: str, sku_id: str):
         ],
         "removeLicenses": []
     }
-    
+
     response = await ctx.http_post(
         f"https://graph.microsoft.com/v1.0/users/{user_id}/assignLicense",
         headers=headers,
         body=json.dumps(body)
     )
-    
+
     if response.status_code == 200:
-        ctx.log("info", f"License assigned: {sku_id}", {"user_id": user_id})
+        logger.info(f"License assigned: {sku_id}", extra={"user_id": user_id})
         return {"status": "assigned", "sku": sku_id}
     else:
         error = response.json()
@@ -183,24 +196,26 @@ async def assign_license(ctx, user_id: str, sku_id: str):
 Retrieve specific user information:
 
 ```python
+from bifrost import oauth
+
 async def get_user(ctx, user_email: str):
     """Get user details by email."""
-    
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
-    
+
+    oauth_conn = await oauth.get_connection("microsoft-graph")
+
     headers = {
-        "Authorization": f"Bearer {oauth['access_token']}",
+        "Authorization": f"Bearer {oauth_conn['access_token']}",
         "Content-Type": "application/json"
     }
-    
+
     # URL encode the email
     user_id = user_email.replace("#", "%23")
-    
+
     response = await ctx.http_get(
         f"https://graph.microsoft.com/v1.0/users/{user_id}",
         headers=headers
     )
-    
+
     if response.status_code == 200:
         user = response.json()
         return {
@@ -222,16 +237,22 @@ async def get_user(ctx, user_email: str):
 Create a Microsoft 365 group:
 
 ```python
+import json
+from bifrost import oauth
+import logging
+
+logger = logging.getLogger(__name__)
+
 async def create_group(ctx, group_name: str, description: str = ""):
     """Create Microsoft 365 security group."""
-    
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
-    
+
+    oauth_conn = await oauth.get_connection("microsoft-graph")
+
     headers = {
-        "Authorization": f"Bearer {oauth['access_token']}",
+        "Authorization": f"Bearer {oauth_conn['access_token']}",
         "Content-Type": "application/json"
     }
-    
+
     body = {
         "displayName": group_name,
         "description": description,
@@ -240,16 +261,16 @@ async def create_group(ctx, group_name: str, description: str = ""):
         "securityEnabled": False,  # Or True for security group
         "mailNickname": group_name.replace(" ", "").lower()
     }
-    
+
     response = await ctx.http_post(
         "https://graph.microsoft.com/v1.0/groups",
         headers=headers,
         body=json.dumps(body)
     )
-    
+
     if response.status_code == 201:
         group = response.json()
-        ctx.log("info", f"Created group: {group_name}", {"group_id": group["id"]})
+        logger.info(f"Created group: {group_name}", extra={"group_id": group["id"]})
         return {"group_id": group["id"], "name": group_name}
     else:
         error = response.json()
@@ -261,28 +282,34 @@ async def create_group(ctx, group_name: str, description: str = ""):
 Add a user to a group:
 
 ```python
+import json
+from bifrost import oauth
+import logging
+
+logger = logging.getLogger(__name__)
+
 async def add_user_to_group(ctx, user_id: str, group_id: str):
     """Add user to group."""
-    
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
-    
+
+    oauth_conn = await oauth.get_connection("microsoft-graph")
+
     headers = {
-        "Authorization": f"Bearer {oauth['access_token']}",
+        "Authorization": f"Bearer {oauth_conn['access_token']}",
         "Content-Type": "application/json"
     }
-    
+
     body = {
         "@odata.id": f"https://graph.microsoft.com/v1.0/users/{user_id}"
     }
-    
+
     response = await ctx.http_post(
         f"https://graph.microsoft.com/v1.0/groups/{group_id}/members/$ref",
         headers=headers,
         body=json.dumps(body)
     )
-    
+
     if response.status_code == 204:
-        ctx.log("info", "User added to group", {
+        logger.info("User added to group", extra={
             "user_id": user_id,
             "group_id": group_id
         })
@@ -347,21 +374,23 @@ while url:
 Microsoft Graph returns specific error codes:
 
 ```python
+from bifrost import oauth
+
 async def make_graph_request(ctx, url: str, method: str = "GET", body: str = ""):
     """Make Graph request with error handling."""
-    
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
-    
+
+    oauth_conn = await oauth.get_connection("microsoft-graph")
+
     headers = {
-        "Authorization": f"Bearer {oauth['access_token']}",
+        "Authorization": f"Bearer {oauth_conn['access_token']}",
         "Content-Type": "application/json"
     }
-    
+
     if method == "GET":
         response = await ctx.http_get(url, headers=headers)
     elif method == "POST":
         response = await ctx.http_post(url, headers=headers, body=body)
-    
+
     # Handle specific error codes
     if response.status_code == 404:
         raise ValueError("Resource not found")
@@ -376,7 +405,7 @@ async def make_graph_request(ctx, url: str, method: str = "GET", body: str = "")
     elif response.status_code >= 400:
         error = response.json()
         raise ValueError(f"Client error: {error.get('error', {}).get('message')}")
-    
+
     return response
 ```
 

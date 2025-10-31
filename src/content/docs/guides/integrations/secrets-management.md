@@ -118,23 +118,23 @@ curl -X DELETE \
 Retrieve a secret in your workflow:
 
 ```python
-from bifrost import workflow, context
+from bifrost import workflow, secrets
 
 @workflow(
     name="fetch_data",
     description="Fetch data using API key"
 )
-async def fetch_data(ctx: context.WorkflowContext):
+async def fetch_data(ctx):
     # Get secret from Key Vault
-    api_key = await ctx.get_secret("api_key")
-    
+    api_key = await secrets.get("api_key")
+
     # Use in API call
     headers = {"Authorization": f"Bearer {api_key}"}
     response = await ctx.http_get(
         "https://api.example.com/data",
         headers=headers
     )
-    
+
     return response.json()
 ```
 
@@ -144,7 +144,9 @@ Store secret references in configuration:
 
 ```python
 # In organization config
-config = {
+from bifrost import config
+
+config_data = {
     "api_settings": {
         "api_key": {
             "secret_ref": "external_api_key"
@@ -156,8 +158,8 @@ config = {
 # In workflow: automatically resolved from Key Vault
 async def workflow(ctx):
     # Secret automatically fetched
-    api_key = ctx.get_config("api_settings.api_key")
-    api_url = ctx.get_config("api_settings.api_url")
+    api_key = config.get("api_settings.api_key")
+    api_url = config.get("api_settings.api_url")
 ```
 
 ### Caching and Performance
@@ -165,13 +167,15 @@ async def workflow(ctx):
 Bifrost caches secrets during workflow execution to avoid repeated Key Vault calls:
 
 ```python
+from bifrost import secrets
+
 async def process_batch(ctx):
     # First call: fetches from Key Vault (slow ~100ms)
-    api_key_1 = await ctx.get_secret("api_key")
-    
+    api_key_1 = await secrets.get("api_key")
+
     # Subsequent calls in same execution: cached (fast <1ms)
-    api_key_2 = await ctx.get_secret("api_key")
-    
+    api_key_2 = await secrets.get("api_key")
+
     # Same value, much faster
     assert api_key_1 == api_key_2
 ```
@@ -240,8 +244,11 @@ Secrets should be rotated regularly for security.
 Create a scheduled workflow for rotation:
 
 ```python
-from bifrost import workflow, context
+from bifrost import workflow, secrets
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 @workflow(
     name="rotate_secrets",
@@ -249,45 +256,45 @@ from datetime import datetime, timedelta
     execution_mode="scheduled",
     schedule="0 2 * * 0"  # Weekly on Sunday at 2 AM
 )
-async def rotate_secrets(ctx: context.WorkflowContext):
+async def rotate_secrets(ctx):
     """Automatically rotate old secrets."""
-    
+
     secrets_to_rotate = [
         "api_key",
         "database_password",
         "service_account_key"
     ]
-    
+
     rotated = []
     for secret_name in secrets_to_rotate:
         try:
             # Generate new secret (implementation depends on source)
             new_value = await generate_new_secret(secret_name)
-            
+
             # Store with rotation timestamp
             backup_name = f"{secret_name}_backup_{datetime.now().strftime('%Y%m%d')}"
-            old_value = await ctx.get_secret(secret_name)
-            await ctx.set_secret(backup_name, old_value)
-            
+            old_value = await secrets.get(secret_name)
+            await secrets.set(backup_name, old_value)
+
             # Update with new value
-            await ctx.set_secret(secret_name, new_value)
-            
+            await secrets.set(secret_name, new_value)
+
             rotated.append({
                 "secret": secret_name,
                 "status": "rotated",
                 "backup": backup_name
             })
-            
-            ctx.log("info", f"Rotated secret: {secret_name}")
-            
+
+            logger.info(f"Rotated secret: {secret_name}")
+
         except Exception as e:
-            ctx.log("error", f"Failed to rotate {secret_name}: {str(e)}")
+            logger.error(f"Failed to rotate {secret_name}: {str(e)}")
             rotated.append({
                 "secret": secret_name,
                 "status": "failed",
                 "error": str(e)
             })
-    
+
     return {
         "rotated_count": len([r for r in rotated if r["status"] == "rotated"]),
         "failed_count": len([r for r in rotated if r["status"] == "failed"]),
@@ -348,11 +355,15 @@ workflow_config = {
 Always audit logs to ensure secrets aren't exposed:
 
 ```python
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Bad: Logging secret value
-ctx.log("info", f"API Key: {api_key}")
+logger.info(f"API Key: {api_key}")
 
 # Good: Log only that operation succeeded
-ctx.log("info", "API call successful", {
+logger.info("API call successful", extra={
     "endpoint": "/api/users",
     "status_code": 200
 })

@@ -234,7 +234,7 @@ The error message tells you what went wrong:
    Fix: Form didn't pass email parameter
 
 ❌ "ImportError: cannot import name 'msgraph'"
-   Fix: Integration not found, must use context.get_integration()
+   Fix: Use oauth module: from bifrost import oauth
 
 ❌ "asyncio.TimeoutError"
    Fix: Workflow took longer than timeout (increase timeout_seconds)
@@ -277,11 +277,11 @@ async def my_workflow(context):
     try:
         result = await some_api_call()
         if result is None:
-            context.log("error", "API returned None")
+            logger.error( "API returned None")
             return {"error": "API failed"}
         return result.data
     except Exception as e:
-        context.log("error", f"API call failed: {str(e)}")
+        logger.error( f"API call failed: {str(e)}")
         return {"error": str(e)}
 ```
 
@@ -442,7 +442,7 @@ async def my_workflow(context: ExecutionContext):
 # ❌ Wrong: Trying to access context that's None
 async def my_workflow(context):
     if context is None:  # This shouldn't happen
-        context.log("error", "Context is None")
+        logger.error( "Context is None")
 ```
 
 ### Check 2: Organization Scope
@@ -456,7 +456,7 @@ Some operations require organization context:
     requires_org=True  # Must have organization context
 )
 async def create_user(context: ExecutionContext):
-    await context.get_config("api_key")  # Uses org context
+    await config.get("api_key")  # Uses org context
 
 # ⚠️ Risky: Global workflow
 @workflow(
@@ -472,17 +472,17 @@ async def system_health(context):
 
 ```python
 # ✅ Correct: With default value
-value = context.get_config("api_key", default="https://api.example.com")
+value = config.get("api_key", default="https://api.example.com")
 
 # ✅ Correct: With error handling
 try:
-    api_key = context.get_config("api_key")
+    api_key = config.get("api_key")
 except KeyError:
-    context.log("error", "api_key not configured")
+    logger.error( "api_key not configured")
     return {"error": "Configuration missing"}
 
 # ❌ Wrong: No fallback
-api_key = context.get_config("api_key")  # Raises if not found
+api_key = config.get("api_key")  # Raises if not found
 ```
 
 ## Performance Issues
@@ -497,10 +497,10 @@ api_key = context.get_config("api_key")  # Raises if not found
 @workflow(name="test")
 async def test(context):
     # Add timing logs
-    context.log("info", "Starting step 1")
+    logger.info( "Starting step 1")
     result1 = await step1()
 
-    context.log("info", "Starting step 2")
+    logger.info( "Starting step 2")
     result2 = await step2()
 
     # Look in execution log to see timing:
@@ -674,7 +674,7 @@ Workspace (/workspace): Limited by Azure Files quota (depends on config)
 # Careful with large files
 file_size_mb = 100  # 100 MB
 if file_size_mb > 500:
-    context.log("error", "File too large for temp storage")
+    logger.error( "File too large for temp storage")
     return {"error": "File too large"}
 ```
 
@@ -695,7 +695,7 @@ if file_size_mb > 500:
 
 - **Execution Logs**: Workflows page → Execution History → [Click execution]
 - **Discovery Logs**: Azure Portal → Function App → Log Stream
-- **Debugging**: Add `context.log()` statements throughout workflow
+- **Debugging**: Add logging statements throughout workflow using Python's logging module
 - **Check Status**: `curl http://your-bifrost.com/api/health`
 
 ## Related Topics

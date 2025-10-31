@@ -16,3 +16,32 @@
 .sidebar a:hover {
     color: hsl(0, 0%, 90%) !important;
 }
+
+/* Indent links under sub-headers */
+.container-group-link .container-group-link > a.entry-link {
+    padding-left: 1rem !important;
+}
+
+/* Make nested group headers (Workflows, Forms, etc.) small but bold */
+.container-group-link .container-sidebar-entry > h4.entry-title {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: hsl(0, 0%, 90%) !important;
+}
+
+/* Make primary sidebar group headers BIGGEST */
+/* Target top-level h4 headers that are NOT inside a container-group-link */
+.container-sidebar-entry > h4.entry-title:first-child {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: hsl(0, 0%, 95%) !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Override for nested ones - make sure they stay small but bold */
+.container-group-link .container-sidebar-entry > h4.entry-title:first-child {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: hsl(0, 0%, 90%) !important;
+    margin-bottom: 0 !important;
+}

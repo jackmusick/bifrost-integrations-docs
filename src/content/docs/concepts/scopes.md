@@ -106,25 +106,25 @@ Example: `acme-corp--api_key`, `techcorp--api_key`
 ### Accessing Global vs Organization Data
 
 ```python
-from bifrost import workflow, context
+from bifrost import workflow, config, oauth, secrets
 
 @workflow(name="scope_example")
-async def scope_example(ctx: context.WorkflowContext):
+async def scope_example(ctx):
     """Show how scope resolution works."""
 
     # Get config with fallback: org → global
     # First tries ACME's config
     # If not found, tries GLOBAL config
-    smtp = ctx.get_config("smtp_server")
+    smtp = config.get("smtp_server")
 
     # Get OAuth connection with fallback: org → global
     # First tries ACME's "microsoft-graph"
     # If not found, tries GLOBAL "microsoft-graph"
-    oauth = await ctx.get_oauth_connection("microsoft-graph")
+    oauth_conn = await oauth.get_connection("microsoft-graph")
 
     # Get secret with org scope only
     # Only ACME's secrets, not global
-    api_key = await ctx.get_secret("api_key")
+    api_key = await secrets.get("api_key")
 ```
 
 ### Scope Resolution Order
@@ -146,7 +146,7 @@ Example for OAuth connection:
 
 ```python
 # Looking for "microsoft-graph"
-oauth = await ctx.get_oauth_connection("microsoft-graph")
+oauth_conn = await oauth.get_connection("microsoft-graph")
 
 # Bifrost checks:
 # 1. "microsoft-graph" in ACME Corp org? YES → use it
@@ -239,16 +239,17 @@ Workflow execution:
 
 ```python
 # Same workflow runs for both organizations
+from bifrost import workflow, config, secrets
 
 @workflow(name="sync_crm_data")
 async def sync_crm_data(ctx):
     # For ACME Corp execution:
-    crm_key = await ctx.get_secret("acme_api_key")
-    timezone = ctx.get_config("acme_timezone")
+    crm_key = await secrets.get("acme_api_key")
+    timezone = config.get("acme_timezone")
 
     # For TechCorp execution:
-    crm_key = await ctx.get_secret("techcorp_api_key")
-    timezone = ctx.get_config("techcorp_timezone")
+    crm_key = await secrets.get("techcorp_api_key")
+    timezone = config.get("techcorp_timezone")
 
     # Each organization uses its own secrets/config!
 ```
@@ -272,15 +273,17 @@ Organization OAuth: "microsoft-graph"
 Forms can use scoped data:
 
 ```python
+from bifrost import workflow, data_provider, param, config
+
 @data_provider(name="get_departments")
-async def get_departments(ctx: context.WorkflowContext):
+async def get_departments(ctx):
     """Get departments for this organization."""
 
     # Automatically uses org context
     org_id = ctx.org_id
 
     # Gets org-specific departments
-    departments = await ctx.get_config("org.departments")
+    departments = config.get("org.departments")
 
     return [
         {"label": dept, "value": dept}
@@ -307,12 +310,13 @@ Organization scope provides security isolation:
 # This is secure:
 # Even if the code is the same,
 # each org only accesses its own data
+from bifrost import secrets
 
 # Org A workflow:
-secret = await ctx.get_secret("api_key")  # Gets Org A's key
+secret = await secrets.get("api_key")  # Gets Org A's key
 
 # Org B workflow:
-secret = await ctx.get_secret("api_key")  # Gets Org B's key
+secret = await secrets.get("api_key")  # Gets Org B's key
 
 # Never can leak between organizations
 ```
@@ -325,9 +329,10 @@ Organization scope prevents accidental data leaks:
 # Even if developer tries to access other org:
 # ctx.org_id is ACME
 # Can only access ACME's secrets and config
+from bifrost import secrets
 
 # Cannot do this:
-secret = await ctx.get_secret("api_key", org_id="other-org")
+secret = await secrets.get("api_key", org_id="other-org")
 # Returns: error - cannot access other organization
 ```
 
@@ -352,10 +357,10 @@ All access is tracked with organization context:
 
 ```python
 # Good: org-specific secrets
-org_secret = await ctx.get_secret("api_key")
+org_secret = await secrets.get("api_key")
 
 # Only use global if explicitly needed
-global_secret = await ctx.get_global_secret("platform_key")
+global_secret = await secrets.get("platform_key")
 ```
 
 ### 2. Clear Naming
@@ -371,6 +376,8 @@ ORG_CONFIG: "office_location"  # specific to this org
 ### 3. Document Scope Decisions
 
 ```python
+from bifrost import workflow, config, oauth
+
 @workflow(name="sync_data")
 async def sync_data(ctx):
     """
@@ -380,8 +387,8 @@ async def sync_data(ctx):
     - Organization OAuth "crm_oauth" (org-specific)
     - Global config "crm_base_url" (shared platform config)
     """
-    oauth = await ctx.get_oauth_connection("crm_oauth")
-    url = ctx.get_config("crm_base_url")
+    oauth_conn = await oauth.get_connection("crm_oauth")
+    url = config.get("crm_base_url")
 ```
 
 ### 4. Test with Multiple Organizations

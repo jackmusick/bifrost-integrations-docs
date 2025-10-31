@@ -48,7 +48,7 @@ async def my_workflow(context: ExecutionContext, email: str, name: str):
     """
     Docstring is optional but recommended.
     """
-    context.log("info", "Starting workflow", {"email": email})
+    logger.info( "Starting workflow", {"email": email})
     return {"success": True}
 ```
 
@@ -189,11 +189,11 @@ context.organization: Organization | None
 
 ```python
 # Get configuration (with secret resolution)
-value = context.get_config("api_url", default="https://example.com")
+value = config.get("api_url", default="https://example.com")
 
 # Check if config exists
 if context.has_config("slack_webhook"):
-    webhook = context.get_config("slack_webhook")
+    webhook = config.get("slack_webhook")
 ```
 
 **Important**: Configuration values can be secrets (type="secret_ref"). The context automatically resolves these from Azure Key Vault.
@@ -202,10 +202,10 @@ if context.has_config("slack_webhook"):
 
 ```python
 # Get a secret from Key Vault (org-scoped)
-api_key = await context.get_secret("api_key")
+api_key = await secrets.get("api_key")
 
 # Get OAuth credentials
-creds = await context.get_oauth_connection("microsoft_graph")
+creds = await oauth.get_oauth_connection("microsoft_graph")
 auth_header = creds.get_auth_header()  # "Bearer {token}"
 
 # Use in API calls
@@ -216,14 +216,17 @@ response = await client.get("https://graph.microsoft.com/v1.0/me", headers=heade
 ### State Tracking
 
 ```python
-# Save checkpoints during execution (for debugging)
-context.save_checkpoint("validation_complete", {
+# Log progress during execution (for debugging)
+import logging
+logger = logging.getLogger(__name__)
+
+logger.info("Validation complete", extra={
     "email": email,
     "is_valid": True
 })
 
 # Log information (automatically sanitizes sensitive data)
-context.log("info", "User created", {
+logger.info( "User created", {
     "user_id": user["id"],
     "email": email  # Non-sensitive data
 })
@@ -424,7 +427,7 @@ async def process_ticket(context, ticket_id: str, priority: str, assign_to: str)
     # Save changes
     await update_ticket(ticket)
 
-    context.log("info", "Ticket processed", {"ticket_id": ticket_id})
+    logger.info( "Ticket processed", {"ticket_id": ticket_id})
 
     # Can return HTML for display
     return {
@@ -477,7 +480,7 @@ import aiohttp
 @param("repo", "string", required=True)
 async def sync_github(context: ExecutionContext, repo: str):
     # Get OAuth credentials
-    creds = await context.get_oauth_connection("github")
+    creds = await oauth.get_oauth_connection("github")
 
     # Use in API call
     headers = {
@@ -492,11 +495,11 @@ async def sync_github(context: ExecutionContext, repo: str):
         ) as response:
             if response.status == 200:
                 data = await response.json()
-                context.log("info", "GitHub repo fetched", {"repo": repo})
+                logger.info( "GitHub repo fetched", {"repo": repo})
                 return {"success": True, "data": data}
             else:
                 error = await response.text()
-                context.log("error", "GitHub API error", {"status": response.status})
+                logger.error( "GitHub API error", {"status": response.status})
                 raise Exception(f"GitHub API error: {response.status}")
 ```
 
@@ -511,11 +514,11 @@ from bifrost import workflow, ExecutionContext
 @param("body", "string", required=True)
 async def send_email(context: ExecutionContext, to: str, subject: str, body: str):
     # Configuration can be references to Key Vault
-    smtp_host = context.get_config("SMTP_HOST")
-    smtp_port = context.get_config("SMTP_PORT", default=587)
+    smtp_host = config.get("SMTP_HOST")
+    smtp_port = config.get("SMTP_PORT", default=587)
 
     # Get secret from Key Vault
-    smtp_password = await context.get_secret("smtp_password")
+    smtp_password = await secrets.get("smtp_password")
 
     # Use in email sending
     import smtplib
@@ -525,7 +528,7 @@ async def send_email(context: ExecutionContext, to: str, subject: str, body: str
     server.send_message(email_message)
     server.quit()
 
-    context.log("info", "Email sent", {"to": to})
+    logger.info( "Email sent", {"to": to})
     return {"success": True}
 ```
 
@@ -542,25 +545,25 @@ from bifrost import workflow, ExecutionContext
 async def multi_step(context: ExecutionContext):
     try:
         # Step 1
-        context.save_checkpoint("step1_start", {})
+        # Checkpoint feature removed
         result1 = await step1()
-        context.save_checkpoint("step1_complete", {"result": result1})
+        # Checkpoint feature removed
 
         # Step 2
-        context.save_checkpoint("step2_start", {})
+        # Checkpoint feature removed
         result2 = await step2(result1)
-        context.save_checkpoint("step2_complete", {"result": result2})
+        # Checkpoint feature removed
 
         # Step 3
-        context.save_checkpoint("step3_start", {})
+        # Checkpoint feature removed
         result3 = await step3(result2)
-        context.save_checkpoint("step3_complete", {"result": result3})
+        # Checkpoint feature removed
 
-        context.log("info", "Process completed successfully")
+        logger.info( "Process completed successfully")
         return {"success": True, "result": result3}
 
     except Exception as e:
-        context.log("error", "Process failed", {
+        logger.error( "Process failed", {
             "error": str(e),
             "error_type": type(e).__name__
         })
@@ -609,7 +612,7 @@ async def process_batch(context: ExecutionContext, dataset_id: str):
     batch_size = 50
     processed = 0
 
-    context.log("info", "Starting batch processing", {"dataset_id": dataset_id})
+    logger.info( "Starting batch processing", {"dataset_id": dataset_id})
 
     while True:
         # Fetch batch
@@ -626,10 +629,10 @@ async def process_batch(context: ExecutionContext, dataset_id: str):
         await save_results(results)
 
         processed += len(batch)
-        context.save_checkpoint("batch_processed", {"count": processed})
-        context.log("info", "Batch processed", {"count": processed})
+        # Checkpoint feature removed
+        logger.info( "Batch processed", {"count": processed})
 
-    context.log("info", "All batches processed", {"total": processed})
+    logger.info( "All batches processed", {"total": processed})
     return {"success": True, "total_processed": processed}
 ```
 
@@ -676,7 +679,7 @@ async def process_batch(context: ExecutionContext, dataset_id: str):
 try:
     result = await api_call()
 except ValueError as e:
-    context.log("error", "Validation failed", {"error": str(e)})
+    logger.error( "Validation failed", {"error": str(e)})
     raise  # Re-raise for caller to handle
 ```
 
@@ -692,7 +695,7 @@ except Exception:
 
 **Good:**
 ```python
-context.log("info", "User created", {
+logger.info( "User created", {
     "user_id": user["id"],
     "email_domain": email.split("@")[1]  # Only domain, not full email
 })
@@ -700,7 +703,7 @@ context.log("info", "User created", {
 
 **Bad:**
 ```python
-context.log("info", "User created", {
+logger.info( "User created", {
     "email": email,        # PII!
     "password": password,  # Secret!
     "api_key": api_key     # Credential!
@@ -729,8 +732,8 @@ groups = await fetch_groups()
 
 **Good:**
 ```python
-context.save_checkpoint("validation_complete", {"email": email})
-context.save_checkpoint("api_call_complete", {"status_code": 201})
+# Checkpoint feature removed
+# Checkpoint feature removed
 ```
 
 **Bad:**
@@ -806,22 +809,23 @@ async def test_my_workflow():
     context = MagicMock()
     context.user_id = "test_user"
     context.org_id = "test_org"
-    context.get_config = MagicMock(return_value="config_value")
-    context.log = MagicMock()
-    context.save_checkpoint = MagicMock()
+    # Mock SDK modules instead of context methods
+    # from bifrost import config, secrets
+    # with patch('bifrost.config.get', return_value="config_value"):
+    #     ...
 
     # Execute workflow
     result = await my_workflow(context, "test_param")
 
     # Assertions
     assert result["success"] is True
-    context.log.assert_called()
+    # Check logging calls
 ```
 
 ## Security Considerations
 
 - Never hardcode secrets or API keys
-- Use `context.get_secret()` for sensitive data
+- Use `secrets.get()` for sensitive data
 - Never log passwords, tokens, or PII
 - Check `context.is_platform_admin` for sensitive operations
 - Validate all user inputs
@@ -830,8 +834,8 @@ async def test_my_workflow():
 
 ## Debugging
 
-1. **Check logs**: `context.log()` calls appear in execution logs
-2. **Use checkpoints**: `context.save_checkpoint()` marks progress
+1. **Check logs**: Use Python's logging module for logs
+2. **Use checkpoints**: `# Checkpoint feature removed` marks progress
 3. **Handle errors**: Always catch and log exceptions
 4. **Test locally**: Run tests before deployment
 5. **Check configuration**: Ensure all required config exists
