@@ -1,0 +1,311 @@
+---
+title: API Quick Start
+description: Get started with the Bifrost API - installation, testing, and basic usage.
+---
+
+import { Card, CardGrid, Aside, Steps } from '@astrojs/starlight/components';
+
+The Bifrost API is the Azure Functions-based backend that powers the platform. This guide will help you get it running locally for development.
+
+<Aside type="note">
+This repository contains only the backend API. For the complete platform with frontend UI, see [bifrost-client](https://github.com/jackmusick/bifrost-client).
+</Aside>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Python 3.11+**
+- **Azure Functions Core Tools v4**
+- **Docker** (for dev container) or **Azurite** (for manual setup)
+
+## Quick Start with Dev Container (Recommended)
+
+The fastest way to get started is using the VS Code dev container. It includes all dependencies pre-configured.
+
+<Steps>
+
+1. **Open in VS Code**
+
+   Open the `bifrost-api` repository in VS Code
+
+2. **Reopen in Container**
+
+   Click "Reopen in Container" when prompted (or use Command Palette → "Dev Containers: Reopen in Container")
+
+3. **Wait for Build**
+
+   The container will build automatically (~2 minutes first time)
+
+4. **Start the Functions Runtime**
+
+   ```bash
+   func start
+   ```
+
+5. **Access the API**
+
+   - API: http://localhost:7071
+   - OpenAPI Spec: http://localhost:7071/api/openapi.json
+   - Health Check: http://localhost:7071/api/health
+
+</Steps>
+
+The dev container includes:
+- Python 3.11
+- Azure Functions Core Tools
+- Azure CLI
+- Azurite (Azure Storage Emulator)
+- All Python dependencies
+
+<Aside type="tip">
+The dev container is the recommended approach because it ensures a consistent development environment across all contributors.
+</Aside>
+
+## Manual Setup
+
+If you prefer not to use dev containers, you can set up manually:
+
+<Steps>
+
+1. **Install Dependencies**
+
+   ```bash
+   pip install -r requirements.txt
+   npm install -g azure-functions-core-tools@4 --unsafe-perm true
+   ```
+
+2. **Start Azurite**
+
+   Azurite is the Azure Storage Emulator. Run it in a separate terminal:
+
+   ```bash
+   azurite --silent &
+   ```
+
+3. **Configure Local Settings**
+
+   ```bash
+   cp local.settings.example.json local.settings.json
+   ```
+
+   Edit `local.settings.json` if you need to customize connection strings or other settings.
+
+4. **Start the Functions Runtime**
+
+   ```bash
+   func start
+   ```
+
+</Steps>
+
+## Testing the API
+
+Once the Functions runtime is running, test it with a simple workflow execution:
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-functions-key: test" \
+  -H "X-Organization-Id: test-org-active" \
+  -d '{"name": "Alice", "language": "spanish"}' \
+  http://localhost:7071/api/workflows/hello_world
+```
+
+**Expected Response:**
+
+```json
+{
+  "greeting": "¡Hola, Alice!",
+  "execution_id": "...",
+  "status": "completed"
+}
+```
+
+## Running Tests
+
+<Aside type="caution" title="Always Use test.sh">
+Always use `./test.sh` to run tests, NOT `pytest` directly. The test script starts all required dependencies (Azurite, Functions runtime).
+</Aside>
+
+```bash
+# Run all tests
+./test.sh
+
+# Run specific test file
+./test.sh tests/integration/platform/test_sdk_from_workflow.py
+
+# Run specific test
+./test.sh tests/integration/platform/test_sdk_from_workflow.py::TestSDKFileOperations::test_file_path_sandboxing -v
+
+# Run with coverage
+./test.sh --coverage
+```
+
+### Why test.sh?
+
+Running `pytest` directly will FAIL for integration tests that need Azure Functions context. The `test.sh` script:
+
+1. Starts Azurite (Azure Storage Emulator)
+2. Starts the Functions runtime in the background
+3. Waits for services to be ready
+4. Runs pytest with proper environment variables
+5. Cleans up services after tests complete
+
+## API Endpoints
+
+Once running, you can explore the available endpoints:
+
+<CardGrid>
+  <Card title="OpenAPI Specification" icon="document">
+    View the auto-generated API documentation
+
+    http://localhost:7071/api/openapi.json
+  </Card>
+
+  <Card title="Health Check" icon="approve-check">
+    Verify the API is running
+
+    http://localhost:7071/api/health
+  </Card>
+
+  <Card title="Discovery" icon="magnifier">
+    List all available workflows
+
+    http://localhost:7071/api/discovery
+  </Card>
+
+  <Card title="Execute Workflow" icon="rocket">
+    Run a workflow by name
+
+    POST http://localhost:7071/api/workflows/{workflow_name}
+  </Card>
+</CardGrid>
+
+## Project Structure
+
+Understanding the codebase structure:
+
+```
+bifrost-api/
+├── functions/              # Azure Functions (HTTP/Timer/Queue)
+│   ├── http/              # HTTP endpoints
+│   ├── timer/             # Scheduled functions
+│   └── queue/             # Queue processors
+├── shared/                # Business logic (NOT in functions/)
+│   ├── models.py          # Pydantic models
+│   ├── handlers/          # Business logic
+│   ├── repositories/      # Data access
+│   └── services/          # External services
+├── sdk/                   # Bifrost SDK (for workflows)
+├── workspace/             # User workflows
+├── tests/                 # Test suite
+└── test.sh                # Test runner script
+```
+
+<Aside type="tip" title="Code Organization Rule">
+**Business logic MUST live in `shared/`, NOT in `functions/`**
+
+Functions should be thin HTTP/timer/queue handlers. All complex logic, algorithms, and business rules go in `shared/handlers/`.
+</Aside>
+
+## Development Workflow
+
+Typical development cycle:
+
+<Steps>
+
+1. **Make Code Changes**
+
+   Edit files in `shared/`, `functions/`, or `sdk/`
+
+2. **Run Linting**
+
+   ```bash
+   ruff check .
+   ```
+
+3. **Run Type Checking**
+
+   ```bash
+   npx pyright
+   ```
+
+4. **Run Tests**
+
+   ```bash
+   ./test.sh
+   ```
+
+5. **Test Manually**
+
+   ```bash
+   func start
+   # Test with curl or Postman
+   ```
+
+</Steps>
+
+<Aside>
+The Functions runtime supports hot reload, so most code changes will be reflected without restarting.
+</Aside>
+
+## Next Steps
+
+<CardGrid>
+  <Card title="Local Development Guide" icon="laptop">
+    Deep dive into dev containers, manual setup, and troubleshooting
+
+    [Read the guide →](/sdk-reference/api/local-development)
+  </Card>
+
+  <Card title="Testing Guide" icon="approve-check">
+    Learn about unit tests, integration tests, and test patterns
+
+    [Read the guide →](/sdk-reference/api/testing)
+  </Card>
+
+  <Card title="Architecture Overview" icon="star">
+    Understand the system design and component interactions
+
+    [Read the overview →](/sdk-reference/architecture/overview)
+  </Card>
+</CardGrid>
+
+## Common Issues
+
+### Port 7071 Already in Use
+
+If you see "Failed to bind to address", another process is using port 7071:
+
+```bash
+# Find the process
+lsof -ti:7071
+
+# Kill it
+kill -9 $(lsof -ti:7071)
+```
+
+### Azurite Connection Errors
+
+If you see connection errors to Azure Storage:
+
+1. Verify Azurite is running: `ps aux | grep azurite`
+2. Check `local.settings.json` has correct connection string
+3. Restart Azurite: `pkill azurite && azurite --silent &`
+
+### Python Version Mismatch
+
+Bifrost requires Python 3.11+. Check your version:
+
+```bash
+python --version
+```
+
+If you need to install Python 3.11, use [pyenv](https://github.com/pyenv/pyenv) or download from [python.org](https://www.python.org/downloads/).
+
+## Getting Help
+
+- **GitHub Issues**: [Report bugs or request features](https://github.com/jackmusick/bifrost-api/issues)
+- **Discussions**: [Ask questions](https://github.com/jackmusick/bifrost-api/discussions)
+- **Frontend Repository**: [bifrost-client](https://github.com/jackmusick/bifrost-client)

@@ -1,0 +1,287 @@
+---
+title: Error Handling
+description: Graceful error handling patterns for Bifrost workflows
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+## Philosophy
+
+**Workflows should rarely raise exceptions**. Instead, return error states that allow the platform to:
+- Log execution results
+- Show meaningful errors to users
+- Track partial success
+- Enable retry logic
+
+## Basic Pattern
+
+```python
+from bifrost import workflow, ExecutionContext
+import logging
+
+logger = logging.getLogger(__name__)
+
+@workflow(name="create_user", description="Create user")
+async def create_user(context: ExecutionContext, email: str):
+    try:
+        user = await api.create_user(email)
+        logger.info(f"Created user: {user.id}")
+        return {"success": True, "user_id": user.id}
+
+    except Exception as e:
+        logger.error(f"Failed: {str(e)}", extra={"email": email})
+        return {"success": False, "error": str(e)}
+```
+
+## Validate Early
+
+Fail fast with input validation:
+
+```python
+@workflow(name="send_email")
+async def send_email(context, email: str, subject: str):
+    # Validate inputs before processing
+    if not email or "@" not in email:
+        return {"success": False, "error": "Invalid email"}
+
+    if not subject:
+        return {"success": False, "error": "Subject required"}
+
+    # Proceed with valid inputs
+    try:
+        await send(email, subject)
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+```
+
+## Handle Specific Exceptions
+
+Provide context-specific errors:
+
+```python
+import aiohttp
+
+@workflow(name="fetch_data")
+async def fetch_data(context, url: str):
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status == 404:
+                    return {"success": False, "error": "Not found"}
+                if resp.status >= 500:
+                    return {"success": False, "error": "Server error"}
+
+                return {"success": True, "data": await resp.json()}
+
+    except aiohttp.ClientError as e:
+        return {"success": False, "error": "Network error"}
+```
+
+## Partial Success
+
+Track progress in bulk operations:
+
+```python
+@workflow(name="bulk_create")
+async def bulk_create(context, items: list):
+    results = {"created": [], "failed": []}
+
+    for item in items:
+        try:
+            new_item = await api.create(item)
+            results["created"].append(new_item)
+        except Exception as e:
+            results["failed"].append({"item": item, "error": str(e)})
+
+    return {
+        "success": len(results["failed"]) == 0,
+        "total": len(items),
+        "created": len(results["created"]),
+        "failed": len(results["failed"]),
+        "details": results
+    }
+```
+
+## Retry with Backoff
+
+Implement exponential backoff for transient errors:
+
+```python
+import asyncio
+
+@workflow(name="api_with_retry")
+async def api_with_retry(context, endpoint: str):
+    max_retries = 3
+    backoff = 1
+
+    for attempt in range(max_retries):
+        try:
+            return {"success": True, "data": await api.call(endpoint)}
+
+        except TransientError:
+            if attempt < max_retries - 1:
+                await asyncio.sleep(backoff)
+                backoff *= 2
+            else:
+                return {"success": False, "error": "Max retries exceeded"}
+
+        except PermanentError as e:
+            return {"success": False, "error": str(e)}
+```
+
+## Resource Cleanup
+
+Always clean up with try/finally:
+
+```python
+@workflow(name="process_with_lock")
+async def process_with_lock(context, resource_id: str):
+    lock = None
+    try:
+        lock = await acquire_lock(resource_id)
+        result = await process(resource_id)
+        return {"success": True, "result": result}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+    finally:
+        if lock:
+            await release_lock(lock)
+```
+
+## OAuth Token Handling
+
+Bifrost auto-refreshes OAuth tokens:
+
+```python
+from bifrost import oauth
+
+@workflow(name="graph_call")
+async def graph_call(context, user_id: str):
+    try:
+        # Automatically refreshes expired tokens
+        creds = oauth.get_oauth_connection("microsoft_graph")
+        headers = {"Authorization": creds.get_auth_header()}
+
+        user = await graph.get_user(user_id, headers=headers)
+        return {"success": True, "user": user}
+
+    except oauth.OAuthConnectionNotFound:
+        return {
+            "success": False,
+            "error": "OAuth not configured",
+            "action": "Set up Microsoft Graph connection"
+        }
+```
+
+## Logging Best Practices
+
+```python
+logger = logging.getLogger(__name__)
+
+@workflow(name="example")
+async def example(context, param: str):
+    # Log start with context
+    logger.info("Started", extra={
+        "org_id": context.org_id,
+        "user_id": context.user_id,
+        "param": param
+    })
+
+    try:
+        result = await do_work(param)
+        logger.info("Completed", extra={"result_size": len(result)})
+        return {"success": True, "result": result}
+
+    except Exception as e:
+        # Log with full context
+        logger.error("Failed", extra={
+            "error": str(e),
+            "param": param
+        }, exc_info=True)
+        return {"success": False, "error": str(e)}
+```
+
+## Error Response Format
+
+Use consistent structure:
+
+```python
+# Success
+{
+    "success": True,
+    "data": {...}
+}
+
+# Error
+{
+    "success": False,
+    "error": "User-friendly message",
+    "error_code": "USER_NOT_FOUND",
+    "action": "Verify and retry"
+}
+
+# Partial Success
+{
+    "success": False,
+    "message": "8/10 completed",
+    "completed": [...],
+    "failed": [...]
+}
+```
+
+<Aside type="caution">
+**When to Raise**: Only raise exceptions for unrecoverable platform bugs, not business logic errors.
+</Aside>
+
+## Common Patterns
+
+### ✅ Return Error State
+```python
+if not user_exists:
+    return {"success": False, "error": "User not found"}
+```
+
+### ❌ Don't Raise for Business Logic
+```python
+# Don't do this
+if not user_exists:
+    raise Exception("User not found")
+```
+
+### ✅ Try/Except External Calls
+```python
+try:
+    await external_api.call()
+except ApiError as e:
+    return {"success": False, "error": str(e)}
+```
+
+### ✅ Raise for Platform Bugs
+```python
+if context is None:
+    raise RuntimeError("Context is None - platform bug!")
+```
+
+## Testing Error Paths
+
+Test both success and failures:
+
+```python
+async def test_create_user_success():
+    result = await create_user(context, "test@example.com")
+    assert result["success"] is True
+
+async def test_create_user_invalid_email():
+    result = await create_user(context, "invalid")
+    assert result["success"] is False
+    assert "email" in result["error"].lower()
+```
+
+## Next Steps
+
+- [Writing Workflows](/how-to-guides/workflows/writing-workflows) - Complete workflow guide
+- [Using Decorators](/how-to-guides/workflows/using-decorators) - Advanced patterns
+- [Testing Guide](/how-to-guides/local-dev/testing) - Test workflows

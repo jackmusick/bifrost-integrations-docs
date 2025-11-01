@@ -594,6 +594,6 @@ curl -X POST http://localhost:7071/api/workflows/my_workflow \
 
 ## Related Topics
 
-- **[Forms Concept](/docs/concepts/forms)** - How forms work
+- **[Forms Concept](/docs/core-concepts/forms)** - How forms work
 - **[Workflow Engine Troubleshooting](/docs/troubleshooting/workflow-engine)** - Workflow execution issues
 - **[Data Provider Issues](/docs/troubleshooting/workflow-engine#data-provider-issues)** - Provider-specific issues

@@ -77,7 +77,7 @@ az functionapp log tail --resource-group <rg> --name <name>
 **If import fails:**
 1. Check Python syntax errors
 2. Look at full error message for import issues
-3. Verify imports are allowed by the [import restrictions](/docs/concepts/discovery-system#import-restrictions)
+3. Verify imports are allowed by the [import restrictions](/docs/core-concepts/discovery-system#import-restrictions)
 
 ### Check 5: Verify Decorator Syntax
 
@@ -700,7 +700,7 @@ if file_size_mb > 500:
 
 ## Related Topics
 
-- **[Discovery System](/docs/concepts/discovery-system)** - How discovery works
-- **[Workflow Development](/docs/guides/creating-workflows)** - How to create workflows
-- **[Local Development](/docs/guides/local-development)** - Debug locally
+- **[Discovery System](/docs/core-concepts/discovery-system)** - How discovery works
+- **[Workflow Development](/docs/how-to-guides/creating-workflows)** - How to create workflows
+- **[Local Development](/docs/how-to-guides/local-development)** - Debug locally
 - **[Azure Functions Troubleshooting](/docs/troubleshooting/azure-functions)** - Infrastructure issues

@@ -562,6 +562,6 @@ async def test_oauth_token_refresh():
 
 ## Related Topics
 
-- **[OAuth Configuration](/docs/guides/oauth-setup)** - How to set up OAuth connections
-- **[Security](/docs/concepts/security)** - How Bifrost secures tokens
+- **[OAuth Configuration](/docs/how-to-guides/oauth-setup)** - How to set up OAuth connections
+- **[Security](/docs/core-concepts/security)** - How Bifrost secures tokens
 - **[Azure Functions Troubleshooting](/docs/troubleshooting/azure-functions)** - Infrastructure issues

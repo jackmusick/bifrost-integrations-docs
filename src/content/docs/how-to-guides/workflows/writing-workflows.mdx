@@ -1,0 +1,297 @@
+---
+title: Write Workflows
+description: Complete guide to writing Bifrost workflows with decorators, parameters, and best practices
+---
+
+## Workflow Structure
+
+Every workflow follows this pattern:
+
+```python
+from bifrost import workflow, param, ExecutionContext
+import logging
+
+logger = logging.getLogger(__name__)
+
+@workflow(
+    name="unique_name",          # Required: snake_case identifier
+    description="What it does",  # Required: shown in UI
+    category="Category Name",    # Optional: for grouping
+    timeout_seconds=300          # Optional: max execution time
+)
+@param("param1", type="string", required=True)
+async def unique_name(context: ExecutionContext, param1: str):
+    """Docstring explaining workflow purpose."""
+    logger.info(f"Processing {param1}")
+    return {"result": "success"}
+```
+
+## Decorator Parameters
+
+### @workflow Options
+
+**Required:**
+- `name`: Unique identifier (snake_case)
+- `description`: User-facing description
+
+**Optional:**
+- `category`: Grouping category (default: "General")
+- `tags`: List of tags for filtering
+- `execution_mode`: `"sync"` (default) or `"async"`
+- `timeout_seconds`: Max execution time (default: 300)
+- `schedule`: Cron expression for scheduled runs
+- `requires_org`: Needs organization context (default: True)
+
+### @param Options
+
+**Required:**
+- `name`: Parameter name (must match function arg)
+- `type`: `string`, `int`, `float`, `bool`, `email`, `json`, `list`
+
+**Optional:**
+- `label`: Display label (defaults to title case name)
+- `required`: Is required (default: False)
+- `default_value`: Default if not provided
+- `help_text`: Help tooltip in UI
+- `validation`: Dict with validation rules
+- `data_provider`: Name of data provider for options
+
+## Parameter Types & Validation
+
+### String Validation
+```python
+@param("username", type="string",
+    validation={
+        "min_length": 3,
+        "max_length": 50,
+        "pattern": r"^[a-zA-Z0-9_]+$"
+    }
+)
+```
+
+### Number Validation
+```python
+@param("quantity", type="int",
+    validation={
+        "min": 1,
+        "max": 1000
+    }
+)
+```
+
+### Enum Options
+```python
+@param("status", type="string",
+    validation={
+        "enum": ["active", "inactive", "pending"]
+    }
+)
+```
+
+## Execution Context
+
+Access organization, user, and execution metadata:
+
+```python
+async def my_workflow(context: ExecutionContext):
+    # Organization
+    org_id = context.org_id
+    org_name = context.org_name
+
+    # User
+    user_id = context.user_id
+    user_email = context.email
+    user_name = context.name
+
+    # Execution
+    execution_id = context.execution_id
+    is_admin = context.is_platform_admin
+    is_global = context.is_global_scope
+```
+
+## Using SDK Modules
+
+Access config, secrets, OAuth, and files via SDK:
+
+```python
+from bifrost import config, secrets, oauth, files
+
+async def my_workflow(context: ExecutionContext):
+    # Configuration
+    api_url = config.get("api_url", default="https://api.example.com")
+
+    # Secrets (from Key Vault)
+    api_key = secrets.get("api_key")
+
+    # OAuth credentials
+    creds = oauth.get_oauth_connection("microsoft_graph")
+    auth_header = creds.get_auth_header()
+
+    # File operations
+    files.write("data/output.txt", "content")
+    content = files.read("data/output.txt")
+```
+
+## Execution Modes
+
+### Synchronous (Default)
+Best for quick operations (< 10 seconds):
+
+```python
+@workflow(execution_mode="sync", timeout_seconds=30)
+async def quick_lookup(context: ExecutionContext, id: str):
+    result = await database.get(id)
+    return {"result": result}
+```
+
+### Asynchronous
+Best for long-running operations (> 30 seconds):
+
+```python
+@workflow(execution_mode="async", timeout_seconds=1800)
+async def bulk_import(context: ExecutionContext, csv_url: str):
+    items = await fetch_csv(csv_url)
+    for item in items:
+        await import_item(item)
+    return {"imported": len(items)}
+```
+
+### Scheduled
+Run automatically on a schedule:
+
+```python
+@workflow(
+    execution_mode="scheduled",
+    schedule="0 9 * * *",  # Daily at 9 AM UTC
+    expose_in_forms=False   # Hide from manual execution
+)
+async def daily_report(context: ExecutionContext):
+    report = await generate_report()
+    await send_report(report)
+    return {"status": "sent"}
+```
+
+## Data Providers
+
+Provide dynamic options for dropdowns:
+
+```python
+from bifrost import data_provider
+
+@data_provider(
+    name="get_departments",
+    description="List departments",
+    cache_ttl_seconds=600
+)
+async def get_departments(context: ExecutionContext):
+    return [
+        {"label": "Engineering", "value": "eng"},
+        {"label": "Sales", "value": "sales"}
+    ]
+```
+
+Use in workflow:
+
+```python
+@workflow(name="assign_user")
+@param("department", type="string", data_provider="get_departments")
+async def assign_user(context: ExecutionContext, department: str):
+    # department contains selected value ("eng" or "sales")
+    return {"assigned_to": department}
+```
+
+## Return Values
+
+Always return a dictionary:
+
+```python
+# Success
+return {"success": True, "result": data}
+
+# Error (workflow still succeeds, but indicates failure)
+return {"success": False, "error": "User not found"}
+
+# Nested data
+return {
+    "user": {"id": "123", "email": "user@example.com"},
+    "items": [1, 2, 3]
+}
+```
+
+## Error Handling
+
+Handle errors gracefully:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+async def my_workflow(context: ExecutionContext, email: str):
+    # Validate input
+    if not email or "@" not in email:
+        return {"success": False, "error": "Invalid email"}
+
+    try:
+        user = await create_user(email)
+        logger.info(f"Created user: {user.id}")
+        return {"success": True, "user_id": user.id}
+
+    except Exception as e:
+        logger.error(f"Failed to create user: {str(e)}")
+        return {"success": False, "error": str(e)}
+```
+
+## Best Practices
+
+1. **Single Responsibility**: One workflow, one task
+2. **Validate Early**: Check inputs before processing
+3. **Log Liberally**: Use `logger.info()` and `logger.error()`
+4. **Handle Errors**: Always return error states, don't raise
+5. **Use Type Hints**: Enable IDE autocomplete and error detection
+6. **Avoid Secrets in Returns**: Never return credentials or PII
+7. **Choose Right Execution Mode**: Sync for quick, async for long-running
+8. **Test Locally**: Use local dev environment before deploying
+
+## Common Patterns
+
+### List Processing
+```python
+async def process_items(context: ExecutionContext, items: list):
+    results = []
+    errors = []
+
+    for item in items:
+        try:
+            result = await process_item(item)
+            results.append(result)
+        except Exception as e:
+            errors.append({"item": item, "error": str(e)})
+
+    return {
+        "processed": len(results),
+        "failed": len(errors),
+        "results": results,
+        "errors": errors
+    }
+```
+
+### Chained Operations
+```python
+async def create_user_with_license(context: ExecutionContext, email: str, sku: str):
+    # Step 1
+    logger.info("Creating user...")
+    user = await create_user(email)
+
+    # Step 2
+    logger.info("Assigning license...")
+    await assign_license(user.id, sku)
+
+    return {"user_id": user.id, "license": sku}
+```
+
+## Next Steps
+
+- [Using Decorators](/how-to-guides/workflows/using-decorators) - Advanced decorator features
+- [Error Handling](/how-to-guides/workflows/error-handling) - Comprehensive error patterns
+- [SDK Reference](/sdk-reference/sdk/bifrost-module) - Full API documentation

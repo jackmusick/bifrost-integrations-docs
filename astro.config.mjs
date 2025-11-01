@@ -6,14 +6,14 @@ import starlightThemeBlack from "starlight-theme-black";
 // https://astro.build/config
 export default defineConfig({
     vite: {
-          server: {
-              host: true,
-              allowedHosts: [".ngrok-free.app", ".ngrok.io"],
-              watch: {
-                  usePolling: true,
-                  interval: 1000, // Check every 100ms
-              },
-          },
+        server: {
+            host: true,
+            allowedHosts: [".ngrok-free.app", ".ngrok.io"],
+            watch: {
+                usePolling: true,
+                interval: 1000, // Check every 100ms
+            },
+        },
     },
     integrations: [
         starlight({
@@ -24,38 +24,47 @@ export default defineConfig({
                 src: "./src/assets/logo-square.svg",
             },
             favicon: "/src/assets/logo-square.svg",
-            social: [
-                {
-                    icon: "github",
-                    label: "GitHub API",
-                    href: "https://github.com/jackmusick/bifrost-api",
-                },
-                {
-                    icon: "github",
-                    label: "GitHub Client",
-                    href: "https://github.com/jackmusick/bifrost-client",
-                },
-            ],
             customCss: ["./src/styles/custom.css"],
             sidebar: [
+                {
+                    label: "About",
+                    items: [
+                        {
+                            label: "What is Bifrost?",
+                            slug: "about",
+                        },
+                        {
+                            label: "Why Open Source?",
+                            slug: "about/why-open-source",
+                        },
+                        {
+                            label: "License (AGPL)",
+                            slug: "about/license",
+                        },
+                    ],
+                },
                 {
                     label: "Getting Started",
                     items: [
                         {
                             label: "Installation Guide",
-                            slug: "guides/installation",
+                            slug: "getting-started/installation",
+                        },
+                        {
+                            label: "For Non-Developers",
+                            slug: "getting-started/for-non-developers",
                         },
                         {
                             label: "Build Your First Workflow",
-                            slug: "tutorials/first-workflow",
+                            slug: "getting-started/first-workflow",
                         },
                         {
                             label: "Create Dynamic Forms",
-                            slug: "tutorials/creating-forms",
+                            slug: "getting-started/creating-forms",
                         },
                         {
                             label: "OAuth Integration",
-                            slug: "tutorials/oauth-integration",
+                            slug: "getting-started/oauth-integration",
                         },
                     ],
                 },
@@ -64,16 +73,19 @@ export default defineConfig({
                     items: [
                         {
                             label: "Platform Overview",
-                            slug: "concepts/platform-overview",
+                            slug: "core-concepts/platform-overview",
                         },
-                        { label: "Workflows", slug: "concepts/workflows" },
-                        { label: "Forms", slug: "concepts/forms" },
+                        { label: "Workflows", slug: "core-concepts/workflows" },
+                        { label: "Forms", slug: "core-concepts/forms" },
                         {
                             label: "Discovery System",
-                            slug: "concepts/discovery-system",
+                            slug: "core-concepts/discovery-system",
                         },
-                        { label: "Permissions", slug: "concepts/permissions" },
-                        { label: "Scopes", slug: "concepts/scopes" },
+                        {
+                            label: "Permissions",
+                            slug: "core-concepts/permissions",
+                        },
+                        { label: "Scopes", slug: "core-concepts/scopes" },
                     ],
                 },
                 {
@@ -86,15 +98,15 @@ export default defineConfig({
                             items: [
                                 {
                                     label: "Writing Workflows",
-                                    slug: "guides/workflows/writing-workflows",
+                                    slug: "how-to-guides/workflows/writing-workflows",
                                 },
                                 {
                                     label: "Using Decorators",
-                                    slug: "guides/workflows/using-decorators",
+                                    slug: "how-to-guides/workflows/using-decorators",
                                 },
                                 {
                                     label: "Error Handling",
-                                    slug: "guides/workflows/error-handling",
+                                    slug: "how-to-guides/workflows/error-handling",
                                 },
                             ],
                         },
@@ -104,27 +116,27 @@ export default defineConfig({
                             items: [
                                 {
                                     label: "Creating Forms",
-                                    slug: "guides/forms/creating-forms",
+                                    slug: "how-to-guides/forms/creating-forms",
                                 },
                                 {
                                     label: "Data Providers",
-                                    slug: "guides/forms/data-providers",
+                                    slug: "how-to-guides/forms/data-providers",
                                 },
                                 {
                                     label: "Visibility Rules",
-                                    slug: "guides/forms/visibility-rules",
+                                    slug: "how-to-guides/forms/visibility-rules",
                                 },
                                 {
                                     label: "HTML Content",
-                                    slug: "guides/forms/html-content",
+                                    slug: "how-to-guides/forms/html-content",
                                 },
                                 {
                                     label: "Startup Workflows",
-                                    slug: "guides/forms/startup-workflows",
+                                    slug: "how-to-guides/forms/startup-workflows",
                                 },
                                 {
                                     label: "Context Field References",
-                                    slug: "guides/forms/context-field-references",
+                                    slug: "how-to-guides/forms/context-field-references",
                                 },
                             ],
                         },
@@ -134,19 +146,19 @@ export default defineConfig({
                             items: [
                                 {
                                     label: "OAuth Setup",
-                                    slug: "guides/integrations/oauth-setup",
+                                    slug: "how-to-guides/integrations/oauth-setup",
                                 },
                                 {
                                     label: "Secrets Management",
-                                    slug: "guides/integrations/secrets-management",
+                                    slug: "how-to-guides/integrations/secrets-management",
                                 },
                                 {
                                     label: "Microsoft Graph",
-                                    slug: "guides/integrations/microsoft-graph",
+                                    slug: "how-to-guides/integrations/microsoft-graph",
                                 },
                                 {
                                     label: "Custom APIs",
-                                    slug: "guides/integrations/custom-apis",
+                                    slug: "how-to-guides/integrations/custom-apis",
                                 },
                             ],
                         },
@@ -156,15 +168,15 @@ export default defineConfig({
                             items: [
                                 {
                                     label: "Setup",
-                                    slug: "guides/local-dev/setup",
+                                    slug: "how-to-guides/local-dev/setup",
                                 },
                                 {
                                     label: "Testing",
-                                    slug: "guides/local-dev/testing",
+                                    slug: "how-to-guides/local-dev/testing",
                                 },
                                 {
                                     label: "Debugging",
-                                    slug: "guides/local-dev/debugging",
+                                    slug: "how-to-guides/local-dev/debugging",
                                 },
                             ],
                         },
@@ -174,9 +186,13 @@ export default defineConfig({
                             items: [
                                 {
                                     label: "Keyboard Shortcuts",
-                                    slug: "guides/ui/keyboard-shortcuts",
+                                    slug: "how-to-guides/ui/keyboard-shortcuts",
                                 },
                             ],
+                        },
+                        {
+                            label: "Contributing",
+                            slug: "how-to-guides/contributing",
                         },
                     ],
                 },
@@ -185,20 +201,26 @@ export default defineConfig({
                     collapsed: true,
                     items: [
                         {
-                            label: "AI Coding Guide",
-                            slug: "reference/sdk/claude",
-                        },
-                        {
-                            label: "Context API",
-                            slug: "reference/sdk/context-api",
-                        },
-                        {
-                            label: "Decorators",
-                            slug: "reference/sdk/decorators",
-                        },
-                        {
-                            label: "Bifrost Module",
-                            slug: "reference/sdk/bifrost-module",
+                            label: "SDK",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "AI Coding Guide",
+                                    slug: "sdk-reference/sdk/claude",
+                                },
+                                {
+                                    label: "Context API",
+                                    slug: "sdk-reference/sdk/context-api",
+                                },
+                                {
+                                    label: "Decorators",
+                                    slug: "sdk-reference/sdk/decorators",
+                                },
+                                {
+                                    label: "Bifrost Module",
+                                    slug: "sdk-reference/sdk/bifrost-module",
+                                },
+                            ],
                         },
                         {
                             label: "Forms",
@@ -206,15 +228,15 @@ export default defineConfig({
                             items: [
                                 {
                                     label: "Field Types",
-                                    slug: "reference/forms/field-types",
+                                    slug: "sdk-reference/forms/field-types",
                                 },
                                 {
                                     label: "Context Object",
-                                    slug: "reference/forms/context-object",
+                                    slug: "sdk-reference/forms/context-object",
                                 },
                                 {
                                     label: "Validation Rules",
-                                    slug: "reference/forms/validation-rules",
+                                    slug: "sdk-reference/forms/validation-rules",
                                 },
                             ],
                         },
@@ -224,15 +246,33 @@ export default defineConfig({
                             items: [
                                 {
                                     label: "Overview",
-                                    slug: "reference/architecture/overview",
+                                    slug: "sdk-reference/architecture/overview",
                                 },
                                 {
                                     label: "Multi-Tenancy",
-                                    slug: "reference/architecture/multi-tenancy",
+                                    slug: "sdk-reference/architecture/multi-tenancy",
                                 },
                                 {
                                     label: "Security",
-                                    slug: "reference/architecture/security",
+                                    slug: "sdk-reference/architecture/security",
+                                },
+                            ],
+                        },
+                        {
+                            label: "API",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Quick Start",
+                                    slug: "sdk-reference/api",
+                                },
+                                {
+                                    label: "Local Development",
+                                    slug: "sdk-reference/api/local-development",
+                                },
+                                {
+                                    label: "Testing",
+                                    slug: "sdk-reference/api/testing",
                                 },
                             ],
                         },
@@ -262,11 +302,11 @@ export default defineConfig({
                 starlightThemeBlack({
                     navLinks: [
                         {
-                            label: "GitHub API",
+                            label: "API",
                             link: "https://github.com/jackmusick/bifrost-api",
                         },
                         {
-                            label: "GitHub Client",
+                            label: "Client",
                             link: "https://github.com/jackmusick/bifrost-client",
                         },
                     ],

@@ -1,0 +1,400 @@
+---
+title: bifrost Module Reference
+description: Complete API reference for decorators, context, and SDK modules
+---
+
+## Import Structure
+
+```python
+# Decorators and context
+from bifrost import workflow, param, data_provider, ExecutionContext
+
+# SDK modules
+from bifrost import config, secrets, oauth, files
+
+# Types (optional)
+from bifrost import Organization, Caller, OAuthCredentials
+```
+
+## Decorators
+
+### @workflow
+
+Registers an async function as an executable workflow.
+
+```python
+@workflow(name: str, description: str, **options)
+```
+
+**Parameters**:
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `name` | str | Yes | - | Unique identifier (snake_case) |
+| `description` | str | Yes | - | User-facing description |
+| `category` | str | No | "General" | Workflow category |
+| `tags` | list[str] | No | [] | Tags for filtering |
+| `execution_mode` | str | No | "sync" | `"sync"` or `"async"` |
+| `timeout_seconds` | int | No | 300 | Max execution time |
+| `schedule` | str | No | None | Cron expression |
+| `requires_org` | bool | No | True | Needs org context |
+| `expose_in_forms` | bool | No | True | Show in forms |
+| `required_permission` | str | No | "canExecuteWorkflows" | Permission needed |
+| `retry_policy` | dict | No | None | Retry configuration |
+
+**Example**:
+```python
+@workflow(
+    name="create_user",
+    description="Create new user",
+    category="User Management",
+    timeout_seconds=60
+)
+async def create_user(context, email: str):
+    return {"user_id": "123"}
+```
+
+### @param
+
+Defines a workflow parameter.
+
+```python
+@param(name: str, type: str, **options)
+```
+
+**Parameters**:
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `name` | str | Yes | - | Parameter name |
+| `type` | str | Yes | - | Parameter type (see types below) |
+| `label` | str | No | Titlecased name | Display label |
+| `required` | bool | No | False | Is required |
+| `default_value` | Any | No | None | Default value |
+| `help_text` | str | No | None | Help tooltip |
+| `validation` | dict | No | None | Validation rules |
+| `data_provider` | str | No | None | Data provider name |
+
+**Types**: `string`, `int`, `float`, `bool`, `email`, `json`, `list`
+
+**Validation**:
+
+| Rule | Applies To | Description |
+|------|-----------|-------------|
+| `min_length` | string | Minimum length |
+| `max_length` | string | Maximum length |
+| `pattern` | string | Regex pattern |
+| `min` | int, float | Minimum value |
+| `max` | int, float | Maximum value |
+| `enum` | string | Allowed values |
+
+**Example**:
+```python
+@param(
+    "email",
+    type="email",
+    required=True,
+    validation={"pattern": r"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"}
+)
+```
+
+### @data_provider
+
+Registers a function that provides dynamic options.
+
+```python
+@data_provider(name: str, description: str, **options)
+```
+
+**Parameters**:
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `name` | str | Yes | - | Unique identifier |
+| `description` | str | Yes | - | What it provides |
+| `category` | str | No | "General" | Category |
+| `cache_ttl_seconds` | int | No | 300 | Cache duration (0 = no cache) |
+
+**Return Format**:
+```python
+[
+    {
+        "label": "Display Text",
+        "value": "actual_value",
+        "metadata": {}  # Optional
+    }
+]
+```
+
+**Example**:
+```python
+@data_provider(
+    name="get_departments",
+    description="List departments",
+    cache_ttl_seconds=600
+)
+async def get_departments(context):
+    return [
+        {"label": "Engineering", "value": "eng"},
+        {"label": "Sales", "value": "sales"}
+    ]
+```
+
+## ExecutionContext
+
+Access to organization, user, and execution metadata.
+
+**Properties**:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `user_id` | str | Current user ID |
+| `email` | str | User email |
+| `name` | str | User display name |
+| `org_id` | str \| None | Organization ID |
+| `org_name` | str \| None | Organization name |
+| `organization` | Organization \| None | Full org object |
+| `scope` | str | "GLOBAL" or org ID |
+| `execution_id` | str | Unique execution ID |
+| `is_platform_admin` | bool | Is platform admin |
+| `is_function_key` | bool | Called via API key |
+| `is_global_scope` | bool | Executing in global scope |
+
+**Example**:
+```python
+async def my_workflow(context: ExecutionContext):
+    org_id = context.org_id
+    user_email = context.email
+    is_admin = context.is_platform_admin
+```
+
+## SDK Modules
+
+### config
+
+Configuration management with org scoping.
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `get(key, default=None)` | key: str, default: Any | Any | Get config value |
+| `set(key, value)` | key: str, value: Any | None | Set config value |
+| `has(key)` | key: str | bool | Check if exists |
+| `list()` | - | list[dict] | List all configs |
+| `delete(key)` | key: str | None | Delete config |
+
+**Example**:
+```python
+from bifrost import config
+
+api_url = config.get("api_url", default="https://api.example.com")
+config.set("api_url", "https://new-api.example.com")
+```
+
+### secrets
+
+Azure Key Vault secret management.
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `get(key)` | key: str | str | Get secret value |
+| `set(key, value)` | key: str, value: str | None | Store secret |
+| `delete(key)` | key: str | None | Delete secret |
+
+**Scoping**: Secrets automatically scoped as `{org_id}--{key}`
+
+**Example**:
+```python
+from bifrost import secrets
+
+api_key = secrets.get("api_key")
+secrets.set("api_key", "new_secret_value")
+```
+
+### oauth
+
+OAuth connection management.
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `get_oauth_connection(name)` | name: str | OAuthCredentials | Get credentials |
+| `create_connection(...)` | See parameters | dict | Create connection |
+| `delete_connection(name)` | name: str | None | Delete connection |
+
+**OAuthCredentials**:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connection_name` | str | Connection identifier |
+| `access_token` | str | Current access token |
+| `token_type` | str | Token type (usually "Bearer") |
+| `expires_at` | datetime | Token expiration |
+| `refresh_token` | str \| None | Refresh token |
+| `scopes` | str | Granted scopes |
+
+**Methods**:
+- `is_expired() -> bool` - Check if token expired
+- `get_auth_header() -> str` - Get "Bearer {token}" header
+
+**Example**:
+```python
+from bifrost import oauth
+
+creds = oauth.get_oauth_connection("microsoft-graph")
+headers = {"Authorization": creds.get_auth_header()}
+```
+
+### files
+
+File operations.
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `read(path)` | path: str | str \| bytes | Read file |
+| `write(path, content)` | path: str, content: str \| bytes | None | Write file |
+| `list_dir(path)` | path: str | list[str] | List directory |
+| `delete(path)` | path: str | None | Delete file |
+
+**Example**:
+```python
+from bifrost import files
+
+files.write("data/output.csv", "id,name\n1,Alice\n")
+content = files.read("data/output.csv")
+items = files.list_dir("data/")
+```
+
+## Type Definitions
+
+### Organization
+
+```python
+@dataclass
+class Organization:
+    id: str
+    name: str
+    is_active: bool
+```
+
+### Caller
+
+```python
+@dataclass
+class Caller:
+    user_id: str
+    email: str
+    name: str
+```
+
+### Enums
+
+**ExecutionStatus**:
+- `PENDING`
+- `RUNNING`
+- `SUCCESS`
+- `COMPLETED_WITH_ERRORS`
+- `FAILED`
+
+**ConfigType**:
+- `STRING`
+- `SECRET_REF`
+- `JSON`
+
+## Complete Example
+
+```python
+from bifrost import (
+    workflow, param, data_provider, ExecutionContext,
+    config, secrets, oauth
+)
+import aiohttp
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Data provider
+@data_provider(
+    name="get_departments",
+    description="List departments",
+    cache_ttl_seconds=600
+)
+async def get_departments(context: ExecutionContext):
+    return [
+        {"label": "Engineering", "value": "eng"},
+        {"label": "Sales", "value": "sales"}
+    ]
+
+# Workflow
+@workflow(
+    name="create_user",
+    description="Create user in system",
+    category="User Management",
+    timeout_seconds=60
+)
+@param("email", type="email", required=True)
+@param("name", type="string", required=True)
+@param("department", type="string", data_provider="get_departments")
+async def create_user(
+    context: ExecutionContext,
+    email: str,
+    name: str,
+    department: str
+):
+    """Create a new user with department assignment."""
+
+    logger.info("Creating user", extra={
+        "email": email,
+        "department": department
+    })
+
+    try:
+        # Get config and secrets
+        api_url = config.get("api_url")
+        api_key = secrets.get("api_key")
+
+        # Call external API
+        headers = {"Authorization": f"Bearer {api_key}"}
+        payload = {"email": email, "name": name, "department": department}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{api_url}/users",
+                headers=headers,
+                json=payload
+            ) as resp:
+                if resp.status == 201:
+                    user = await resp.json()
+                    logger.info(f"User created: {user['id']}")
+                    return {"success": True, "user_id": user["id"]}
+                else:
+                    error = await resp.text()
+                    logger.error(f"API error: {error}")
+                    return {"success": False, "error": error}
+
+    except Exception as e:
+        logger.error(f"Failed: {str(e)}", exc_info=True)
+        return {"success": False, "error": str(e)}
+```
+
+## Best Practices
+
+1. **Type Hints**: Always use `ExecutionContext` type hint
+2. **Logging**: Use `logging.getLogger(__name__)`
+3. **Error Handling**: Return error states, don't raise
+4. **Validation**: Use `@param` validation, validate in code too
+5. **Secrets**: Never log or return secret values
+6. **Caching**: Set appropriate cache TTL for data providers
+7. **Async/Await**: Always use async functions and await calls
+
+## Next Steps
+
+- [Context API Reference](/sdk-reference/sdk/context-api) - Detailed context properties
+- [Decorators Reference](/sdk-reference/sdk/decorators) - Advanced decorator usage
+- [Writing Workflows Guide](/how-to-guides/workflows/writing-workflows) - Practical guide

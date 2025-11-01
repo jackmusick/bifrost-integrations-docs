@@ -647,5 +647,5 @@ curl http://localhost:7071/api/health
 ## Related Topics
 
 - **[Workflow Engine Troubleshooting](/docs/troubleshooting/workflow-engine)** - Workflow execution issues
-- **[Local Development](/docs/guides/local-development)** - Setting up locally
-- **[Deployment](/docs/guides/deployment)** - Deploying to Azure
+- **[Local Development](/docs/how-to-guides/local-development)** - Setting up locally
+- **[Deployment](/docs/how-to-guides/deployment)** - Deploying to Azure

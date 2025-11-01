@@ -1,0 +1,330 @@
+---
+title: Data Providers
+description: Dynamic dropdown options with data providers
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+Data providers populate dropdown menus dynamically from databases, APIs, or business logic.
+
+## Basic Data Provider
+
+```python
+from bifrost import data_provider, ExecutionContext
+
+@data_provider(
+    name="get_departments",
+    description="List of departments",
+    cache_ttl_seconds=600  # Cache for 10 minutes
+)
+async def get_departments(context: ExecutionContext):
+    return [
+        {"label": "Engineering", "value": "eng"},
+        {"label": "Sales", "value": "sales"},
+        {"label": "Support", "value": "support"}
+    ]
+```
+
+## Use in Form
+
+In form builder, select field → **Data Provider** → `get_departments`
+
+Or in workflow:
+
+```python
+@workflow(name="assign_user")
+@param("department", type="string", data_provider="get_departments")
+async def assign_user(context, department: str):
+    # department = "eng", "sales", or "support"
+    return {"assigned_to": department}
+```
+
+## Return Format
+
+Must return list of dicts with `label` and `value`:
+
+```python
+[
+    {
+        "label": "Display Text",      # Shown in dropdown
+        "value": "actual_value",      # Passed to workflow
+        "metadata": {                 # Optional extra data
+            "description": "...",
+            "icon": "..."
+        }
+    }
+]
+```
+
+## Fetch from Database
+
+```python
+@data_provider(name="get_active_users")
+async def get_active_users(context):
+    users = await db.query(
+        "SELECT id, name FROM users WHERE active = true"
+    )
+
+    return [
+        {"label": user["name"], "value": user["id"]}
+        for user in users
+    ]
+```
+
+## Fetch from API
+
+```python
+import aiohttp
+
+@data_provider(name="get_github_repos")
+async def get_github_repos(context):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://api.github.com/user/repos",
+            headers={"Authorization": f"token {get_token()}"}
+        ) as resp:
+            repos = await resp.json()
+
+            return [
+                {
+                    "label": repo["full_name"],
+                    "value": repo["name"],
+                    "metadata": {
+                        "description": repo["description"],
+                        "stars": repo["stargazers_count"]
+                    }
+                }
+                for repo in repos
+            ]
+```
+
+## Organization-Scoped
+
+Filter by current organization:
+
+```python
+@data_provider(name="get_org_licenses")
+async def get_org_licenses(context):
+    # Only show licenses for this org
+    licenses = await db.query(
+        "SELECT * FROM licenses WHERE org_id = ?",
+        context.org_id
+    )
+
+    return [
+        {"label": lic["name"], "value": lic["sku"]}
+        for lic in licenses
+    ]
+```
+
+## User-Filtered
+
+Filter by user permissions:
+
+```python
+@data_provider(name="get_assignable_users")
+async def get_assignable_users(context):
+    # Get all users
+    users = await db.get_users(context.org_id)
+
+    # Filter by permission
+    if not context.is_platform_admin:
+        users = [u for u in users if u.department == get_user_dept(context)]
+
+    return [
+        {"label": u.name, "value": u.id}
+        for u in users
+    ]
+```
+
+## Dependent Data Providers
+
+Provider with parameters (depends on other field):
+
+```python
+@data_provider(name="get_users_by_dept")
+@param("department", type="string", required=True)
+async def get_users_by_dept(context, department: str):
+    users = await db.query(
+        "SELECT * FROM users WHERE department = ?",
+        department
+    )
+
+    return [
+        {"label": u.name, "value": u.id}
+        for u in users
+    ]
+```
+
+Use in workflow:
+
+```python
+@workflow(name="assign")
+@param("department", type="string", data_provider="get_departments")
+@param("user", type="string", data_provider="get_users_by_dept")
+async def assign(context, department: str, user: str):
+    # User dropdown updates when department changes
+    pass
+```
+
+## Hierarchical Options
+
+Group related options:
+
+```python
+@data_provider(name="get_apps_grouped")
+async def get_apps_grouped(context):
+    return [
+        {
+            "label": "Outlook",
+            "value": "outlook",
+            "metadata": {"group": "Microsoft 365"}
+        },
+        {
+            "label": "Teams",
+            "value": "teams",
+            "metadata": {"group": "Microsoft 365"}
+        },
+        {
+            "label": "Gmail",
+            "value": "gmail",
+            "metadata": {"group": "Google Workspace"}
+        },
+        {
+            "label": "Drive",
+            "value": "drive",
+            "metadata": {"group": "Google Workspace"}
+        }
+    ]
+```
+
+## Caching Strategies
+
+### Long Cache (Rarely Changes)
+```python
+@data_provider(
+    name="get_countries",
+    cache_ttl_seconds=86400  # 24 hours
+)
+async def get_countries(context):
+    return [{"label": "USA", "value": "us"}, ...]
+```
+
+### Short Cache (Changes Frequently)
+```python
+@data_provider(
+    name="get_available_licenses",
+    cache_ttl_seconds=60  # 1 minute
+)
+async def get_available_licenses(context):
+    return await fetch_current_licenses()
+```
+
+### No Cache (Always Fresh)
+```python
+@data_provider(
+    name="get_current_user_info",
+    cache_ttl_seconds=0  # No cache
+)
+async def get_current_user_info(context):
+    return await get_user(context.user_id)
+```
+
+<Aside type="tip">
+**Cache Duration**: Balance freshness vs. performance. Start with 5-10 minutes for most use cases.
+</Aside>
+
+## Error Handling
+
+Return empty list on error:
+
+```python
+@data_provider(name="get_external_data")
+async def get_external_data(context):
+    try:
+        data = await external_api.fetch()
+        return [{"label": d.name, "value": d.id} for d in data]
+
+    except Exception as e:
+        logger.error(f"Failed to fetch data: {e}")
+        return []  # Return empty list, don't crash form
+```
+
+## OAuth Integration
+
+Use OAuth credentials:
+
+```python
+from bifrost import oauth
+
+@data_provider(name="get_graph_users")
+async def get_graph_users(context):
+    try:
+        creds = oauth.get_oauth_connection("microsoft_graph")
+        headers = {"Authorization": creds.get_auth_header()}
+
+        users = await graph_api.get_users(headers=headers)
+
+        return [
+            {
+                "label": u["displayName"],
+                "value": u["userPrincipalName"],
+                "metadata": {"email": u["mail"]}
+            }
+            for u in users
+        ]
+
+    except oauth.OAuthConnectionNotFound:
+        logger.warning("Graph OAuth not configured")
+        return []
+```
+
+## Performance Tips
+
+1. **Use Caching**: Cache expensive queries
+2. **Limit Results**: Don't return 10,000 options
+3. **Add Search**: For large datasets, use search parameters
+4. **Lazy Loading**: Use dependent providers for subsets
+
+### Limit Results
+```python
+@data_provider(name="get_users")
+async def get_users(context):
+    users = await db.get_users(limit=100)  # Limit results
+    return [{"label": u.name, "value": u.id} for u in users]
+```
+
+### Add Search
+```python
+@data_provider(name="search_users")
+@param("search", type="string", required=False)
+async def search_users(context, search: str = ""):
+    users = await db.search_users(search, limit=50)
+    return [{"label": u.name, "value": u.id} for u in users]
+```
+
+## Testing Data Providers
+
+```python
+async def test_get_departments():
+    result = await get_departments(context)
+
+    assert isinstance(result, list)
+    assert len(result) > 0
+    assert "label" in result[0]
+    assert "value" in result[0]
+
+async def test_get_users_by_dept():
+    result = await get_users_by_dept(context, "eng")
+
+    assert isinstance(result, list)
+    # Verify all users are from engineering
+    for user in result:
+        assert user["metadata"]["department"] == "eng"
+```
+
+## Next Steps
+
+- [Visibility Rules](/how-to-guides/forms/visibility-rules) - Conditional field display
+- [Creating Forms](/how-to-guides/forms/creating-forms) - Build complete forms
+- [Context Field References](/how-to-guides/forms/context-field-references) - Access form values

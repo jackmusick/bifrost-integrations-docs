@@ -1,0 +1,558 @@
+---
+title: Testing Guide
+description: Comprehensive guide to testing in Bifrost - unit tests, integration tests, and best practices.
+---
+
+import { Card, CardGrid, Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Testing is a critical part of Bifrost development. This guide covers the testing strategy, tools, and best practices.
+
+<Aside type="caution" title="Always Use test.sh">
+**IMPORTANT:** Always use `./test.sh` to run tests, NOT `pytest` directly. The test script starts all required dependencies (Azurite, Functions runtime).
+</Aside>
+
+## Test Suite Overview
+
+Bifrost uses pytest for all testing with three types of tests:
+
+<CardGrid>
+  <Card title="Unit Tests" icon="document">
+    Test individual functions and classes in isolation
+
+    **Location:** `tests/unit/`
+
+    **Purpose:** Verify business logic, validators, utilities
+  </Card>
+
+  <Card title="Integration Tests" icon="rocket">
+    Test full workflows with Azure Functions context
+
+    **Location:** `tests/integration/`
+
+    **Purpose:** Verify workflows, SDK, handlers, end-to-end flows
+  </Card>
+
+  <Card title="Contract Tests" icon="approve-check">
+    Test SDK public API contracts
+
+    **Location:** `tests/contract/`
+
+    **Purpose:** Ensure SDK API stability
+  </Card>
+</CardGrid>
+
+## Running Tests
+
+### Basic Test Commands
+
+```bash
+# Run all tests (unit + integration + contract)
+./test.sh
+
+# Run specific test file
+./test.sh tests/integration/platform/test_sdk_from_workflow.py
+
+# Run specific test class
+./test.sh tests/integration/platform/test_sdk_from_workflow.py::TestSDKFileOperations
+
+# Run specific test method
+./test.sh tests/integration/platform/test_sdk_from_workflow.py::TestSDKFileOperations::test_file_path_sandboxing -v
+
+# Run tests matching a pattern
+./test.sh -k "test_oauth"
+
+# Run with verbose output
+./test.sh -v
+
+# Run with coverage report
+./test.sh --coverage
+```
+
+### Test Categories
+
+```bash
+# Run only unit tests
+./test.sh tests/unit/
+
+# Run only integration tests
+./test.sh tests/integration/
+
+# Run only contract tests
+./test.sh tests/contract/
+
+# Run specific subdirectory
+./test.sh tests/integration/platform/
+./test.sh tests/integration/engine/
+./test.sh tests/integration/oauth/
+```
+
+### Test Options
+
+The `test.sh` script supports common pytest options:
+
+```bash
+# Stop on first failure
+./test.sh -x
+
+# Show local variables on failure
+./test.sh -l
+
+# Run tests in parallel (4 workers)
+./test.sh -n 4
+
+# Capture output (show print statements)
+./test.sh -s
+
+# Increase verbosity
+./test.sh -vv
+```
+
+## Why test.sh Instead of pytest?
+
+Running `pytest` directly will **FAIL** for integration tests because they need:
+
+1. **Azurite** - Azure Storage Emulator
+2. **Functions Runtime** - Azure Functions context
+3. **Proper Environment Variables**
+4. **Service Health Checks**
+
+The `test.sh` script handles all of this:
+
+```bash
+#!/bin/bash
+# 1. Start Azurite
+azurite --silent &
+
+# 2. Start Functions runtime
+func start &
+
+# 3. Wait for services to be ready
+wait_for_health_checks
+
+# 4. Run pytest with proper environment
+pytest "$@"
+
+# 5. Clean up services
+cleanup
+```
+
+<Aside type="tip">
+You can still use `pytest` directly for unit tests only: `pytest tests/unit/`
+</Aside>
+
+## Test Structure
+
+### Unit Test Example
+
+Unit tests should mock external dependencies:
+
+```python
+# tests/unit/services/test_oauth_storage_service.py
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from shared.services.oauth_storage_service import OAuthStorageService
+
+@pytest.mark.asyncio
+async def test_store_tokens():
+    # Arrange
+    mock_keyvault = AsyncMock()
+    service = OAuthStorageService(mock_keyvault)
+
+    tokens = {
+        "access_token": "test_access",
+        "refresh_token": "test_refresh"
+    }
+
+    # Act
+    await service.store_tokens("test-org", "microsoft", tokens)
+
+    # Assert
+    mock_keyvault.set_secret.assert_called_once()
+```
+
+### Integration Test Example
+
+Integration tests run in full Azure Functions context:
+
+```python
+# tests/integration/platform/test_sdk_from_workflow.py
+import pytest
+from tests.integration.conftest import execute_workflow
+
+@pytest.mark.asyncio
+async def test_workflow_can_access_sdk(test_org_id):
+    """Test that workflows can access Bifrost SDK"""
+    result = await execute_workflow(
+        "test_sdk_access",
+        {"test_param": "value"},
+        org_id=test_org_id
+    )
+
+    assert result["status"] == "success"
+    assert "sdk_version" in result
+```
+
+### Contract Test Example
+
+Contract tests verify SDK public API:
+
+```python
+# tests/contract/test_sdk_api.py
+def test_sdk_exports():
+    """Verify SDK exports expected classes and functions"""
+    import bifrost
+
+    # Core decorators
+    assert hasattr(bifrost, 'workflow')
+    assert hasattr(bifrost, 'param')
+    assert hasattr(bifrost, 'data_provider')
+
+    # SDK classes
+    assert hasattr(bifrost, 'workflows')
+    assert hasattr(bifrost, 'executions')
+    assert hasattr(bifrost, 'secrets')
+```
+
+## Test Fixtures
+
+Bifrost provides reusable fixtures in `tests/conftest.py`:
+
+### Organization Fixtures
+
+```python
+@pytest.fixture
+def test_org_id():
+    """Returns ID of test organization"""
+    return "test-org-active"
+
+@pytest.fixture
+def test_org_inactive_id():
+    """Returns ID of inactive test organization"""
+    return "test-org-inactive"
+```
+
+### User Fixtures
+
+```python
+@pytest.fixture
+def test_user_id():
+    """Returns ID of test user"""
+    return "test-user-id"
+
+@pytest.fixture
+def test_user_email():
+    """Returns email of test user"""
+    return "test@example.com"
+```
+
+### Execution Context Fixtures
+
+```python
+@pytest.fixture
+def mock_context():
+    """Returns mocked execution context"""
+    context = MagicMock()
+    context.organization_id = "test-org-active"
+    context.user_id = "test-user-id"
+    return context
+```
+
+### Helper Fixtures
+
+```python
+@pytest.fixture
+async def execute_workflow():
+    """Helper to execute workflows in tests"""
+    async def _execute(workflow_name, params, org_id=None):
+        # Implementation
+        pass
+    return _execute
+```
+
+## Test Organization
+
+```
+tests/
+├── conftest.py                    # Shared fixtures
+├── unit/                          # Unit tests (isolated)
+│   ├── handlers/                  # Test handlers
+│   │   ├── test_executions_handlers.py
+│   │   ├── test_oauth_handlers.py
+│   │   └── test_secrets_handlers.py
+│   ├── services/                  # Test services
+│   │   ├── test_keyvault.py
+│   │   └── test_oauth_storage_service.py
+│   └── repositories/              # Test repositories
+│       └── test_executions.py
+├── integration/                   # Integration tests (full context)
+│   ├── engine/                    # Test workflow engine
+│   │   ├── test_workflow_execution.py
+│   │   └── test_async_workflow_execution.py
+│   ├── platform/                  # Test platform features
+│   │   ├── test_sdk_from_workflow.py
+│   │   └── test_bifrost_sdk_security.py
+│   └── oauth/                     # Test OAuth flows
+│       └── test_oauth_flow.py
+└── contract/                      # Contract tests (API stability)
+    └── test_sdk_api.py
+```
+
+## Writing Good Tests
+
+### AAA Pattern
+
+Use the Arrange-Act-Assert pattern:
+
+```python
+async def test_create_user():
+    # Arrange
+    user_data = {"email": "test@example.com", "name": "Test User"}
+    mock_repo = AsyncMock()
+
+    # Act
+    result = await create_user_handler(user_data, mock_repo)
+
+    # Assert
+    assert result["id"] is not None
+    assert result["email"] == "test@example.com"
+    mock_repo.create.assert_called_once()
+```
+
+### Test Naming
+
+Use descriptive test names that explain what's being tested:
+
+```python
+# Good
+def test_workflow_execution_logs_errors_when_workflow_fails()
+def test_oauth_refresh_updates_tokens_in_keyvault()
+def test_sdk_secrets_get_returns_none_when_secret_not_found()
+
+# Less good
+def test_workflow_1()
+def test_oauth()
+def test_get()
+```
+
+### Test Documentation
+
+Add docstrings for complex tests:
+
+```python
+async def test_multi_tenant_isolation():
+    """
+    Verify that workflows from one org cannot access data from another org.
+
+    This test:
+    1. Creates data in org A
+    2. Executes workflow as org B
+    3. Verifies workflow cannot access org A data
+    """
+    # Test implementation
+```
+
+## Mocking Best Practices
+
+### Mock External Services
+
+Always mock calls to external services (Azure, APIs, etc.):
+
+```python
+from unittest.mock import AsyncMock, patch
+
+@patch('shared.services.keyvault.KeyVaultService')
+async def test_store_secret(mock_keyvault):
+    mock_keyvault.set_secret = AsyncMock()
+
+    await store_secret("test-key", "test-value")
+
+    mock_keyvault.set_secret.assert_called_with("test-key", "test-value")
+```
+
+### Don't Over-Mock
+
+Unit tests should mock external dependencies, but integration tests should use real implementations:
+
+```python
+# Unit test - Mock database
+@patch('shared.repositories.executions.ExecutionsRepository')
+async def test_handler_logic(mock_repo):
+    # Test business logic with mocked repo
+    pass
+
+# Integration test - Use real database (Azurite)
+async def test_full_workflow_execution():
+    # Test end-to-end with real storage
+    pass
+```
+
+## Coverage Reports
+
+Generate coverage reports to identify untested code:
+
+```bash
+# Run tests with coverage
+./test.sh --coverage
+
+# View HTML report
+open htmlcov/index.html
+```
+
+Coverage report shows:
+
+- **Line coverage** - Which lines were executed
+- **Branch coverage** - Which conditional branches were taken
+- **Missing lines** - Code that wasn't tested
+
+<Aside type="tip">
+Aim for 80%+ coverage, but focus on testing critical paths over achieving 100% coverage.
+</Aside>
+
+## Continuous Integration
+
+Tests run automatically on every commit via GitHub Actions:
+
+```yaml
+# .github/workflows/test.yml
+name: Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: ./test.sh --coverage
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+```
+
+## Debugging Tests
+
+### Print Debugging
+
+Use `-s` to see print statements:
+
+```python
+def test_something():
+    print("Debug:", some_variable)
+    assert something
+```
+
+```bash
+./test.sh -s tests/unit/test_something.py
+```
+
+### VS Code Debugger
+
+Set breakpoints in VS Code and debug tests:
+
+1. Set breakpoint by clicking left gutter
+2. Open test file
+3. Click "Debug Test" above test function
+
+### pytest Options
+
+```bash
+# Stop on first failure and enter debugger
+./test.sh --pdb
+
+# Show locals on failure
+./test.sh -l
+
+# Very verbose output
+./test.sh -vv
+```
+
+## Test Performance
+
+### Parallel Execution
+
+Run tests in parallel for faster execution:
+
+```bash
+# 4 parallel workers
+./test.sh -n 4
+
+# Auto-detect CPU cores
+./test.sh -n auto
+```
+
+<Aside type="caution">
+Some integration tests may fail when run in parallel due to shared state. Run sequentially if you encounter issues.
+</Aside>
+
+### Skip Slow Tests
+
+Mark slow tests and skip them during development:
+
+```python
+@pytest.mark.slow
+async def test_long_running_workflow():
+    # Test that takes a long time
+    pass
+```
+
+```bash
+# Skip slow tests
+./test.sh -m "not slow"
+```
+
+## Common Test Patterns
+
+### Testing Async Functions
+
+```python
+@pytest.mark.asyncio
+async def test_async_function():
+    result = await my_async_function()
+    assert result == expected
+```
+
+### Testing Exceptions
+
+```python
+async def test_raises_exception():
+    with pytest.raises(ValueError, match="Invalid input"):
+        await function_that_raises()
+```
+
+### Parametrized Tests
+
+```python
+@pytest.mark.parametrize("input,expected", [
+    ("hello", "HELLO"),
+    ("world", "WORLD"),
+    ("test", "TEST"),
+])
+def test_uppercase(input, expected):
+    assert uppercase(input) == expected
+```
+
+## Next Steps
+
+<CardGrid>
+  <Card title="Local Development" icon="laptop">
+    Set up your development environment
+
+    [Read the guide →](/sdk-reference/api/local-development)
+  </Card>
+
+  <Card title="API Quick Start" icon="rocket">
+    Get the API running locally
+
+    [Read the guide →](/sdk-reference/api/)
+  </Card>
+
+  <Card title="Contributing" icon="star">
+    Learn how to contribute to Bifrost
+
+    [Read the guide →](/how-to-guides/contributing/)
+  </Card>
+</CardGrid>

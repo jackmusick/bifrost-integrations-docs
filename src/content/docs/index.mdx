@@ -1,22 +1,26 @@
 ---
-title: Bifrost
-description: Open-source workflow automation platform for MSPs and Integration Services
+title: Bifrost Integrations
+description: Open-source automation platform for Integration Services - Built to democratize best-in-class tooling before venture capital gets the chance to own something we're all incredibly passionate about.
 template: splash
 editUrl: false
 hero:
-  title: Bifrost
-  tagline: Open-source workflow automation platform for MSPs and Integration Services
-  actions:
-    - text: Get Started
-      link: /guides/installation
-      icon: rocket
-    - text: View on GitHub
-      link: https://github.com/jackmusick/bifrost-api
-      icon: github
-      variant: minimal
-      attrs:
-        target: _blank
-        rel: noopener noreferrer
+    title: Bifrost Integrations
+    tagline: Open-source automation platform for Integration Services
+    actions:
+        - text: Get Started
+          link: /getting-started/installation
+          icon: rocket
+          variant: primary
+        - text: What is Bifrost?
+          link: /about/
+          icon: information
+        - text: View on GitHub
+          link: https://github.com/jackmusick/bifrost-api
+          icon: github
+          variant: minimal
+          attrs:
+              target: _blank
+              rel: noopener noreferrer
 ---
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
@@ -24,25 +28,78 @@ import { ContainerSection } from "starlight-theme-black/components";
 
 <ContainerSection>
 
-## Next Steps
+## Built to democratize automation tooling
+
+**Before venture capital gets the chance to own something we're all incredibly passionate about.**
+
+Bifrost removes the limitations of traditional RPA tools while preserving the valuable abstractions - OAuth workflows, monitoring, configuration, and secret management. With multi-tenancy at its core, you can scale your Integration Services business without duplicating work across customers.
+
+[Learn why this matters →](/about/why-open-source)
+
+</ContainerSection>
+
+<ContainerSection>
+
+## Key Features
 
 <CardGrid stagger>
-  <Card title="📘 Installation" icon="rocket">
-    Get up and running in 5 minutes with Docker. Create your first workflow and
-    form. [Start here](/guides/installation)
-  </Card>
-  <Card title="🛠️ Build Your First Workflow" icon="laptop">
-    Learn the basics of workflow development. Create, deploy, and execute a
-    workflow. [Learn workflows](/tutorials/first-workflow/)
-  </Card>
-  <Card title="📋 Create Dynamic Forms" icon="document">
-    Build powerful forms with data providers, visibility rules, and real-time
-    data binding. [Build forms](/tutorials/creating-forms/)
-  </Card>
-  <Card title="🔐 OAuth & Integrations" icon="shield">
-    Connect to external services like Microsoft Graph, HaloPSA, and custom APIs.
-    [Set up OAuth](/tutorials/oauth-integration/)
-  </Card>
+    <Card title="Multi-Tenant Architecture" icon="users">
+        Complete data isolation per organization. Deliver value to customers without code duplication or redeployment.
+    </Card>
+    <Card title="OAuth Management" icon="shield">
+        Automated token refresh and credential storage. Secure integration with Azure Key Vault.
+    </Card>
+    <Card title="Dynamic Workflows" icon="rocket">
+        Python-based with full language capabilities. No proprietary syntax or limitations.
+    </Card>
+    <Card title="Reusable Integrations" icon="puzzle">
+        Build once, use across all customers. Abstract authentication, pagination, and API complexity.
+    </Card>
+    <Card title="AI-Assisted Development" icon="star">
+        Built for modern AI coding workflows. Use Claude Code, GitHub Copilot, and other AI tools.
+    </Card>
+    <Card title="Cost-Effective" icon="approve-check">
+        ~$10-35/month for small-to-medium workloads. No vendor lock-in or extractive pricing.
+    </Card>
 </CardGrid>
+
+</ContainerSection>
+
+<ContainerSection>
+
+## Get Started
+
+<CardGrid stagger>
+    <Card title="Installation" icon="rocket">
+        Get up and running in 5 minutes with Docker. Create your first workflow and form.
+
+        [Start here →](/getting-started/installation)
+    </Card>
+    <Card title="Build Your First Workflow" icon="laptop">
+        Learn the basics of workflow development. Create, deploy, and execute a workflow.
+
+        [Learn workflows →](/getting-started/first-workflow/)
+    </Card>
+    <Card title="Create Dynamic Forms" icon="document">
+        Build powerful forms with data providers, visibility rules, and real-time data binding.
+
+        [Build forms →](/getting-started/creating-forms/)
+    </Card>
+    <Card title="OAuth & Integrations" icon="setting">
+        Connect to external services like Microsoft Graph, HaloPSA, and custom APIs.
+
+        [Set up OAuth →](/getting-started/oauth-integration/)
+    </Card>
+</CardGrid>
+
+</ContainerSection>
+
+<ContainerSection>
+
+## This is our chance to own the tools we build our businesses on.
+
+The MSP industry is at a critical juncture. The next frontier is Integration Services, where we use the automation skills we've developed over decades to build value for customers - without being beholden to extractive pricing or vendor lock-in.
+
+[Learn more about why this matters →](/about/why-open-source)
 
 </ContainerSection>

@@ -1,0 +1,113 @@
+---
+title: Discovery System
+description: How Bifrost automatically finds and registers your workflows
+---
+
+# Discovery System
+
+Bifrost automatically discovers workflows and data providers in your workspace. Just write your code with decorators—the platform finds and registers it for you.
+
+## How It Works
+
+When you add a Python file with a `@workflow` or `@data_provider` decorator:
+
+1. **Bifrost scans** your workspace for `.py` files
+2. **Decorators register** your functions automatically
+3. **Your workflow appears** in the UI and becomes executable
+
+No configuration files, no manual registration—it just works.
+
+## Making Your Workflows Discoverable
+
+### Create a Python file anywhere in your workspace
+
+```python
+from bifrost import workflow, param
+
+@workflow(
+    name="send_email",
+    description="Send email notification",
+    category="communications"
+)
+@param("recipient", type="email", required=True)
+@param("subject", type="string", required=True)
+async def send_email(context, recipient: str, subject: str):
+    # Your code here
+    return {"sent": True}
+```
+
+**That's it!** Your workflow now appears in the UI and can be executed.
+
+### Data providers work the same way
+
+```python
+from bifrost import data_provider
+
+@data_provider(
+    name="get_licenses",
+    description="Available M365 licenses"
+)
+async def get_licenses(context):
+    return [
+        {"label": "Microsoft 365 E3", "value": "SPE_E3"},
+        {"label": "Microsoft 365 E5", "value": "SPE_E5"}
+    ]
+```
+
+Use it in form dropdowns: `dataProvider="get_licenses"`
+
+## Rules for Discovery
+
+Your files must follow these simple rules:
+
+1. **Use the `.py` extension** - Only Python files are discovered
+2. **Don't start filenames with `_`** - Files like `_helpers.py` are ignored
+3. **Use the `@workflow` or `@data_provider` decorator** - Undecorated functions won't appear
+4. **Import from `bifrost`** - Use `from bifrost import workflow, param`
+
+## Quick Example
+
+**Create a file:** `/workspace/create_user.py`
+
+```python
+from bifrost import workflow, param
+
+@workflow(
+    name="create_user",
+    description="Create a new user account"
+)
+@param("email", type="email", required=True)
+@param("first_name", type="string", required=True)
+@param("last_name", type="string", required=True)
+async def create_user(context, email: str, first_name: str, last_name: str):
+    # Your user creation logic
+    return {"success": True, "email": email}
+```
+
+**Result:** Your workflow immediately appears in the Workflows page and can be executed via forms or API.
+
+## Common Issues
+
+### My workflow isn't appearing
+
+1. **Check your decorator** - Make sure you have `@workflow(name="...")` above your function
+2. **Check your imports** - Use `from bifrost import workflow, param`
+3. **Check your filename** - Files starting with `_` are ignored (like `_helpers.py`)
+4. **Check for errors** - Look at the application logs for import errors
+
+### My parameters aren't showing in forms
+
+1. **Put `@param` after `@workflow`**
+    ```python
+    @workflow(name="test")    # First
+    @param("name", ...)       # Then params
+    async def test(context, name):
+        pass
+    ```
+
+2. **Match parameter names to function arguments**
+    ```python
+    @param("email", ...)                      # Must match...
+    async def create_user(context, email):    # ...this
+        pass
+    ```
