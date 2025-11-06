@@ -1,296 +1,437 @@
 ---
-title: Visibility Rules
-description: Show and hide form fields conditionally
+title: Show Fields Based on User Permissions
+description: Display different form fields based on user roles and permissions
 ---
 
-import { Aside } from "@astrojs/starlight/components";
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-Visibility rules show or hide fields based on other field values using JavaScript expressions.
+Control which form fields appear based on user permissions, roles, or any other context. Show admin-only fields to admins, manager fields to managers, and so on.
 
-## Basic Rule
+## What You'll Build
 
-Show field only when checkbox is checked:
+A form that shows different fields based on user role:
+
+-   Budget approval field (budget approvers only)
+-   Team size field (managers only)
+-   System configuration (admins only)
+-   Basic fields (everyone)
+
+## Prerequisites
+
+-   Form with linked workflow
+-   Understanding of launch workflows
+
+## Create Permission Check Workflow
+
+Create a launch workflow to fetch user permissions (`workspace/workflows/get_user_permissions.py`):
+
+<Tabs>
+  <TabItem label="With Permission System" icon="seti:python">
+```python
+from bifrost import workflow, ExecutionContext
+
+@workflow(name="get_user_permissions", description="Get user permissions for form")
+async def get_user_permissions(context: ExecutionContext):
+"""Fetch user permissions and roles."""
+
+    # Get user roles from your permission system
+    user_roles = await fetch_user_roles(context, context.user_id)
+
+    return {
+        "is_admin": "admin" in user_roles,
+        "is_manager": "manager" in user_roles,
+        "is_budget_approver": "budget_approver" in user_roles,
+        "user_id": context.user_id,
+        "user_email": context.email
+    }
+
+````
+  </TabItem>
+
+  <TabItem label="Platform Admin Only" icon="approve-check">
+```python
+@workflow(name="get_user_permissions")
+async def get_user_permissions(context: ExecutionContext):
+    """Simple permission check using built-in platform admin flag."""
+    return {
+        "is_admin": context.is_platform_admin,
+        "user_id": context.user_id
+    }
+````
+
+  </TabItem>
+</Tabs>
+
+<Aside type="note">
+    The launch workflow runs when the form loads. Results are stored in
+    `context.workflow.*` and available to all visibility expressions.
+</Aside>
+
+## Configure Form Launch Workflow
+
+<Steps>
+
+1. Open form in builder
+2. Right panel → **Launch Workflow** section
+3. Select `get_user_permissions`
+4. Save form
+
+</Steps>
+
+## Add Fields with Visibility Rules
+
+<Steps>
+
+1. **Add budget approval field**:
+
+    - Field name: `budget_amount`
+    - Type: Number
+    - **Visibility Expression**:
+
+    ```javascript
+    context.workflow.is_budget_approver === true;
+    ```
+
+2. **Add team management field**:
+
+    - Field name: `team_size`
+    - Type: Number
+    - **Visibility Expression**:
+
+    ```javascript
+    context.workflow.is_manager === true;
+    ```
+
+3. **Add system config field**:
+
+    - Field name: `system_config`
+    - Type: JSON
+    - **Visibility Expression**:
+
+    ```javascript
+    context.workflow.is_admin === true;
+    ```
+
+4. **Add basic field** (always visible):
+    - Field name: `request_description`
+    - Type: Text Area
+    - **No visibility expression**
+
+</Steps>
+
+## Test It
+
+<Steps>
+
+1. Save and launch the form
+2. Form loads launch workflow first
+3. Fields appear based on your permissions
+4. Different users see different fields
+
+</Steps>
+
+## Advanced Patterns
+
+### Multiple Permission Checks
+
+Show field if user has ANY of several roles:
 
 ```javascript
-context.field.send_notification === true
+context.workflow.is_admin === true || context.workflow.is_manager === true;
 ```
 
-In form builder:
-1. Select field
-2. **Visibility Expression** → Enter expression
-3. Field shows when expression returns `true`
-
-## Context Object
-
-Access form values via `context.field`:
+Show field if user has ALL roles:
 
 ```javascript
-// Access field by name
-context.field.employee_type
-
-// Compare values
-context.field.employee_type === "full-time"
-
-// Check if exists
-context.field.department !== null
+context.workflow.is_admin === true &&
+    context.workflow.can_approve_budget === true;
 ```
+
+### Department-Scoped Visibility
+
+Check permissions AND department:
+
+<Tabs>
+  <TabItem label="Launch Workflow" icon="seti:python">
+```python
+@workflow(name="get_user_context")
+async def get_user_context(context: ExecutionContext):
+    user = await get_user_details(context, context.user_id)
+
+    return {
+        "is_manager": user.role == "manager",
+        "department": user.department,
+        "permissions": user.permissions
+    }
+
+````
+  </TabItem>
+
+  <TabItem label="Visibility Expression" icon="seti:javascript">
+```javascript
+context.workflow.is_manager === true &&
+context.workflow.department === "engineering"
+````
+
+  </TabItem>
+</Tabs>
+
+### Permission Array Checks
+
+If your permission system returns arrays:
+
+```python
+@workflow(name="get_permissions")
+async def get_permissions(context: ExecutionContext):
+    perms = await fetch_permissions(context, context.user_id)
+
+    return {
+        "permissions": perms,  # ["read", "write", "admin"]
+        "departments": await get_departments(context, context.user_id)
+    }
+```
+
+Check if array contains specific permission:
+
+```javascript
+context.workflow.permissions.includes("admin");
+```
+
+Check if user has access to specific department:
+
+```javascript
+context.workflow.departments.includes("engineering");
+```
+
+Check if user has ANY of several permissions:
+
+```javascript
+["admin", "manager"].some((perm) =>
+    context.workflow.permissions.includes(perm)
+);
+```
+
+### Combine with Field Values
+
+Mix launch workflow data with field values:
+
+```javascript
+// Show field if admin OR if requesting for self
+context.workflow.is_admin === true ||
+    context.field.user_id === context.workflow.user_id;
+```
+
+```javascript
+// Show approval field only for high budget + approver role
+context.field.budget > 10000 && context.workflow.can_approve_budget === true;
+```
+
+### Parameterized Permissions
+
+Pass context to permission check:
+
+<Tabs>
+  <TabItem label="Launch Workflow" icon="seti:python">
+```python
+@workflow(name="check_resource_access")
+@param("resource_id", type="string", required=True)
+async def check_resource_access(context: ExecutionContext, resource_id: str):
+    has_access = await check_access(
+        context,
+        context.user_id,
+        resource_id
+    )
+
+    return {
+        "has_access": has_access,
+        "resource_id": resource_id
+    }
+
+````
+  </TabItem>
+
+  <TabItem label="Form Setup" icon="setting">
+Create hidden field `resource_id`, enable "Allow as Query Parameter", then pass via URL: `/execute/form?resource_id=res-123`
+  </TabItem>
+
+  <TabItem label="Visibility Expression" icon="seti:javascript">
+```javascript
+context.workflow.has_access === true
+````
+
+  </TabItem>
+</Tabs>
 
 ## Common Patterns
 
-### Show if Checkbox Checked
-```javascript
-context.field.is_manager === true
-```
+### Admin-Only Section
 
-### Show if Specific Value
-```javascript
-context.field.employee_type === "full-time"
-```
-
-### Show if Multiple Values
-```javascript
-["full-time", "part-time"].includes(context.field.employee_type)
-```
-
-### Show if NOT Equal
-```javascript
-context.field.status !== "inactive"
-```
-
-### Show if Field Has Value
-```javascript
-context.field.email && context.field.email.length > 0
-```
-
-### Show if Field Empty
-```javascript
-!context.field.phone || context.field.phone.length === 0
-```
-
-## Numeric Comparisons
+Group multiple admin fields with same visibility:
 
 ```javascript
-// Greater than
-context.field.quantity > 10
-
-// Less than or equal
-context.field.age <= 65
-
-// Between range
-context.field.budget >= 1000 && context.field.budget <= 10000
+// Apply to all admin fields
+context.workflow.is_admin === true;
 ```
 
-## String Operations
+### Tiered Access
+
+Show different fields per tier:
+
+```python
+@workflow(name="get_user_tier")
+async def get_user_tier(context: ExecutionContext):
+    user = await get_user(context, context.user_id)
+
+    return {
+        "tier": user.subscription_tier,  # "free", "pro", "enterprise"
+        "features": user.enabled_features
+    }
+```
 
 ```javascript
-// Contains text
-context.field.email.includes("@example.com")
+// Show pro feature field
+context.workflow.tier === "pro" || context.workflow.tier === "enterprise";
 
-// Starts with
-context.field.username.startsWith("admin_")
+// Show enterprise-only field
+context.workflow.tier === "enterprise";
 
-// Ends with
-context.field.domain.endsWith(".com")
-
-// Case insensitive
-context.field.country.toLowerCase() === "usa"
+// Show if specific feature enabled
+context.workflow.features.includes("advanced_reporting");
 ```
 
-## Multiple Conditions (AND)
+### Conditional Required Fields
 
-Show if BOTH conditions true:
-
-```javascript
-context.field.employee_type === "full-time" && context.field.department === "engineering"
-```
-
-## Multiple Conditions (OR)
-
-Show if EITHER condition true:
-
-```javascript
-context.field.role === "admin" || context.field.role === "manager"
-```
-
-## Complex Logic
-
-Combine AND/OR with parentheses:
-
-```javascript
-(context.field.role === "admin" || context.field.role === "manager") &&
-context.field.department === "engineering"
-```
-
-## Array/Multi-Select Fields
-
-Check if array contains value:
-
-```javascript
-// Single value
-context.field.permissions.includes("admin")
-
-// Multiple values
-context.field.permissions.includes("admin") &&
-context.field.permissions.includes("write")
-
-// Any of several
-["admin", "manager"].some(role => context.field.permissions.includes(role))
-```
-
-## Null/Undefined Checks
-
-Always check for null/undefined with optional fields:
-
-```javascript
-// Safe null check
-context.field.manager_email !== null &&
-context.field.manager_email !== undefined &&
-context.field.manager_email.length > 0
-
-// Shorthand
-context.field.manager_email?.length > 0
-
-// Default value
-(context.field.priority || "normal") === "high"
-```
-
-## Date Comparisons
-
-```javascript
-// Check if date is set
-context.field.start_date !== null
-
-// Compare dates (strings in ISO format)
-context.field.end_date > context.field.start_date
-
-// Check if date is in future
-new Date(context.field.event_date) > new Date()
-```
-
-## Cascading Visibility
-
-Create dependent field chains:
-
-**Field 1**: `employee_type` (always visible)
-
-**Field 2**: `full_time_benefits`
-```javascript
-context.field.employee_type === "full-time"
-```
-
-**Field 3**: `health_insurance_plan`
-```javascript
-context.field.employee_type === "full-time" &&
-context.field.full_time_benefits === true
-```
-
-## Dynamic Required Fields
-
-Use visibility to make fields conditionally required:
+Make fields conditionally required:
 
 1. Set field as **not required** in settings
 2. Add visibility rule to show when needed
-3. Add validation in workflow to check if needed value is present
+3. Validate in workflow:
 
 ```python
-@workflow(name="example")
-async def example(context, employee_type: str, benefits: str = None):
-    if employee_type == "full-time" and not benefits:
-        return {"success": False, "error": "Benefits required for full-time"}
-    # ...
+@workflow(name="process_request")
+async def process_request(
+    context: ExecutionContext,
+    request_type: str,
+    approval_notes: str = None
+):
+    # Check if approval notes required
+    if request_type == "high_priority" and not approval_notes:
+        return {
+            "success": False,
+            "error": "Approval notes required for high priority requests"
+        }
+
+    # Process request
+    return {"success": True}
 ```
 
-## Common Use Cases
+## Testing Visibility
 
-### Employee Onboarding
+<Steps>
+
+1. **Test launch workflow** independently:
+
+    - Click **Play** button next to Launch Workflow in form builder
+    - Click **Execute**
+    - Verify returned permissions are correct
+
+2. **Check context in browser**:
+
+    - Open form
+    - Open DevTools → Console
+    - Type: `window.formContext.workflow`
+    - Verify permissions loaded correctly
+
+3. **Test with different users**:
+    - Log in as user with different roles
+    - Verify correct fields appear
+    - Check all permission combinations
+
+</Steps>
+
+## Troubleshooting
+
+**Fields not appearing**: Verify launch workflow returns expected data. Check browser console for `context.workflow` object.
+
+**All fields hidden**: Expression may have syntax error. Check browser console for JavaScript errors.
+
+**Fields show for wrong users**: Review permission logic in launch workflow. Test workflow independently.
+
+## Expression Reference
+
+### Basic Comparisons
+
 ```javascript
-// Show manager field only for management roles
-["manager", "director", "vp"].includes(context.field.role)
+// Equality
+context.workflow.is_admin === true;
+context.workflow.role === "manager";
 
-// Show equipment request for office workers
-context.field.work_location === "office"
+// Inequality
+context.workflow.status !== "inactive";
 
-// Show parking pass for on-site
-context.field.work_location !== "remote"
+// Greater than / less than
+context.workflow.access_level > 5;
 ```
 
-### License Assignment
+### Logical Operators
+
 ```javascript
-// Show license options only if needs license
-context.field.requires_license === true
+// AND - both must be true
+condition1 && condition2;
 
-// Show specific license types based on role
-context.field.role === "developer" && context.field.requires_license === true
+// OR - either can be true
+condition1 || condition2;
+
+// NOT - invert condition
+!context.workflow.is_disabled;
 ```
 
-### Conditional Approvals
+### Array Operations
+
 ```javascript
-// Show approver field only for high budget
-context.field.budget > 10000
+// Check if array contains value
+context.workflow.permissions
+    .includes("admin")
 
-// Require manager approval for sensitive access
-["admin", "privileged"].includes(context.field.access_level)
+    [
+        // Check if any match
+        ("admin", "manager")
+    ].some((role) => context.workflow.roles.includes(role))
+
+    [
+        // Check if all match
+        ("read", "write")
+    ].every((perm) => context.workflow.permissions.includes(perm));
 ```
 
-## Debugging Rules
+### Null Safety
 
-<Aside type="tip">
-**Testing**: Use browser console to test expressions. Open DevTools → Console → Type `context.field` to inspect values.
-</Aside>
+Always check for null/undefined when values might be missing:
 
-### Check Current Values
 ```javascript
-// Add temporary field with this expression to see all values
-JSON.stringify(context.field, null, 2)
+// Safe check
+context.workflow.department && context.workflow.department === "engineering";
+
+// Optional chaining
+context.workflow.department?.length >
+    0(
+        // Default value
+        context.workflow.role || "user"
+    ) ===
+    "admin";
 ```
-
-### Common Errors
-
-❌ **Missing null check**
-```javascript
-context.field.email.includes("@")  // Fails if email is null
-```
-
-✅ **Safe null check**
-```javascript
-context.field.email && context.field.email.includes("@")
-```
-
-❌ **Type mismatch**
-```javascript
-context.field.quantity === "10"  // String vs number
-```
-
-✅ **Correct type**
-```javascript
-context.field.quantity === 10  // Number comparison
-```
-
-## Performance Tips
-
-1. **Keep Rules Simple**: Complex rules slow down form
-2. **Minimize Dependencies**: Don't reference many fields
-3. **Cache Expensive Checks**: Use computed fields if needed
-
-## Testing
-
-Test visibility rules with different scenarios:
-
-1. Fill form with different combinations
-2. Verify fields show/hide correctly
-3. Check required field validation
-4. Test edge cases (null, empty, special chars)
 
 ## Best Practices
 
-1. **Document Complex Rules**: Add comments in form description
-2. **Test All Paths**: Verify every condition shows/hides correctly
-3. **Handle Nulls**: Always check for null/undefined
-4. **Use Meaningful Names**: Clear field names make rules readable
-5. **Keep It Simple**: If rule is too complex, simplify form design
+1. **Keep launch workflows fast** - They block form load
+2. **Return clear permission flags** - Boolean values are easiest to check
+3. **Test all permission combinations** - Verify each role sees correct fields
+4. **Document permission requirements** - Add comments explaining complex rules
+5. **Use meaningful permission names** - `is_budget_approver` vs `perm_ba`
+6. **Handle missing data** - Always check for null/undefined
 
 ## Next Steps
 
-- [Data Providers](/how-to-guides/forms/data-providers) - Dynamic dropdown options
-- [Context Field References](/how-to-guides/forms/context-field-references) - Access form context
-- [Creating Forms Tutorial](/getting-started/creating-forms) - Build complete form
+-   [Cascading Dropdowns](/how-to-guides/forms/cascading-dropdowns) - Dynamic dropdowns based on selections
+-   [HTML Content](/how-to-guides/forms/html-content) - Display dynamic permission-based content
+-   [Startup Workflows](/how-to-guides/forms/startup-workflows) - Complete launch workflow reference

@@ -3,18 +3,24 @@ title: bifrost Module Reference
 description: Complete API reference for decorators, context, and SDK modules
 ---
 
+import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
+
 ## Import Structure
 
 ```python
 # Decorators and context
 from bifrost import workflow, param, data_provider, ExecutionContext
 
-# SDK modules
+# SDK modules (all async except files)
 from bifrost import config, secrets, oauth, files
 
 # Types (optional)
-from bifrost import Organization, Caller, OAuthCredentials
+from bifrost import Organization
 ```
+
+<Aside type="note">
+All SDK modules are **async** and must be awaited, except the `files` module which is synchronous.
+</Aside>
 
 ## Decorators
 
@@ -26,33 +32,47 @@ Registers an async function as an executable workflow.
 @workflow(name: str, description: str, **options)
 ```
 
-**Parameters**:
+<Tabs>
+  <TabItem label="Basic Usage" icon="seti:python">
+```python
+@workflow(
+    name="create_user",
+    description="Create new user"
+)
+async def create_user(context: ExecutionContext, email: str):
+    return {"user_id": "123"}
+```
+  </TabItem>
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `name` | str | Yes | - | Unique identifier (snake_case) |
-| `description` | str | Yes | - | User-facing description |
-| `category` | str | No | "General" | Workflow category |
-| `tags` | list[str] | No | [] | Tags for filtering |
-| `execution_mode` | str | No | "sync" | `"sync"` or `"async"` |
-| `timeout_seconds` | int | No | 300 | Max execution time |
-| `schedule` | str | No | None | Cron expression |
-| `requires_org` | bool | No | True | Needs org context |
-| `expose_in_forms` | bool | No | True | Show in forms |
-| `required_permission` | str | No | "canExecuteWorkflows" | Permission needed |
-| `retry_policy` | dict | No | None | Retry configuration |
-
-**Example**:
+  <TabItem label="With Options" icon="setting">
 ```python
 @workflow(
     name="create_user",
     description="Create new user",
     category="User Management",
-    timeout_seconds=60
+    timeout_seconds=60,
+    schedule="0 9 * * *"  # Daily at 9 AM
 )
-async def create_user(context, email: str):
+async def create_user(context: ExecutionContext, email: str):
     return {"user_id": "123"}
 ```
+  </TabItem>
+</Tabs>
+
+**Parameters**:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Unique identifier (snake_case) |
+| `description` | str | Required | User-facing description |
+| `category` | str | "General" | Workflow category |
+| `tags` | list[str] | [] | Tags for filtering |
+| `execution_mode` | str | "sync" | `"sync"` or `"async"` |
+| `timeout_seconds` | int | 300 | Max execution time |
+| `schedule` | str | None | Cron expression |
+| `endpoint_enabled` | bool | False | Expose as HTTP endpoint |
+| `allowed_methods` | list[str] | ["POST"] | Allowed HTTP methods |
+| `public_endpoint` | bool | False | Skip authentication |
 
 ### @param
 
@@ -64,28 +84,69 @@ Defines a workflow parameter.
 
 **Parameters**:
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `name` | str | Yes | - | Parameter name |
-| `type` | str | Yes | - | Parameter type (see types below) |
-| `label` | str | No | Titlecased name | Display label |
-| `required` | bool | No | False | Is required |
-| `default_value` | Any | No | None | Default value |
-| `help_text` | str | No | None | Help tooltip |
-| `validation` | dict | No | None | Validation rules |
-| `data_provider` | str | No | None | Data provider name |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Parameter name (must match function arg) |
+| `type` | str | Required | Parameter type (see types below) |
+| `label` | str | Titlecased name | Display label |
+| `required` | bool | False | Is required |
+| `default_value` | Any | None | Default value |
+| `help_text` | str | None | Help tooltip |
+| `validation` | dict | None | Validation rules |
+| `data_provider` | str | None | Data provider name |
 
-**Types**: `string`, `int`, `float`, `bool`, `email`, `json`, `list`
+**Available Types**:
 
-**Validation**:
+<Tabs>
+  <TabItem label="Text" icon="document">
+    <ul>
+      <li><code>string</code> - Text input</li>
+      <li><code>email</code> - Email with validation</li>
+      <li><code>textarea</code> - Multi-line text</li>
+    </ul>
+  </TabItem>
+
+  <TabItem label="Numbers" icon="hashtag">
+    <ul>
+      <li><code>number</code> - Numeric input</li>
+      <li><code>int</code> - Integer input</li>
+      <li><code>float</code> - Decimal number</li>
+    </ul>
+  </TabItem>
+
+  <TabItem label="Selection" icon="list">
+    <ul>
+      <li><code>boolean</code> - Checkbox</li>
+      <li><code>select</code> - Single-select dropdown</li>
+      <li><code>multi_select</code> - Multiple-select dropdown</li>
+    </ul>
+  </TabItem>
+
+  <TabItem label="Date/Time" icon="calendar">
+    <ul>
+      <li><code>date</code> - Date picker (YYYY-MM-DD)</li>
+      <li><code>datetime</code> - Date + time picker</li>
+    </ul>
+  </TabItem>
+
+  <TabItem label="Data" icon="open-folder">
+    <ul>
+      <li><code>json</code> - JSON data</li>
+      <li><code>list</code> - Array/list</li>
+      <li><code>file</code> - File upload</li>
+    </ul>
+  </TabItem>
+</Tabs>
+
+**Validation Rules**:
 
 | Rule | Applies To | Description |
 |------|-----------|-------------|
 | `min_length` | string | Minimum length |
 | `max_length` | string | Maximum length |
 | `pattern` | string | Regex pattern |
-| `min` | int, float | Minimum value |
-| `max` | int, float | Maximum value |
+| `min` | number | Minimum value |
+| `max` | number | Maximum value |
 | `enum` | string | Allowed values |
 
 **Example**:
@@ -94,6 +155,7 @@ Defines a workflow parameter.
     "email",
     type="email",
     required=True,
+    help_text="User's email address",
     validation={"pattern": r"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"}
 )
 ```
@@ -108,12 +170,12 @@ Registers a function that provides dynamic options.
 
 **Parameters**:
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `name` | str | Yes | - | Unique identifier |
-| `description` | str | Yes | - | What it provides |
-| `category` | str | No | "General" | Category |
-| `cache_ttl_seconds` | int | No | 300 | Cache duration (0 = no cache) |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Unique identifier |
+| `description` | str | Required | What it provides |
+| `category` | str | "General" | Category |
+| `cache_ttl_seconds` | int | 300 | Cache duration (0 = no cache) |
 
 **Return Format**:
 ```python
@@ -133,7 +195,7 @@ Registers a function that provides dynamic options.
     description="List departments",
     cache_ttl_seconds=600
 )
-async def get_departments(context):
+async def get_departments(context: ExecutionContext):
     return [
         {"label": "Engineering", "value": "eng"},
         {"label": "Sales", "value": "sales"}
@@ -168,11 +230,17 @@ async def my_workflow(context: ExecutionContext):
     is_admin = context.is_platform_admin
 ```
 
+See [ExecutionContext API](/sdk-reference/sdk/context-api) for complete reference.
+
 ## SDK Modules
 
 ### config
 
 Configuration management with org scoping.
+
+<Aside type="caution">
+All config methods are **async** and must be awaited.
+</Aside>
 
 **Functions**:
 
@@ -180,139 +248,264 @@ Configuration management with org scoping.
 |----------|-----------|---------|-------------|
 | `get(key, default=None)` | key: str, default: Any | Any | Get config value |
 | `set(key, value)` | key: str, value: Any | None | Set config value |
-| `has(key)` | key: str | bool | Check if exists |
-| `list()` | - | list[dict] | List all configs |
-| `delete(key)` | key: str | None | Delete config |
+| `list()` | - | dict[str, Any] | List all configs |
+| `delete(key)` | key: str | bool | Delete config (returns success) |
 
-**Example**:
+<Tabs>
+  <TabItem label="Get Config" icon="approve-check">
 ```python
 from bifrost import config
 
-api_url = config.get("api_url", default="https://api.example.com")
-config.set("api_url", "https://new-api.example.com")
+# Get with default
+api_url = await config.get("api_url", default="https://api.example.com")
+
+# Check if exists first
+if await config.get("api_key"):
+    api_key = await config.get("api_key")
 ```
+  </TabItem>
+
+  <TabItem label="Set Config" icon="pencil">
+```python
+from bifrost import config
+
+# Set configuration value
+await config.set("api_url", "https://new-api.example.com")
+```
+  </TabItem>
+
+  <TabItem label="List All" icon="list">
+```python
+from bifrost import config
+
+# Get all configurations for current org
+all_configs = await config.list()
+for key, value in all_configs.items():
+    print(f"{key}: {value}")
+```
+  </TabItem>
+</Tabs>
 
 ### secrets
 
 Azure Key Vault secret management.
 
+<Aside type="caution">
+All secrets methods are **async** and must be awaited.
+</Aside>
+
 **Functions**:
 
 | Function | Parameters | Returns | Description |
 |----------|-----------|---------|-------------|
-| `get(key)` | key: str | str | Get secret value |
+| `get(key)` | key: str | str \| None | Get secret value |
 | `set(key, value)` | key: str, value: str | None | Store secret |
-| `delete(key)` | key: str | None | Delete secret |
+| `list()` | - | list[str] | List secret keys (not values) |
+| `delete(key)` | key: str | bool | Delete secret (returns success) |
 
-**Scoping**: Secrets automatically scoped as `{org_id}--{key}`
+**Scoping**: Secrets automatically scoped as `{org_id}--{key}` in Key Vault.
 
-**Example**:
+<Tabs>
+  <TabItem label="Get Secret" icon="approve-check">
 ```python
 from bifrost import secrets
 
-api_key = secrets.get("api_key")
-secrets.set("api_key", "new_secret_value")
+# Get secret from Key Vault
+api_key = await secrets.get("api_key")
+
+if api_key:
+    # Use in API call
+    headers = {"Authorization": f"Bearer {api_key}"}
 ```
+  </TabItem>
+
+  <TabItem label="Set Secret" icon="pencil">
+```python
+from bifrost import secrets
+
+# Store secret in Key Vault
+await secrets.set("api_key", "new_secret_value")
+```
+  </TabItem>
+
+  <TabItem label="List Keys" icon="list">
+```python
+from bifrost import secrets
+
+# List secret keys (values not returned for security)
+secret_keys = await secrets.list()
+for key in secret_keys:
+    print(f"Secret exists: {key}")
+```
+  </TabItem>
+</Tabs>
 
 ### oauth
 
-OAuth connection management.
+OAuth token management.
+
+<Aside type="caution">
+All oauth methods are **async** and must be awaited.
+</Aside>
 
 **Functions**:
 
 | Function | Parameters | Returns | Description |
 |----------|-----------|---------|-------------|
-| `get_oauth_connection(name)` | name: str | OAuthCredentials | Get credentials |
-| `create_connection(...)` | See parameters | dict | Create connection |
-| `delete_connection(name)` | name: str | None | Delete connection |
+| `get_token(provider)` | provider: str | dict \| None | Get OAuth token data |
+| `set_token(provider, token_data)` | provider: str, token_data: dict | None | Store token |
+| `list_providers()` | - | list[str] | List provider names |
+| `delete_token(provider)` | provider: str | bool | Delete token (returns success) |
+| `refresh_token(provider)` | provider: str | dict | Refresh and return new token |
 
-**OAuthCredentials**:
+**Token Data Structure**:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `connection_name` | str | Connection identifier |
-| `access_token` | str | Current access token |
-| `token_type` | str | Token type (usually "Bearer") |
-| `expires_at` | datetime | Token expiration |
-| `refresh_token` | str \| None | Refresh token |
-| `scopes` | str | Granted scopes |
+The `get_token()` method returns a dictionary with:
 
-**Methods**:
-- `is_expired() -> bool` - Check if token expired
-- `get_auth_header() -> str` - Get "Bearer &#123;token&#125;" header
+```python
+{
+    "access_token": str,      # Current access token
+    "refresh_token": str,     # Refresh token (if available)
+    "expires_at": int,        # Unix timestamp
+    "token_type": str,        # Usually "Bearer"
+    "scope": str              # Granted scopes
+}
+```
 
-**Example**:
+<Tabs>
+  <TabItem label="Get Token" icon="approve-check">
+```python
+from bifrost import oauth
+import aiohttp
+
+# Get OAuth token
+token_data = await oauth.get_token("microsoft")
+if not token_data:
+    raise ValueError("Microsoft OAuth not configured")
+
+# Use in API call
+url = "https://graph.microsoft.com/v1.0/me"
+headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+
+async with aiohttp.ClientSession() as session:
+    async with session.get(url, headers=headers) as resp:
+        return await resp.json()
+```
+  </TabItem>
+
+  <TabItem label="Refresh Token" icon="refresh">
 ```python
 from bifrost import oauth
 
-creds = oauth.get_oauth_connection("microsoft-graph")
-headers = {"Authorization": creds.get_auth_header()}
+# Refresh token if expired
+token_data = await oauth.get_token("microsoft")
+
+if token_data and token_data["expires_at"] < time.time():
+    # Token expired, refresh it
+    token_data = await oauth.refresh_token("microsoft")
 ```
+  </TabItem>
+
+  <TabItem label="List Providers" icon="list">
+```python
+from bifrost import oauth
+
+# List all configured OAuth providers
+providers = await oauth.list_providers()
+for provider in providers:
+    print(f"Provider configured: {provider}")
+```
+  </TabItem>
+</Tabs>
+
+<Aside type="note">
+Bifrost automatically refreshes expired tokens when using `get_token()`. Manual refresh is rarely needed.
+</Aside>
 
 ### files
 
-File operations.
+File operations (synchronous).
+
+<Aside type="tip">
+The files module is **synchronous** - no await needed!
+</Aside>
 
 **Functions**:
 
 | Function | Parameters | Returns | Description |
 |----------|-----------|---------|-------------|
-| `read(path)` | path: str | str \| bytes | Read file |
-| `write(path, content)` | path: str, content: str \| bytes | None | Write file |
-| `list_dir(path)` | path: str | list[str] | List directory |
+| `read(path)` | path: str | str | Read file as text |
+| `read_bytes(path)` | path: str | bytes | Read file as bytes |
+| `write(path, content)` | path: str, content: str | None | Write text file |
+| `write_bytes(path, content)` | path: str, content: bytes | None | Write binary file |
+| `list(directory)` | directory: str | list[str] | List directory contents |
 | `delete(path)` | path: str | None | Delete file |
+| `exists(path)` | path: str | bool | Check if file exists |
 
-**Example**:
+**Location Parameter**:
+
+All functions accept optional `location` parameter:
+- `"workspace"` (default) - Persistent workspace files
+- `"temp"` - Temporary files cleared after execution
+
+<Tabs>
+  <TabItem label="Read File" icon="document">
 ```python
 from bifrost import files
 
+# Read text file (no await!)
+content = files.read("data/config.json")
+
+# Read binary file
+image_bytes = files.read_bytes("images/logo.png")
+```
+  </TabItem>
+
+  <TabItem label="Write File" icon="pencil">
+```python
+from bifrost import files
+
+# Write CSV file
 files.write("data/output.csv", "id,name\n1,Alice\n")
-content = files.read("data/output.csv")
-items = files.list_dir("data/")
+
+# Write binary file
+files.write_bytes("images/chart.png", image_data)
 ```
+  </TabItem>
 
-## Type Definitions
-
-### Organization
-
+  <TabItem label="List & Check" icon="list">
 ```python
-@dataclass
-class Organization:
-    id: str
-    name: str
-    is_active: bool
+from bifrost import files
+
+# List directory
+items = files.list("data/")
+for item in items:
+    print(f"Found: {item}")
+
+# Check if exists
+if files.exists("data/config.json"):
+    config = files.read("data/config.json")
 ```
+  </TabItem>
 
-### Caller
-
+  <TabItem label="Temp Files" icon="clock">
 ```python
-@dataclass
-class Caller:
-    user_id: str
-    email: str
-    name: str
+from bifrost import files
+
+# Write to temp location
+files.write("temp_report.html", html_content, location="temp")
+
+# Temp files are automatically cleaned up after execution
 ```
-
-### Enums
-
-**ExecutionStatus**:
-- `PENDING`
-- `RUNNING`
-- `SUCCESS`
-- `COMPLETED_WITH_ERRORS`
-- `FAILED`
-
-**ConfigType**:
-- `STRING`
-- `SECRET_REF`
-- `JSON`
+  </TabItem>
+</Tabs>
 
 ## Complete Example
 
 ```python
 from bifrost import (
     workflow, param, data_provider, ExecutionContext,
-    config, secrets, oauth
+    config, secrets, oauth, files
 )
 import aiohttp
 import logging
@@ -355,9 +548,9 @@ async def create_user(
     })
 
     try:
-        # Get config and secrets
-        api_url = config.get("api_url")
-        api_key = secrets.get("api_key")
+        # Get config and secrets (both async!)
+        api_url = await config.get("api_url")
+        api_key = await secrets.get("api_key")
 
         # Call external API
         headers = {"Authorization": f"Bearer {api_key}"}
@@ -371,6 +564,13 @@ async def create_user(
             ) as resp:
                 if resp.status == 201:
                     user = await resp.json()
+
+                    # Write to file (synchronous!)
+                    files.write(
+                        f"users/{user['id']}.json",
+                        json.dumps(user, indent=2)
+                    )
+
                     logger.info(f"User created: {user['id']}")
                     return {"success": True, "user_id": user["id"]}
                 else:
@@ -383,18 +583,38 @@ async def create_user(
         return {"success": False, "error": str(e)}
 ```
 
+## Type Definitions
+
+### Organization
+
+```python
+@dataclass
+class Organization:
+    id: str
+    name: str
+    is_active: bool
+```
+
+### Enums
+
+**ExecutionStatus**:
+- `PENDING` - Queued for execution
+- `RUNNING` - Currently executing
+- `SUCCESS` - Completed successfully
+- `FAILED` - Failed with error
+
 ## Best Practices
 
 1. **Type Hints**: Always use `ExecutionContext` type hint
-2. **Logging**: Use `logging.getLogger(__name__)`
-3. **Error Handling**: Return error states, don't raise
-4. **Validation**: Use `@param` validation, validate in code too
-5. **Secrets**: Never log or return secret values
-6. **Caching**: Set appropriate cache TTL for data providers
-7. **Async/Await**: Always use async functions and await calls
+2. **Async/Await**: Remember config, secrets, and oauth are async
+3. **Files Are Sync**: No await for files module
+4. **Logging**: Use `logging.getLogger(__name__)`
+5. **Error Handling**: Return error states, log with context
+6. **Secrets**: Never log or return secret values
+7. **Caching**: Set appropriate cache TTL for data providers
 
 ## Next Steps
 
-- [Context API Reference](/sdk-reference/sdk/context-api) - Detailed context properties
+- [Context API Reference](/sdk-reference/sdk/context-api) - Detailed ExecutionContext properties
 - [Decorators Reference](/sdk-reference/sdk/decorators) - Advanced decorator usage
 - [Writing Workflows Guide](/how-to-guides/workflows/writing-workflows) - Practical guide

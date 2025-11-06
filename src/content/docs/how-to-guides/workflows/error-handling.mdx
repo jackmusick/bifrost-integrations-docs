@@ -3,18 +3,23 @@ title: Error Handling
 description: Graceful error handling patterns for Bifrost workflows
 ---
 
-import { Aside } from "@astrojs/starlight/components";
+import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Philosophy
 
-**Workflows should rarely raise exceptions**. Instead, return error states that allow the platform to:
-- Log execution results
-- Show meaningful errors to users
-- Track partial success
-- Enable retry logic
+The execution engine automatically catches and handles exceptions. You have two patterns:
 
-## Basic Pattern
+1. **Raise exceptions** for failures → execution status: `FAILED`
+2. **Return `{"success": False}`** for partial failures → execution status: `COMPLETED_WITH_ERRORS`
 
+<Aside type="tip">
+Most workflows should let exceptions bubble naturally. Only return `{"success": False}` when you need to indicate partial success.
+</Aside>
+
+## Basic Patterns
+
+<Tabs>
+  <TabItem label="Let Exceptions Bubble" icon="approve-check">
 ```python
 from bifrost import workflow, ExecutionContext
 import logging
@@ -23,81 +28,111 @@ logger = logging.getLogger(__name__)
 
 @workflow(name="create_user", description="Create user")
 async def create_user(context: ExecutionContext, email: str):
-    try:
-        user = await api.create_user(email)
-        logger.info(f"Created user: {user.id}")
-        return {"success": True, "user_id": user.id}
-
-    except Exception as e:
-        logger.error(f"Failed: {str(e)}", extra={"email": email})
-        return {"success": False, "error": str(e)}
+    # Exception automatically caught and logged
+    user = await api.create_user(email)
+    logger.info(f"Created user: {user.id}")
+    return {"user_id": user.id}
 ```
+  </TabItem>
+
+  <TabItem label="Partial Success" icon="warning">
+```python
+@workflow(name="bulk_create", description="Create multiple users")
+async def bulk_create(context: ExecutionContext, emails: list):
+    results = {"created": [], "failed": []}
+
+    for email in emails:
+        try:
+            user = await api.create_user(email)
+            results["created"].append(user.id)
+        except Exception as e:
+            results["failed"].append({"email": email, "error": str(e)})
+
+    # Indicate partial failure
+    return {
+        "success": len(results["failed"]) == 0,
+        "created": results["created"],
+        "failed": results["failed"]
+    }
+```
+  </TabItem>
+</Tabs>
 
 ## Validate Early
 
-Fail fast with input validation:
+Fail fast with input validation before processing:
 
 ```python
 @workflow(name="send_email")
+@param("email", type="email", required=True)
 async def send_email(context, email: str, subject: str):
-    # Validate inputs before processing
-    if not email or "@" not in email:
-        return {"success": False, "error": "Invalid email"}
-
+    # Validate inputs
     if not subject:
-        return {"success": False, "error": "Subject required"}
+        raise ValueError("Subject is required")
 
     # Proceed with valid inputs
-    try:
-        await send(email, subject)
-        return {"success": True}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    await send(email, subject)
+    return {"sent": True}
 ```
+
+<Aside type="note">
+**Validation in @param**: Use `@param` validation rules when possible to fail before workflow execution starts.
+</Aside>
 
 ## Handle Specific Exceptions
 
-Provide context-specific errors:
+Provide context-specific error handling:
 
 ```python
 import aiohttp
+from aiohttp import ClientError, ClientResponseError
 
 @workflow(name="fetch_data")
 async def fetch_data(context, url: str):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
-                if resp.status == 404:
-                    return {"success": False, "error": "Not found"}
-                if resp.status >= 500:
-                    return {"success": False, "error": "Server error"}
+                resp.raise_for_status()
+                return {"data": await resp.json()}
 
-                return {"success": True, "data": await resp.json()}
+    except ClientResponseError as e:
+        if e.status == 404:
+            raise ValueError(f"Resource not found: {url}")
+        elif e.status >= 500:
+            raise RuntimeError(f"Server error: {e.status}")
+        raise
 
-    except aiohttp.ClientError as e:
-        return {"success": False, "error": "Network error"}
+    except ClientError:
+        raise ConnectionError("Network error occurred")
 ```
 
-## Partial Success
+## Partial Success Tracking
 
 Track progress in bulk operations:
 
 ```python
-@workflow(name="bulk_create")
-async def bulk_create(context, items: list):
-    results = {"created": [], "failed": []}
+@workflow(name="bulk_process")
+async def bulk_process(context, items: list):
+    results = {"processed": [], "failed": []}
 
+    # Process each item and track results
     for item in items:
         try:
-            new_item = await api.create(item)
-            results["created"].append(new_item)
+            result = await api.process(item)
+            results["processed"].append(result)
+            logger.info(f"Processed item {item.id}")
         except Exception as e:
-            results["failed"].append({"item": item, "error": str(e)})
+            logger.error(f"Failed item {item.id}: {e}")
+            results["failed"].append({
+                "item_id": item.id,
+                "error": str(e)
+            })
 
+    # Return comprehensive results
     return {
         "success": len(results["failed"]) == 0,
         "total": len(items),
-        "created": len(results["created"]),
+        "processed": len(results["processed"]),
         "failed": len(results["failed"]),
         "details": results
     }
@@ -105,34 +140,55 @@ async def bulk_create(context, items: list):
 
 ## Retry with Backoff
 
-Implement exponential backoff for transient errors:
+For transient errors, use the built-in retry policy or implement custom logic:
 
+<Tabs>
+  <TabItem label="Decorator Retry" icon="setting">
+```python
+@workflow(
+    name="api_call",
+    retry_policy={
+        "max_attempts": 3,
+        "backoff_seconds": 5
+    }
+)
+async def api_call(context, endpoint: str):
+    # Automatic retry on failure
+    return await api.call(endpoint)
+```
+  </TabItem>
+
+  <TabItem label="Custom Retry" icon="seti:code">
 ```python
 import asyncio
 
-@workflow(name="api_with_retry")
-async def api_with_retry(context, endpoint: str):
+@workflow(name="custom_retry")
+async def custom_retry(context, endpoint: str):
     max_retries = 3
     backoff = 1
 
     for attempt in range(max_retries):
         try:
-            return {"success": True, "data": await api.call(endpoint)}
+            result = await api.call(endpoint)
+            return {"success": True, "data": result}
 
-        except TransientError:
+        except TransientError as e:
             if attempt < max_retries - 1:
+                logger.warning(f"Attempt {attempt + 1} failed, retrying...")
                 await asyncio.sleep(backoff)
                 backoff *= 2
             else:
-                return {"success": False, "error": "Max retries exceeded"}
+                raise RuntimeError(f"Max retries exceeded: {e}")
 
-        except PermanentError as e:
-            return {"success": False, "error": str(e)}
+        except PermanentError:
+            raise  # Don't retry permanent errors
 ```
+  </TabItem>
+</Tabs>
 
 ## Resource Cleanup
 
-Always clean up with try/finally:
+Always clean up resources with try/finally:
 
 ```python
 @workflow(name="process_with_lock")
@@ -141,10 +197,7 @@ async def process_with_lock(context, resource_id: str):
     try:
         lock = await acquire_lock(resource_id)
         result = await process(resource_id)
-        return {"success": True, "result": result}
-
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"result": result}
 
     finally:
         if lock:
@@ -153,135 +206,164 @@ async def process_with_lock(context, resource_id: str):
 
 ## OAuth Token Handling
 
-Bifrost auto-refreshes OAuth tokens:
+OAuth tokens are automatically refreshed by the engine:
 
 ```python
 from bifrost import oauth
 
 @workflow(name="graph_call")
 async def graph_call(context, user_id: str):
-    try:
-        # Automatically refreshes expired tokens
-        creds = oauth.get_oauth_connection("microsoft_graph")
-        headers = {"Authorization": creds.get_auth_header()}
+    # Get OAuth token (automatically refreshes if expired)
+    token_data = await oauth.get_token("microsoft")
 
-        user = await graph.get_user(user_id, headers=headers)
-        return {"success": True, "user": user}
+    if not token_data:
+        raise ValueError("Microsoft OAuth not configured")
 
-    except oauth.OAuthConnectionNotFound:
-        return {
-            "success": False,
-            "error": "OAuth not configured",
-            "action": "Set up Microsoft Graph connection"
-        }
+    headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+    user = await graph_api.get_user(user_id, headers=headers)
+
+    return {"user": user}
 ```
 
+<Aside type="caution">
+Always check if `oauth.get_token()` returns `None` before using the token.
+</Aside>
+
 ## Logging Best Practices
+
+Log at appropriate levels for visibility:
 
 ```python
 logger = logging.getLogger(__name__)
 
 @workflow(name="example")
 async def example(context, param: str):
-    # Log start with context
-    logger.info("Started", extra={
-        "org_id": context.org_id,
-        "user_id": context.user_id,
-        "param": param
-    })
+    # Debug: Hidden from users, for developers only
+    logger.debug(f"Processing param: {param}")
+
+    # Info: Visible to users, progress updates
+    logger.info(f"Started processing for org {context.org_id}")
 
     try:
         result = await do_work(param)
-        logger.info("Completed", extra={"result_size": len(result)})
-        return {"success": True, "result": result}
+        logger.info(f"Completed successfully")
+        return {"result": result}
 
     except Exception as e:
-        # Log with full context
-        logger.error("Failed", extra={
-            "error": str(e),
-            "param": param
-        }, exc_info=True)
-        return {"success": False, "error": str(e)}
+        # Error: Visible to users, includes details
+        logger.error(f"Failed to process: {e}", exc_info=True)
+        raise
 ```
+
+<Aside type="tip">
+**Log Visibility**: `logger.debug()` is hidden from users. All other levels (`info`, `warning`, `error`) are visible in the UI.
+</Aside>
 
 ## Error Response Format
 
-Use consistent structure:
+Use consistent structure for partial failures:
 
+<Tabs>
+  <TabItem label="Success" icon="approve-check">
 ```python
-# Success
 {
     "success": True,
-    "data": {...}
-}
-
-# Error
-{
-    "success": False,
-    "error": "User-friendly message",
-    "error_code": "USER_NOT_FOUND",
-    "action": "Verify and retry"
-}
-
-# Partial Success
-{
-    "success": False,
-    "message": "8/10 completed",
-    "completed": [...],
-    "failed": [...]
+    "user_id": "123",
+    "email": "user@example.com"
 }
 ```
+  </TabItem>
 
-<Aside type="caution">
-**When to Raise**: Only raise exceptions for unrecoverable platform bugs, not business logic errors.
-</Aside>
+  <TabItem label="Partial Failure" icon="warning">
+```python
+{
+    "success": False,
+    "message": "8 of 10 users created",
+    "created": [{"id": "1"}, {"id": "2"}],
+    "failed": [
+        {"email": "invalid", "error": "Invalid format"}
+    ]
+}
+```
+  </TabItem>
+</Tabs>
 
 ## Common Patterns
 
-### ✅ Return Error State
+### Validation Errors
+
 ```python
-if not user_exists:
-    return {"success": False, "error": "User not found"}
+# ✅ Raise for invalid input
+if not user_id or not isinstance(user_id, str):
+    raise ValueError("user_id must be a non-empty string")
+
+# ✅ Or use @param validation
+@param("user_id", type="string", required=True, validation={"min_length": 1})
 ```
 
-### ❌ Don't Raise for Business Logic
-```python
-# Don't do this
-if not user_exists:
-    raise Exception("User not found")
-```
+### External API Calls
 
-### ✅ Try/Except External Calls
 ```python
+# ✅ Let exceptions bubble for API errors
 try:
-    await external_api.call()
+    result = await external_api.call()
 except ApiError as e:
-    return {"success": False, "error": str(e)}
+    # Log context and re-raise
+    logger.error(f"API call failed: {e}", extra={"endpoint": endpoint})
+    raise
 ```
 
-### ✅ Raise for Platform Bugs
+### Resource Not Found
+
 ```python
+# ✅ Raise for missing resources
+user = await get_user(user_id)
+if not user:
+    raise ValueError(f"User not found: {user_id}")
+```
+
+### Platform Bugs
+
+```python
+# ✅ Raise for unexpected conditions
 if context is None:
-    raise RuntimeError("Context is None - platform bug!")
+    raise RuntimeError("ExecutionContext is None - platform bug!")
 ```
 
 ## Testing Error Paths
 
-Test both success and failures:
+Test both success and failure scenarios:
 
 ```python
+import pytest
+
 async def test_create_user_success():
     result = await create_user(context, "test@example.com")
-    assert result["success"] is True
+    assert result["user_id"]
 
 async def test_create_user_invalid_email():
-    result = await create_user(context, "invalid")
+    with pytest.raises(ValueError, match="Invalid email"):
+        await create_user(context, "invalid")
+
+async def test_bulk_create_partial_failure():
+    result = await bulk_create(context, ["valid@test.com", "invalid"])
     assert result["success"] is False
-    assert "email" in result["error"].lower()
+    assert len(result["created"]) == 1
+    assert len(result["failed"]) == 1
 ```
+
+## When to Use Each Pattern
+
+- **Raise exceptions**: Total failure, invalid input, external API errors
+- **Return `{"success": False}`**: Partial success in bulk operations
+- **Both**: Log errors, re-raise for critical issues
+
+<Aside type="note">
+**Default to Exceptions**: Let the engine handle error capture and logging. Only use `success: False` when tracking partial progress matters.
+</Aside>
 
 ## Next Steps
 
 - [Writing Workflows](/how-to-guides/workflows/writing-workflows) - Complete workflow guide
 - [Using Decorators](/how-to-guides/workflows/using-decorators) - Advanced patterns
-- [Testing Guide](/how-to-guides/local-dev/testing) - Test workflows
+- [Logging Guide](/how-to-guides/workflows/writing-workflows#logging) - Log visibility

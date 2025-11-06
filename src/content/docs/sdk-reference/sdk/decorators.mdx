@@ -3,7 +3,13 @@ title: Decorators Reference
 description: Complete reference for @workflow, @param, and @data_provider decorators
 ---
 
+import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
+
 Decorators are the foundation of Bifrost's discovery system. They register workflows and data providers automatically when your modules are imported.
+
+<Aside type="note">
+Decorators are applied **bottom-to-top**. This means the decorator closest to the function is applied first, and the decorator at the top is applied last.
+</Aside>
 
 ## @workflow Decorator
 
@@ -40,15 +46,15 @@ Registers an async function as a discoverable workflow.
 | `timeout_seconds` | int | 300 | Maximum execution time in seconds |
 | `retry_policy` | dict | None | Retry configuration |
 | `schedule` | str | None | Cron schedule for scheduled execution |
-| `endpoint_enabled` | bool | False | Expose as HTTP endpoint at /api/endpoints/{name} |
+| `endpoint_enabled` | bool | False | Expose as HTTP endpoint at /api/endpoints/\{name\} |
 | `allowed_methods` | list | None | HTTP methods allowed (GET, POST, etc) |
 | `disable_global_key` | bool | False | Require workflow-specific API key |
 | `public_endpoint` | bool | False | Skip authentication for webhooks |
 
 ### Examples
 
-**Basic workflow:**
-
+<Tabs>
+  <TabItem label="Basic" icon="seti:python">
 ```python
 @workflow(
     name="send_email",
@@ -58,9 +64,9 @@ async def send_email(context, recipient: str):
     # Implementation
     pass
 ```
+  </TabItem>
 
-**Scheduled workflow:**
-
+  <TabItem label="Scheduled" icon="clock">
 ```python
 @workflow(
     name="daily_report",
@@ -72,9 +78,9 @@ async def daily_report(context):
     # Implementation
     pass
 ```
+  </TabItem>
 
-**With retry policy:**
-
+  <TabItem label="With Retry" icon="refresh">
 ```python
 @workflow(
     name="sync_with_external_api",
@@ -89,6 +95,23 @@ async def sync_with_external_api(context):
     # Implementation
     pass
 ```
+  </TabItem>
+
+  <TabItem label="HTTP Endpoint" icon="link">
+```python
+@workflow(
+    name="handle_webhook",
+    description="Handle incoming webhook",
+    endpoint_enabled=True,
+    allowed_methods=["POST"],
+    public_endpoint=True  # No auth required
+)
+async def handle_webhook(context, payload: dict):
+    # Implementation
+    pass
+```
+  </TabItem>
+</Tabs>
 
 ## @param Decorator
 
@@ -137,8 +160,8 @@ Defines a parameter for a workflow or data provider.
 
 ### Examples
 
-**Required string with validation:**
-
+<Tabs>
+  <TabItem label="Email" icon="email">
 ```python
 @param(
     "email",
@@ -148,9 +171,9 @@ Defines a parameter for a workflow or data provider.
     help_text="Enter a valid email address"
 )
 ```
+  </TabItem>
 
-**Select with data provider:**
-
+  <TabItem label="Select" icon="list">
 ```python
 @param(
     "department",
@@ -160,9 +183,9 @@ Defines a parameter for a workflow or data provider.
     data_provider="get_departments"
 )
 ```
+  </TabItem>
 
-**Number with validation:**
-
+  <TabItem label="Number" icon="hashtag">
 ```python
 @param(
     "user_count",
@@ -176,9 +199,9 @@ Defines a parameter for a workflow or data provider.
     }
 )
 ```
+  </TabItem>
 
-**With default value:**
-
+  <TabItem label="Boolean" icon="approve-check">
 ```python
 @param(
     "notify_admin",
@@ -187,9 +210,9 @@ Defines a parameter for a workflow or data provider.
     default_value=True
 )
 ```
+  </TabItem>
 
-**Multi-select:**
-
+  <TabItem label="Multi-Select" icon="list">
 ```python
 @param(
     "permissions",
@@ -199,6 +222,8 @@ Defines a parameter for a workflow or data provider.
     data_provider="get_available_permissions"
 )
 ```
+  </TabItem>
+</Tabs>
 
 ### Validation Rules
 
@@ -241,8 +266,8 @@ Registers a function that provides dynamic options for form fields.
 
 ### Examples
 
-**Basic data provider:**
-
+<Tabs>
+  <TabItem label="Basic" icon="seti:python">
 ```python
 @data_provider(
     name="get_active_users",
@@ -255,9 +280,9 @@ async def get_active_users(context):
         {"label": "Bob Johnson", "value": "bob@example.com"}
     ]
 ```
+  </TabItem>
 
-**With parameters:**
-
+  <TabItem label="With Parameters" icon="setting">
 ```python
 @data_provider(
     name="get_users_by_department",
@@ -273,9 +298,9 @@ async def get_users_by_department(context, department: str):
         for user in users
     ]
 ```
+  </TabItem>
 
-**With error handling:**
-
+  <TabItem label="Error Handling" icon="warning">
 ```python
 import logging
 
@@ -298,10 +323,18 @@ async def get_api_endpoints(context):
         logger.error(f"Failed to fetch endpoints: {str(e)}")
         return []  # Return empty list on error
 ```
+  </TabItem>
+</Tabs>
+
+<Aside type="tip">
+Data providers with `cache_ttl_seconds > 0` are cached. Results are reused until the cache expires, reducing API calls and improving form load times.
+</Aside>
 
 ## Decorator Stacking
 
-Multiple decorators can be stacked. Decorators are applied from bottom to top:
+<Aside type="caution">
+Multiple decorators can be stacked. Decorators are applied **bottom-to-top** - the decorator closest to the function is applied first.
+</Aside>
 
 ```python
 @workflow(name="create_user", description="Create a new user")
@@ -312,15 +345,13 @@ async def create_user(context, email: str, first_name: str, last_name: str):
     pass
 ```
 
-**Important**: Parameters are processed in reverse order (bottom-to-top), so they appear in the correct order in the workflow.
+Parameters appear in UI in the order they're declared (last_name, first_name, email).
 
 ## Return Values
 
-Workflows and data providers must return specific formats:
-
-### Workflow Return
-
-Any JSON-serializable value:
+<Tabs>
+  <TabItem label="Workflow" icon="seti:python">
+Workflows return any JSON-serializable value:
 
 ```python
 @workflow(name="example")
@@ -331,10 +362,10 @@ async def example(context):
         "data": [1, 2, 3]
     }
 ```
+  </TabItem>
 
-### Data Provider Return
-
-A list of objects with `label` and `value`:
+  <TabItem label="Data Provider" icon="list">
+Data providers return a list of objects with `label` and `value`:
 
 ```python
 @data_provider(name="example")
@@ -360,10 +391,16 @@ return [
     }
 ]
 ```
+  </TabItem>
+</Tabs>
 
 ## Best Practices
 
-✅ **DO:**
+<Aside type="tip">
+Follow these guidelines for production-ready workflows and data providers:
+</Aside>
+
+**✅ DO:**
 - Use descriptive names and descriptions
 - Validate all parameters
 - Handle errors gracefully
@@ -372,7 +409,7 @@ return [
 - Add help text for complex parameters
 - Use type hints in function signatures
 
-❌ **DON'T:**
+**❌ DON'T:**
 - Use generic names like "workflow1" or "param1"
 - Forget to add descriptions
 - Return inconsistent data structures

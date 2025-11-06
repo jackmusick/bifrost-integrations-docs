@@ -46,6 +46,24 @@
     margin-bottom: 0 !important;
 }
 
+/* Widen the sidebar to prevent text wrapping */
+:root {
+    --sl-sidebar-width: 24rem;
+}
+
+/* Allow sidebar links to wrap naturally without height constraint */
+.sidebar a,
+.sidebar a span {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.4 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
 /* Add GitHub icons to header nav links */
 header nav a[href*="github.com"]::before {
     content: "";

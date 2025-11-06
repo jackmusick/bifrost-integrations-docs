@@ -11,9 +11,12 @@
             "Bash(/Users/jack/GitHub/bifrost-docs/src/content/docs/guides/workflows/using-decorators.md )",
             "Bash(/Users/jack/GitHub/bifrost-docs/src/content/docs/guides/workflows/error-handling.md )",
             "Bash(/Users/jack/GitHub/bifrost-docs/src/content/docs/concepts/workflows.md)",
-            "WebFetch(domain:hideoo.dev)"
+            "WebFetch(domain:hideoo.dev)",
+            "WebFetch(domain:starlight.astro.build)",
+            "WebFetch(domain:blog.trueberryless.org)"
         ],
         "deny": [],
-        "ask": []
+        "ask": [],
+        "additionalDirectories": ["../bifrost-api", "../bifrost-client"]
     }
 }

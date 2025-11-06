@@ -115,27 +115,23 @@ export default defineConfig({
                             collapsed: true,
                             items: [
                                 {
-                                    label: "Creating Forms",
-                                    slug: "how-to-guides/forms/creating-forms",
+                                    label: "Cascading Dropdowns",
+                                    slug: "how-to-guides/forms/cascading-dropdowns",
                                 },
                                 {
-                                    label: "Data Providers",
-                                    slug: "how-to-guides/forms/data-providers",
-                                },
-                                {
-                                    label: "Visibility Rules",
+                                    label: "Dynamic Fields",
                                     slug: "how-to-guides/forms/visibility-rules",
                                 },
                                 {
-                                    label: "HTML Content",
+                                    label: "Personalized Messages",
                                     slug: "how-to-guides/forms/html-content",
                                 },
                                 {
-                                    label: "Startup Workflows",
+                                    label: "Pre-fill Forms from URLs",
                                     slug: "how-to-guides/forms/startup-workflows",
                                 },
                                 {
-                                    label: "Context Field References",
+                                    label: "Reference Context Data",
                                     slug: "how-to-guides/forms/context-field-references",
                                 },
                             ],
@@ -145,19 +141,15 @@ export default defineConfig({
                             collapsed: true,
                             items: [
                                 {
-                                    label: "OAuth Setup",
-                                    slug: "how-to-guides/integrations/oauth-setup",
-                                },
-                                {
-                                    label: "Secrets Management",
+                                    label: "Store API Keys Securely",
                                     slug: "how-to-guides/integrations/secrets-management",
                                 },
                                 {
-                                    label: "Microsoft Graph",
+                                    label: "Automate Microsoft 365",
                                     slug: "how-to-guides/integrations/microsoft-graph",
                                 },
                                 {
-                                    label: "Custom APIs",
+                                    label: "Custom REST APIs",
                                     slug: "how-to-guides/integrations/custom-apis",
                                 },
                             ],
@@ -189,10 +181,6 @@ export default defineConfig({
                                     slug: "how-to-guides/ui/keyboard-shortcuts",
                                 },
                             ],
-                        },
-                        {
-                            label: "Contributing",
-                            slug: "how-to-guides/contributing",
                         },
                     ],
                 },

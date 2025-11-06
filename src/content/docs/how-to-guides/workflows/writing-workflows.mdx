@@ -3,7 +3,16 @@ title: Write Workflows
 description: Complete guide to writing Bifrost workflows with decorators, parameters, and best practices
 ---
 
-## Workflow Structure
+import {
+    Steps,
+    Aside,
+    Tabs,
+    TabItem,
+    Card,
+    CardGrid,
+} from "@astrojs/starlight/components";
+
+## Basic Structure
 
 Every workflow follows this pattern:
 
@@ -26,39 +35,82 @@ async def unique_name(context: ExecutionContext, param1: str):
     return {"result": "success"}
 ```
 
-## Decorator Parameters
+## Decorator Reference
 
 ### @workflow Options
 
-**Required:**
-- `name`: Unique identifier (snake_case)
-- `description`: User-facing description
+<Tabs>
+  <TabItem label="Required" icon="star">
 
-**Optional:**
-- `category`: Grouping category (default: "General")
-- `tags`: List of tags for filtering
-- `execution_mode`: `"sync"` (default) or `"async"`
-- `timeout_seconds`: Max execution time (default: 300)
-- `schedule`: Cron expression for scheduled runs
-- `requires_org`: Needs organization context (default: True)
+**name** (str)
+: Unique identifier in snake_case
+
+**description** (str)
+: User-facing description shown in UI
+
+  </TabItem>
+  <TabItem label="Optional" icon="setting">
+
+**category** (str)
+: Grouping category (default: "General")
+
+**tags** (list)
+: List of tags for filtering
+
+**execution_mode** (str)
+: `"sync"` (default) or `"async"`
+
+**timeout_seconds** (int)
+: Max execution time (default: 300)
+
+**schedule** (str)
+: Cron expression for scheduled runs
+
+**requires_org** (bool)
+: Needs organization context (default: True)
+
+  </TabItem>
+</Tabs>
 
 ### @param Options
 
-**Required:**
-- `name`: Parameter name (must match function arg)
-- `type`: `string`, `int`, `float`, `bool`, `email`, `json`, `list`
+<Tabs>
+  <TabItem label="Required" icon="star">
 
-**Optional:**
-- `label`: Display label (defaults to title case name)
-- `required`: Is required (default: False)
-- `default_value`: Default if not provided
-- `help_text`: Help tooltip in UI
-- `validation`: Dict with validation rules
-- `data_provider`: Name of data provider for options
+**name** (str)
+: Parameter name (must match function arg)
 
-## Parameter Types & Validation
+**type** (str)
+: `string`, `int`, `float`, `bool`, `email`, `json`, `list`
+
+  </TabItem>
+  <TabItem label="Optional" icon="setting">
+
+**label** (str)
+: Display label (defaults to title case name)
+
+**required** (bool)
+: Is required (default: False)
+
+**default_value** (any)
+: Default if not provided
+
+**help_text** (str)
+: Help tooltip in UI
+
+**validation** (dict)
+: Validation rules
+
+**data_provider** (str)
+: Name of data provider for options
+
+  </TabItem>
+</Tabs>
+
+## Parameter Validation
 
 ### String Validation
+
 ```python
 @param("username", type="string",
     validation={
@@ -70,6 +122,7 @@ async def unique_name(context: ExecutionContext, param1: str):
 ```
 
 ### Number Validation
+
 ```python
 @param("quantity", type="int",
     validation={
@@ -80,6 +133,7 @@ async def unique_name(context: ExecutionContext, param1: str):
 ```
 
 ### Enum Options
+
 ```python
 @param("status", type="string",
     validation={
@@ -109,7 +163,7 @@ async def my_workflow(context: ExecutionContext):
     is_global = context.is_global_scope
 ```
 
-## Using SDK Modules
+## SDK Modules
 
 Access config, secrets, OAuth, and files via SDK:
 
@@ -117,25 +171,35 @@ Access config, secrets, OAuth, and files via SDK:
 from bifrost import config, secrets, oauth, files
 
 async def my_workflow(context: ExecutionContext):
-    # Configuration
-    api_url = config.get("api_url", default="https://api.example.com")
+    # Configuration (async)
+    api_url = await config.get("api_url", default="https://api.example.com")
+    await config.set("api_url", "https://api.example.com")
 
-    # Secrets (from Key Vault)
-    api_key = secrets.get("api_key")
+    # Secrets from Key Vault (async)
+    api_key = await secrets.get("bifrost-global-api-key")
+    await secrets.set("bifrost-global-api-key", "secret_value")
 
-    # OAuth credentials
-    creds = oauth.get_oauth_connection("microsoft_graph")
-    auth_header = creds.get_auth_header()
+    # OAuth tokens (async)
+    token_data = await oauth.get_token("microsoft")
+    if token_data:
+        access_token = token_data["access_token"]
+        # Use access_token for API calls
 
-    # File operations
-    files.write("data/output.txt", "content")
-    content = files.read("data/output.txt")
+    # File operations (synchronous)
+    files.write("data/output.txt", "content", location="workspace")
+    content = files.read("data/output.txt", location="workspace")
 ```
+
+<Aside type="tip">
+    **SDK Methods**: Most SDK methods (`config`, `secrets`, `oauth`) are async
+    and require `await`. File operations are synchronous.
+</Aside>
 
 ## Execution Modes
 
-### Synchronous (Default)
-Best for quick operations (< 10 seconds):
+### Synchronous
+
+Only recommended for endpoint-enabled workflows, which will use this mode by default. Returns result immediately.
 
 ```python
 @workflow(execution_mode="sync", timeout_seconds=30)
@@ -145,7 +209,8 @@ async def quick_lookup(context: ExecutionContext, id: str):
 ```
 
 ### Asynchronous
-Best for long-running operations (> 30 seconds):
+
+Best for long-running operations (> 30 seconds) and default unless using a workflow as an endpoint. Queued for background execution and will return realtime updates in the UI.
 
 ```python
 @workflow(execution_mode="async", timeout_seconds=1800)
@@ -157,7 +222,8 @@ async def bulk_import(context: ExecutionContext, csv_url: str):
 ```
 
 ### Scheduled
-Run automatically on a schedule:
+
+Run automatically on a schedule using cron expressions.
 
 ```python
 @workflow(
@@ -171,91 +237,134 @@ async def daily_report(context: ExecutionContext):
     return {"status": "sent"}
 ```
 
+<Aside type="note">
+    You shouldn't have to think about this very much, with the exception of
+    scheduled jobs.
+</Aside>
+
 ## Data Providers
 
 Provide dynamic options for dropdowns:
 
-```python
-from bifrost import data_provider
+<Steps>
 
-@data_provider(
-    name="get_departments",
-    description="List departments",
-    cache_ttl_seconds=600
-)
-async def get_departments(context: ExecutionContext):
-    return [
-        {"label": "Engineering", "value": "eng"},
-        {"label": "Sales", "value": "sales"}
-    ]
-```
+1. Create a data provider:
 
-Use in workflow:
+    ```python
+    from bifrost import data_provider
 
-```python
-@workflow(name="assign_user")
-@param("department", type="string", data_provider="get_departments")
-async def assign_user(context: ExecutionContext, department: str):
-    # department contains selected value ("eng" or "sales")
-    return {"assigned_to": department}
-```
+    @data_provider(
+        name="get_departments",
+        description="List departments",
+        cache_ttl_seconds=600
+    )
+    async def get_departments(context: ExecutionContext):
+        return [
+            {"label": "Engineering", "value": "eng"},
+            {"label": "Sales", "value": "sales"}
+        ]
+    ```
+
+2. Use in workflow:
+
+    ```python
+    @workflow(name="assign_user")
+    @param("department", type="string", data_provider="get_departments")
+    async def assign_user(context: ExecutionContext, department: str):
+        # department contains selected value ("eng" or "sales")
+        return {"assigned_to": department}
+    ```
+
+</Steps>
 
 ## Return Values
 
 Always return a dictionary:
 
-```python
-# Success
-return {"success": True, "result": data}
+<Tabs>
+  <TabItem label="Success" icon="approve-check">
+    ```python
+    return {"success": True, "result": data}
+    ```
+  </TabItem>
 
-# Error (workflow still succeeds, but indicates failure)
-return {"success": False, "error": "User not found"}
+  <TabItem label="Error" icon="error">
+    ```python
+    # Workflow still succeeds, but indicates failure
+    return {"success": False, "error": "User not found"}
+    ```
+  </TabItem>
 
-# Nested data
-return {
-    "user": {"id": "123", "email": "user@example.com"},
-    "items": [1, 2, 3]
-}
-```
+  <TabItem label="Nested Data" icon="document">
+    ```python
+    return {
+        "user": {"id": "123", "email": "user@example.com"},
+        "items": [1, 2, 3]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Error Handling
 
-Handle errors gracefully:
+Exceptions are automatically caught and handled by the execution engine. You can optionally return `{"success": False}` to indicate partial failures:
+
+```python
+import logging
+from bifrost import workflow, param, ExecutionContext
+
+logger = logging.getLogger(__name__)
+
+@workflow(name="create_user", description="Create a new user")
+@param("email", type="email", required=True)
+async def create_user(context: ExecutionContext, email: str):
+    # Raised exceptions are automatically caught and logged
+    user = await create_user_in_system(email)
+    logger.info(f"Created user: {user.id}")
+    return {"user_id": user.id}
+
+    # Or indicate partial failure (execution status: COMPLETED_WITH_ERRORS)
+    # return {"success": False, "error": "User created but email failed"}
+```
+
+<Aside type="note">
+**Exception Handling**: Raised exceptions automatically mark the execution as FAILED. Returning `{"success": False}` marks it as COMPLETED_WITH_ERRORS.
+</Aside>
+
+## Logging
+
+Use Python's logging module for visibility into execution:
 
 ```python
 import logging
 
 logger = logging.getLogger(__name__)
 
-async def my_workflow(context: ExecutionContext, email: str):
-    # Validate input
-    if not email or "@" not in email:
-        return {"success": False, "error": "Invalid email"}
-
-    try:
-        user = await create_user(email)
-        logger.info(f"Created user: {user.id}")
-        return {"success": True, "user_id": user.id}
-
-    except Exception as e:
-        logger.error(f"Failed to create user: {str(e)}")
-        return {"success": False, "error": str(e)}
+@workflow(name="process_data")
+async def process_data(context: ExecutionContext):
+    logger.debug("Starting detailed processing...")  # Hidden from users
+    logger.info("Processing item 1 of 10...")        # Visible to users
+    logger.warning("Item 5 failed, continuing...")   # Visible to users
+    logger.error("Critical failure detected")        # Visible to users
 ```
+
+<Aside type="tip">
+**Log Visibility**: `logger.debug()` is only visible to developers. All other levels (`info`, `warning`, `error`) are visible to users who execute workflows from forms.
+</Aside>
 
 ## Best Practices
 
-1. **Single Responsibility**: One workflow, one task
-2. **Validate Early**: Check inputs before processing
-3. **Log Liberally**: Use `logger.info()` and `logger.error()`
-4. **Handle Errors**: Always return error states, don't raise
-5. **Use Type Hints**: Enable IDE autocomplete and error detection
-6. **Avoid Secrets in Returns**: Never return credentials or PII
-7. **Choose Right Execution Mode**: Sync for quick, async for long-running
-8. **Test Locally**: Use local dev environment before deploying
+-   **Single Responsibility**: One workflow, one task. Keep workflows focused and composable.
+-   **Validate Early**: Check inputs before processing to fail fast and provide clear feedback.
+-   **Log for Users**: Use `logger.info()` for user-facing progress updates. Use `logger.debug()` for developer debugging.
+-   **Let Exceptions Bubble**: Raised exceptions are automatically handled - no need to catch and return error dicts.
+-   **Use Type Hints**: Enable IDE autocomplete and error detection with proper typing.
+-   **Avoid Secrets in Returns**: Never return credentials or PII in workflow results.
 
 ## Common Patterns
 
 ### List Processing
+
 ```python
 async def process_items(context: ExecutionContext, items: list):
     results = []
@@ -277,6 +386,7 @@ async def process_items(context: ExecutionContext, items: list):
 ```
 
 ### Chained Operations
+
 ```python
 async def create_user_with_license(context: ExecutionContext, email: str, sku: str):
     # Step 1
@@ -292,6 +402,6 @@ async def create_user_with_license(context: ExecutionContext, email: str, sku: s
 
 ## Next Steps
 
-- [Using Decorators](/how-to-guides/workflows/using-decorators) - Advanced decorator features
-- [Error Handling](/how-to-guides/workflows/error-handling) - Comprehensive error patterns
-- [SDK Reference](/sdk-reference/sdk/bifrost-module) - Full API documentation
+-   [Using Decorators](/how-to-guides/workflows/using-decorators) - Advanced decorator features
+-   [Error Handling](/how-to-guides/workflows/error-handling) - Comprehensive error patterns
+-   [SDK Reference](/sdk-reference/sdk/bifrost-module) - Full API documentation

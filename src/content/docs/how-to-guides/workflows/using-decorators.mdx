@@ -3,12 +3,15 @@ title: Use Decorators
 description: Advanced decorator patterns and best practices
 ---
 
+import { Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Overview
 
 Bifrost uses three decorators to define workflows:
-- `@workflow` - Registers executable workflow
-- `@param` - Defines input parameters
-- `@data_provider` - Provides dynamic options
+
+- **@workflow** - Registers executable workflow
+- **@param** - Defines input parameters
+- **@data_provider** - Provides dynamic options
 
 ## @workflow Advanced Options
 
@@ -20,9 +23,7 @@ Run workflows automatically on a schedule:
 @workflow(
     name="daily_cleanup",
     description="Daily cleanup task",
-    execution_mode="scheduled",
-    schedule="0 2 * * *",  # Daily at 2 AM UTC
-    expose_in_forms=False   # Hide from manual execution
+    schedule="0 2 * * *"  # Daily at 2 AM UTC
 )
 async def daily_cleanup(context):
     # Runs automatically
@@ -30,10 +31,69 @@ async def daily_cleanup(context):
 ```
 
 **Cron Expressions**:
+
 - `0 9 * * *` - Daily at 9 AM
 - `0 */6 * * *` - Every 6 hours
 - `0 9 * * 1` - Every Monday at 9 AM
 - `0 0 1 * *` - First day of month at midnight
+
+<Aside type="tip">
+Use UTC times for schedules to ensure consistency across timezones.
+</Aside>
+
+### HTTP Endpoints
+
+Expose workflows as HTTP endpoints for webhooks:
+
+```python
+@workflow(
+    name="process_webhook",
+    description="Process incoming webhook",
+    endpoint_enabled=True,
+    allowed_methods=["POST"],
+    public_endpoint=True  # Skip authentication
+)
+async def process_webhook(context, payload: dict):
+    # Available at: POST /api/endpoints/process_webhook
+    return {"status": "processed"}
+```
+
+<Tabs>
+  <TabItem label="Endpoint Options" icon="setting">
+
+**endpoint_enabled** (bool)
+: Expose at `/api/endpoints/{name}` (default: False)
+
+**allowed_methods** (list)
+: HTTP methods allowed (default: `["POST"]`)
+
+**public_endpoint** (bool)
+: Skip authentication for webhooks (default: False)
+
+**disable_global_key** (bool)
+: Only workflow-specific keys work (default: False)
+
+  </TabItem>
+  <TabItem label="Example" icon="seti:code">
+
+```python
+# Authenticated endpoint (requires API key)
+@workflow(
+    name="sync_data",
+    endpoint_enabled=True,
+    allowed_methods=["GET", "POST"]
+)
+
+# Public webhook (no auth required)
+@workflow(
+    name="github_webhook",
+    endpoint_enabled=True,
+    public_endpoint=True
+)
+```
+
+  </TabItem>
+</Tabs>
 
 ### Retry Policies
 
@@ -53,19 +113,31 @@ async def api_call(context):
     pass
 ```
 
-### Custom Permissions
+### Execution Modes
 
-Require specific permissions to execute:
+Control how workflows execute:
 
 ```python
+# Sync: Returns result immediately (best for endpoints)
 @workflow(
-    name="admin_task",
-    description="Admin-only workflow",
-    required_permission="canManageOrganization"
+    name="quick_lookup",
+    execution_mode="sync",
+    endpoint_enabled=True
 )
-async def admin_task(context):
-    # Only users with canManageOrganization can run
-    pass
+
+# Async: Queued for background execution (best for forms)
+@workflow(
+    name="bulk_import",
+    execution_mode="async"
+)
+
+# Auto: Defaults based on endpoint_enabled
+@workflow(
+    name="auto_mode"
+    # execution_mode auto-selects:
+    # - "sync" if endpoint_enabled=True
+    # - "async" if endpoint_enabled=False
+)
 ```
 
 ## @param Advanced Patterns
@@ -104,7 +176,7 @@ Combine multiple validation rules:
         "max_length": 128,
         "pattern": r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$"
     },
-    help_text="Min 12 chars, must include uppercase, lowercase, number, and special char"
+    help_text="Min 12 chars with uppercase, lowercase, number, and special char"
 )
 ```
 
@@ -131,6 +203,8 @@ async def create_ticket(context, assignee: str = None):
 
 Control cache behavior:
 
+<Tabs>
+  <TabItem label="Long Cache" icon="clock">
 ```python
 @data_provider(
     name="get_departments",
@@ -139,19 +213,25 @@ Control cache behavior:
 async def get_departments(context):
     # Expensive query, cache results
     return await fetch_departments()
+```
+  </TabItem>
 
+  <TabItem label="No Cache" icon="refresh">
+```python
 @data_provider(
     name="get_current_user",
-    cache_ttl_seconds=0  # Never cache (always fresh)
+    cache_ttl_seconds=0  # Never cache
 )
 async def get_current_user(context):
     # Always fetch latest user data
     return await fetch_user(context.user_id)
 ```
+  </TabItem>
+</Tabs>
 
 ### Hierarchical Options
 
-Create nested/grouped options:
+Create options with metadata for grouping:
 
 ```python
 @data_provider(name="get_apps_by_category")
@@ -163,14 +243,6 @@ async def get_apps_by_category(context):
             "metadata": {
                 "group": "Productivity",
                 "icon": "microsoft"
-            }
-        },
-        {
-            "label": "Google Workspace",
-            "value": "google",
-            "metadata": {
-                "group": "Productivity",
-                "icon": "google"
             }
         },
         {
@@ -204,10 +276,12 @@ async def get_available_licenses(context):
     ]
 ```
 
-## Decorator Order Matters
+## Decorator Order
 
-Parameters are applied bottom-to-top:
+Parameters are applied bottom-to-top, so decorators appear in reverse order:
 
+<Tabs>
+  <TabItem label="Reverse Order" icon="warning">
 ```python
 @workflow(name="example")
 @param("third", type="string")   # Shows FIRST in form
@@ -216,9 +290,9 @@ Parameters are applied bottom-to-top:
 async def example(context, first, second, third):
     pass
 ```
+  </TabItem>
 
-To match declaration order, reverse the decorators:
-
+  <TabItem label="Natural Order" icon="approve-check">
 ```python
 @workflow(name="example")
 @param("first", type="string")   # Shows FIRST in form
@@ -227,50 +301,68 @@ To match declaration order, reverse the decorators:
 async def example(context, first, second, third):
     pass
 ```
+  </TabItem>
+</Tabs>
+
+<Aside type="note">
+Most developers list parameters in natural order (top = first), accepting the reverse visual flow.
+</Aside>
 
 ## Best Practices
 
-1. **Use Descriptive Names**: `create_user_in_m365` not `proc1`
-2. **Set Appropriate Timeouts**: Match expected execution time
-3. **Cache Wisely**: Balance freshness vs. performance
-4. **Validate Early**: Use `@param` validation before workflow runs
-5. **Document Parameters**: Use `help_text` for user guidance
-6. **Test Data Providers**: Verify they return correct format
-7. **Use Retry Policies**: For unreliable external APIs
-8. **Schedule Appropriately**: Use UTC times for schedules
+- **Use Descriptive Names**: `create_user_in_m365` not `proc1`
+- **Set Appropriate Timeouts**: Match expected execution time (default: 1800s)
+- **Cache Wisely**: Balance freshness vs. performance (default: 300s)
+- **Validate Early**: Use `@param` validation before workflow runs
+- **Document Parameters**: Use `help_text` for user guidance
+- **Test Data Providers**: Verify correct format with `label` and `value`
+- **Use Retry Policies**: For unreliable external APIs
+- **Schedule in UTC**: Avoid timezone confusion
 
 ## Common Pitfalls
 
-### ❌ Missing Required Parameters
+### Missing Required Parameters
+
+❌ **Wrong**
 ```python
 @workflow()  # Missing name and description
 ```
 
-### ✅ Always Provide Required
+✅ **Correct**
 ```python
 @workflow(name="example", description="Example workflow")
 ```
 
-### ❌ Wrong Parameter Type
+### Invalid Parameter Type
+
+❌ **Wrong**
 ```python
 @param("email", type="text")  # No such type
 ```
 
-### ✅ Use Valid Types
+✅ **Correct**
 ```python
-@param("email", type="email")  # Valid type with validation
+@param("email", type="email")  # Valid: string, int, bool, float, json, list, email
 ```
 
-### ❌ Sync Mode for Long Tasks
+### Sync Mode for Long Tasks
+
+❌ **Wrong**
 ```python
-@workflow(execution_mode="sync", timeout_seconds=1800)
+@workflow(
+    execution_mode="sync",
+    timeout_seconds=1800
+)
 async def bulk_import():  # Will timeout/block users
     pass
 ```
 
-### ✅ Async for Long Tasks
+✅ **Correct**
 ```python
-@workflow(execution_mode="async", timeout_seconds=1800)
+@workflow(
+    execution_mode="async",
+    timeout_seconds=1800
+)
 async def bulk_import():  # Runs in background
     pass
 ```
@@ -279,4 +371,4 @@ async def bulk_import():  # Runs in background
 
 - [Error Handling](/how-to-guides/workflows/error-handling) - Handle errors gracefully
 - [Writing Workflows](/how-to-guides/workflows/writing-workflows) - Complete workflow guide
-- [Decorators Reference](/sdk-reference/sdk/decorators) - Full API documentation
+- [SDK Reference](/sdk-reference/sdk/bifrost-module) - Full API documentation
