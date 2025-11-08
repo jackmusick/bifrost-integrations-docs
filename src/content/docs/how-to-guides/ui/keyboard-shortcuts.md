@@ -132,6 +132,6 @@ If shortcuts don't work, ensure you're clicking inside the Bifrost app first to 
 
 ## See Also
 
-- [Code Editor Guide](/how-to-guides/local-dev/debugging/) - Using the Code Editor for development
+- [Local Development Setup](/how-to-guides/local-dev/setup/) - Full local development setup and debugging
 - [Forms Guide](/how-to-guides/forms/creating-forms/) - Creating and executing forms
 - [Workflows Guide](/how-to-guides/workflows/writing-workflows/) - Writing and running workflows

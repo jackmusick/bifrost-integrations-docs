@@ -1,0 +1,359 @@
+---
+title: Setup
+description: Set up a local Bifrost environment for developing and debugging workflows
+---
+
+import { Aside, Steps, Card, CardGrid } from '@astrojs/starlight/components';
+
+<Aside type="caution">
+This setup is for **workflow development only**. This runs a complete local Bifrost environment so you can develop and debug workflows, but it is NOT meant for production use.
+</Aside>
+
+This guide shows you how to set up a local Bifrost environment for developing workflows using the <a href="https://github.com/jackmusick/bifrost-workspace" target="_blank">bifrost-workspace</a> project.
+
+## What You'll Get
+
+Running `./start.sh` will start a complete Bifrost environment locally:
+
+- **Azurite** - Azure Storage emulator for tables, blobs, and queues
+- **Bifrost API** - The complete workflow engine and API (port 7071)
+- **Bifrost Client** - The web interface (port 4280)
+- **Debugpy** - Python debugger for setting breakpoints in workflows (port 5678)
+
+## Prerequisites
+
+<CardGrid>
+  <Card title="Docker Desktop" icon="seti:docker">
+    Required to run the containerized Bifrost environment
+  </Card>
+  <Card title="VS Code" icon="seti:code">
+    Recommended for debugging workflows with breakpoints (with Python extension)
+  </Card>
+  <Card title="Azure Resources" icon="azure">
+    - Entra ID App Registration
+    - Key Vault (can use production)
+    - Web PubSub (optional but recommended)
+  </Card>
+</CardGrid>
+
+## Azure Setup
+
+### App Registration
+
+You'll need an Entra ID App Registration for authentication. You can create a dedicated dev app registration or use your production one.
+
+<Aside type="tip">
+Creating a separate dev app registration is recommended so you don't need to add localhost redirect URIs to your production app.
+</Aside>
+
+**Create App Registration**:
+
+<Steps>
+
+1. Navigate to <a href="https://entra.microsoft.com" target="_blank">Entra Admin Center</a>
+2. Go to **App Registrations** → **New Registration**
+3. Set the **Redirect URI**:
+   - Platform: **Web**
+   - URI: `http://localhost:4280/.auth/login/aad/callback`
+4. Under **Certificates & Secrets**, create a new client secret
+5. Under **Authentication**, enable **ID tokens**
+6. Copy your **Application (client) ID**, **Tenant ID**, and **Client Secret** for later
+
+</Steps>
+
+### Key Vault Permissions
+
+Your **App Registration** (not your user account) needs the **Key Vault Secrets Officer** role on your Key Vault.
+
+<Aside type="note">
+The role definition ID is `b86a8fe4-44ce-4948-aee5-eccb2c155cd7`. This is the same role assigned to the Function App in production (see `deployment/azuredeploy.json` in bifrost-api).
+</Aside>
+
+**Assign the Role**:
+
+<Steps>
+
+1. Navigate to your Key Vault in the Azure Portal
+2. Go to **Access control (IAM)**
+3. Click **Add role assignment**
+4. Select **Key Vault Secrets Officer**
+5. Assign to your **App Registration** (search by the app name or client ID)
+
+</Steps>
+
+<Aside type="tip">
+You can use your production Key Vault for local development to ensure secrets are consistent. If you have separate dev/test environments, create a dedicated dev Key Vault instead.
+</Aside>
+
+### Web PubSub (Optional)
+
+Web PubSub enables real-time updates in the web interface. Without it, you'll need to refresh the page to see workflow execution updates.
+
+You can use your production Web PubSub instance or create a free-tier instance for development:
+
+<Steps>
+
+1. In Azure Portal, create a new **Web PubSub** resource
+2. Select the **Free** tier (sufficient for development)
+3. Copy the **Connection String** from **Keys** section
+
+</Steps>
+
+## Environment Configuration
+
+<Steps>
+
+1. **Clone the workspace repository**:
+
+   ```bash
+   git clone https://github.com/jackmusick/bifrost-workspace.git
+   cd bifrost-workspace
+   ```
+
+2. **Copy the example environment file**:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Edit `.env` with your credentials**:
+
+   ```bash
+   # Azure Entra ID (App Registration)
+   ENTRA_TENANT_ID=your-tenant-id
+   ENTRA_CLIENT_ID=your-app-client-id
+   ENTRA_CLIENT_SECRET=your-app-client-secret
+
+   # Azure Key Vault URL
+   AZURE_KEY_VAULT_URL=https://your-vault-name.vault.azure.net/
+
+   # Web PubSub (optional but recommended)
+   WebPubSubConnectionString=your-connection-string
+   ```
+
+4. **Make start script executable**:
+
+   ```bash
+   chmod +x ./start.sh ./stop.sh
+   ```
+
+</Steps>
+
+### Configuration Reference
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ENTRA_TENANT_ID` | Yes | Your Entra ID tenant ID |
+| `ENTRA_CLIENT_ID` | Yes | App Registration client ID |
+| `ENTRA_CLIENT_SECRET` | Yes | App Registration client secret |
+| `AZURE_KEY_VAULT_URL` | Yes | Key Vault URL (can be production) |
+| `WebPubSubConnectionString` | No | Web PubSub connection string (free tier recommended) |
+| `ENABLE_DEBUGGING` | No | Enable debugpy for breakpoints (default: `true`) |
+| `FUNCTIONS_WORKER_PROCESS_COUNT` | No | Worker processes (must be `1` when debugging, default: `1`) |
+
+<Aside type="note">
+When `ENABLE_DEBUGGING=true`, you must use `FUNCTIONS_WORKER_PROCESS_COUNT=1` to avoid debugpy port conflicts. With only 1 worker, the UI may lock up during long-running workflows, but this is normal for local development. Production environments auto-scale across multiple instances.
+</Aside>
+
+## Starting the Environment
+
+Simply run the start script:
+
+```bash
+./start.sh
+```
+
+The script will:
+
+1. Download the latest Bifrost type stubs for IDE autocomplete
+2. Check for `.env` file (prompts to create if missing)
+3. Start Docker services (Azurite + API + Client)
+4. Wait for services to become healthy
+5. Display access URLs and debugging instructions
+
+### What's Running
+
+Once started, you'll have:
+
+- **Web Interface**: http://localhost:4280
+- **API**: http://localhost:7071
+- **Debugpy**: localhost:5678 (for VS Code debugging)
+
+## Creating Workflows
+
+Create Python files in the `/workspace` directory. These files will be automatically mounted into the container.
+
+### Example Workflow
+
+```python
+# workspace/hello_world.py
+
+def run(context):
+    """
+    Simple workflow example
+
+    Args:
+        context: OrganizationContext containing org, caller, execution_id
+    """
+    print(f"Hello from workflow!")
+    print(f"Organization: {context.org.name if context.org else 'No org'}")
+    print(f"Caller: {context.caller.email}")
+
+    return {
+        "status": "success",
+        "message": "Workflow completed successfully"
+    }
+```
+
+See the [Workflows Guide](/how-to-guides/workflows/writing-workflows/) for more information on writing workflows.
+
+## Debugging with Breakpoints
+
+One of the major benefits of local development is the ability to debug workflows with breakpoints.
+
+### VS Code Debugging Setup
+
+<Steps>
+
+1. **Ensure the environment is running**:
+   ```bash
+   ./start.sh
+   ```
+
+2. **Open the workspace in VS Code**:
+   ```bash
+   code .
+   ```
+
+3. **Set breakpoints** in your Python workflow files by clicking in the gutter next to line numbers
+
+4. **Start debugging**: Press `F5` or go to **Run and Debug** → **Attach to Docker Functions**
+
+5. **Trigger your workflow** from the web interface at http://localhost:4280
+
+6. **Debugger pauses** at your breakpoints. You can now:
+   - Inspect variables
+   - Step through code line by line
+   - Evaluate expressions in the Debug Console
+   - Modify variables and continue execution
+
+</Steps>
+
+### Debugger Configuration
+
+The workspace includes a pre-configured `.vscode/launch.json` that attaches to debugpy running on port 5678 inside the container.
+
+**Path Mappings**:
+- Local: `${workspaceFolder}/workspace`
+- Container: `/mounts/workspace`
+
+## Viewing Logs
+
+Monitor what's happening in your containers:
+
+```bash
+# All services
+docker compose logs -f
+
+# Just the API (workflow engine)
+docker compose logs -f api
+
+# Just the client (web interface)
+docker compose logs -f client
+```
+
+## Stopping the Environment
+
+When you're done developing:
+
+```bash
+./stop.sh
+```
+
+Or manually:
+
+```bash
+docker compose down
+```
+
+## Troubleshooting
+
+### Services Won't Start
+
+Check if the required ports are already in use:
+
+```bash
+# Check for port conflicts
+lsof -i :4280  # Client
+lsof -i :7071  # API
+lsof -i :5678  # Debugpy
+```
+
+Kill any conflicting processes or modify the ports in `docker-compose.yml`.
+
+### Authentication Fails
+
+Verify your `.env` file has the correct:
+- `ENTRA_CLIENT_ID`
+- `ENTRA_CLIENT_SECRET`
+- `ENTRA_TENANT_ID`
+
+And that your App Registration has:
+- Redirect URI: `http://localhost:4280/.auth/login/aad/callback`
+- ID tokens enabled
+
+### Key Vault Access Denied
+
+Ensure your **App Registration** (not your user) has the **Key Vault Secrets Officer** role:
+
+```bash
+# Check role assignments
+az role assignment list --scope /subscriptions/{subscription-id}/resourceGroups/{rg}/providers/Microsoft.KeyVault/vaults/{vault-name}
+```
+
+Look for your App Registration's client ID with the `b86a8fe4-44ce-4948-aee5-eccb2c155cd7` role (Key Vault Secrets Officer).
+
+### Debugger Won't Attach
+
+1. Verify `ENABLE_DEBUGGING=true` in `.env`
+2. Verify `FUNCTIONS_WORKER_PROCESS_COUNT=1` in `.env`
+3. Check debugpy is listening:
+   ```bash
+   docker compose logs api | grep debugpy
+   ```
+4. Restart the environment:
+   ```bash
+   ./stop.sh && ./start.sh
+   ```
+
+### Type Hints Not Working
+
+Regenerate type stubs:
+
+```bash
+./start.sh  # Downloads latest types automatically
+```
+
+Or manually download from <a href="https://github.com/jackmusick/bifrost-api/releases/latest" target="_blank">GitHub Releases</a>.
+
+## Next Steps
+
+<CardGrid>
+  <Card title="Writing Workflows" icon="rocket">
+    Learn how to create powerful automation workflows
+
+    [Read the guide →](/how-to-guides/workflows/writing-workflows/)
+  </Card>
+
+  <Card title="AI Coding Guide" icon="seti:ai">
+    Use AI assistants to help write workflows faster
+
+    [Read the guide →](/how-to-guides/local-dev/ai-coding)
+  </Card>
+
+  <Card title="SDK Reference" icon="document">
+    Explore the complete Bifrost SDK API
+
+    [View SDK docs →](/sdk-reference/sdk/bifrost-module)
+  </Card>
+</CardGrid>

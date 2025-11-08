@@ -163,12 +163,8 @@ export default defineConfig({
                                     slug: "how-to-guides/local-dev/setup",
                                 },
                                 {
-                                    label: "Testing",
-                                    slug: "how-to-guides/local-dev/testing",
-                                },
-                                {
-                                    label: "Debugging",
-                                    slug: "how-to-guides/local-dev/debugging",
+                                    label: "AI Coding Guide",
+                                    slug: "how-to-guides/local-dev/ai-coding",
                                 },
                             ],
                         },
@@ -185,17 +181,13 @@ export default defineConfig({
                     ],
                 },
                 {
-                    label: "SDK Reference",
+                    label: "Reference",
                     collapsed: true,
                     items: [
                         {
                             label: "SDK",
                             collapsed: true,
                             items: [
-                                {
-                                    label: "AI Coding Guide",
-                                    slug: "sdk-reference/sdk/claude",
-                                },
                                 {
                                     label: "Context API",
                                     slug: "sdk-reference/sdk/context-api",
@@ -207,60 +199,6 @@ export default defineConfig({
                                 {
                                     label: "Bifrost Module",
                                     slug: "sdk-reference/sdk/bifrost-module",
-                                },
-                            ],
-                        },
-                        {
-                            label: "Forms",
-                            collapsed: true,
-                            items: [
-                                {
-                                    label: "Field Types",
-                                    slug: "sdk-reference/forms/field-types",
-                                },
-                                {
-                                    label: "Context Object",
-                                    slug: "sdk-reference/forms/context-object",
-                                },
-                                {
-                                    label: "Validation Rules",
-                                    slug: "sdk-reference/forms/validation-rules",
-                                },
-                            ],
-                        },
-                        {
-                            label: "Architecture",
-                            collapsed: true,
-                            items: [
-                                {
-                                    label: "Overview",
-                                    slug: "sdk-reference/architecture/overview",
-                                },
-                                {
-                                    label: "Multi-Tenancy",
-                                    slug: "sdk-reference/architecture/multi-tenancy",
-                                },
-                                {
-                                    label: "Security",
-                                    slug: "sdk-reference/architecture/security",
-                                },
-                            ],
-                        },
-                        {
-                            label: "API",
-                            collapsed: true,
-                            items: [
-                                {
-                                    label: "Quick Start",
-                                    slug: "sdk-reference/api",
-                                },
-                                {
-                                    label: "Local Development",
-                                    slug: "sdk-reference/api/local-development",
-                                },
-                                {
-                                    label: "Testing",
-                                    slug: "sdk-reference/api/testing",
                                 },
                             ],
                         },
