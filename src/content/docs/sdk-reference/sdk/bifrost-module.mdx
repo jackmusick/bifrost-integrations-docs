@@ -8,38 +8,36 @@ import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
 ## Import Structure
 
 ```python
-# Decorators and context
-from bifrost import workflow, param, data_provider, ExecutionContext
+# Decorators and context proxy
+from bifrost import workflow, data_provider, context
 
-# SDK modules (all async except files)
-from bifrost import config, secrets, oauth, files
+# SDK modules (all async)
+from bifrost import config, oauth, files
 
-# Types (optional)
-from bifrost import Organization
+# Types (optional, for type hints)
+from bifrost import ExecutionContext, Organization
 ```
 
 <Aside type="note">
-All SDK modules are **async** and must be awaited, except the `files` module which is synchronous.
+All SDK modules are **async** and must be awaited.
 </Aside>
 
 ## Decorators
 
 ### @workflow
 
-Registers an async function as an executable workflow.
+Registers an async function as an executable workflow. **All parameters are optional** - the decorator auto-infers name, description, and parameters from your function.
 
 ```python
-@workflow(name: str, description: str, **options)
+@workflow(**options)
 ```
 
 <Tabs>
-  <TabItem label="Basic Usage" icon="seti:python">
+  <TabItem label="Minimal" icon="star">
 ```python
-@workflow(
-    name="create_user",
-    description="Create new user"
-)
-async def create_user(context: ExecutionContext, email: str):
+@workflow
+async def create_user(email: str, name: str):
+    """Create a new user in the system."""
     return {"user_id": "123"}
 ```
   </TabItem>
@@ -47,13 +45,12 @@ async def create_user(context: ExecutionContext, email: str):
   <TabItem label="With Options" icon="setting">
 ```python
 @workflow(
-    name="create_user",
-    description="Create new user",
     category="User Management",
     timeout_seconds=60,
     schedule="0 9 * * *"  # Daily at 9 AM
 )
-async def create_user(context: ExecutionContext, email: str):
+async def create_user(email: str, name: str):
+    """Create a new user in the system."""
     return {"user_id": "123"}
 ```
   </TabItem>
@@ -63,102 +60,16 @@ async def create_user(context: ExecutionContext, email: str):
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `name` | str | Required | Unique identifier (snake_case) |
-| `description` | str | Required | User-facing description |
+| `name` | str | Auto | Auto-derived from function name |
+| `description` | str | Auto | Auto-derived from docstring |
 | `category` | str | "General" | Workflow category |
 | `tags` | list[str] | [] | Tags for filtering |
-| `execution_mode` | str | "sync" | `"sync"` or `"async"` |
-| `timeout_seconds` | int | 300 | Max execution time |
+| `execution_mode` | str | Auto | Auto-selects based on endpoint_enabled |
+| `timeout_seconds` | int | 1800 | Max execution time (30 min default) |
 | `schedule` | str | None | Cron expression |
 | `endpoint_enabled` | bool | False | Expose as HTTP endpoint |
 | `allowed_methods` | list[str] | ["POST"] | Allowed HTTP methods |
 | `public_endpoint` | bool | False | Skip authentication |
-
-### @param
-
-Defines a workflow parameter.
-
-```python
-@param(name: str, type: str, **options)
-```
-
-**Parameters**:
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `name` | str | Required | Parameter name (must match function arg) |
-| `type` | str | Required | Parameter type (see types below) |
-| `label` | str | Titlecased name | Display label |
-| `required` | bool | False | Is required |
-| `default_value` | Any | None | Default value |
-| `help_text` | str | None | Help tooltip |
-| `validation` | dict | None | Validation rules |
-| `data_provider` | str | None | Data provider name |
-
-**Available Types**:
-
-<Tabs>
-  <TabItem label="Text" icon="document">
-    <ul>
-      <li><code>string</code> - Text input</li>
-      <li><code>email</code> - Email with validation</li>
-      <li><code>textarea</code> - Multi-line text</li>
-    </ul>
-  </TabItem>
-
-  <TabItem label="Numbers" icon="hashtag">
-    <ul>
-      <li><code>number</code> - Numeric input</li>
-      <li><code>int</code> - Integer input</li>
-      <li><code>float</code> - Decimal number</li>
-    </ul>
-  </TabItem>
-
-  <TabItem label="Selection" icon="list">
-    <ul>
-      <li><code>boolean</code> - Checkbox</li>
-      <li><code>select</code> - Single-select dropdown</li>
-      <li><code>multi_select</code> - Multiple-select dropdown</li>
-    </ul>
-  </TabItem>
-
-  <TabItem label="Date/Time" icon="calendar">
-    <ul>
-      <li><code>date</code> - Date picker (YYYY-MM-DD)</li>
-      <li><code>datetime</code> - Date + time picker</li>
-    </ul>
-  </TabItem>
-
-  <TabItem label="Data" icon="open-folder">
-    <ul>
-      <li><code>json</code> - JSON data</li>
-      <li><code>list</code> - Array/list</li>
-      <li><code>file</code> - File upload</li>
-    </ul>
-  </TabItem>
-</Tabs>
-
-**Validation Rules**:
-
-| Rule | Applies To | Description |
-|------|-----------|-------------|
-| `min_length` | string | Minimum length |
-| `max_length` | string | Maximum length |
-| `pattern` | string | Regex pattern |
-| `min` | number | Minimum value |
-| `max` | number | Maximum value |
-| `enum` | string | Allowed values |
-
-**Example**:
-```python
-@param(
-    "email",
-    type="email",
-    required=True,
-    help_text="User's email address",
-    validation={"pattern": r"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"}
-)
-```
 
 ### @data_provider
 
@@ -190,21 +101,36 @@ Registers a function that provides dynamic options.
 
 **Example**:
 ```python
+from bifrost import data_provider, context
+
 @data_provider(
     name="get_departments",
     description="List departments",
     cache_ttl_seconds=600
 )
-async def get_departments(context: ExecutionContext):
+async def get_departments():
+    # Access context via proxy if needed
+    org_id = context.org_id
     return [
         {"label": "Engineering", "value": "eng"},
         {"label": "Sales", "value": "sales"}
     ]
 ```
 
-## ExecutionContext
+## Context
 
-Access to organization, user, and execution metadata.
+Access organization, user, and execution metadata via the `context` proxy. No need to pass it as a parameter.
+
+```python
+from bifrost import context
+
+@workflow
+async def my_workflow(name: str):
+    # Access context properties directly
+    org_id = context.org_id
+    user_email = context.email
+    is_admin = context.is_platform_admin
+```
 
 **Properties**:
 
@@ -222,21 +148,13 @@ Access to organization, user, and execution metadata.
 | `is_function_key` | bool | Called via API key |
 | `is_global_scope` | bool | Executing in global scope |
 
-**Example**:
-```python
-async def my_workflow(context: ExecutionContext):
-    org_id = context.org_id
-    user_email = context.email
-    is_admin = context.is_platform_admin
-```
-
-See [ExecutionContext API](/sdk-reference/sdk/context-api) for complete reference.
+See [Context API](/sdk-reference/sdk/context-api) for complete reference.
 
 ## SDK Modules
 
 ### config
 
-Configuration management with org scoping.
+Configuration and secrets management with org scoping.
 
 <Aside type="caution">
 All config methods are **async** and must be awaited.
@@ -247,9 +165,13 @@ All config methods are **async** and must be awaited.
 | Function | Parameters | Returns | Description |
 |----------|-----------|---------|-------------|
 | `get(key, default=None)` | key: str, default: Any | Any | Get config value |
-| `set(key, value)` | key: str, value: Any | None | Set config value |
+| `set(key, value, is_secret=False)` | key: str, value: Any, is_secret: bool | None | Set config value (use `is_secret=True` for sensitive data) |
 | `list()` | - | dict[str, Any] | List all configs |
 | `delete(key)` | key: str | bool | Delete config (returns success) |
+
+<Aside type="tip">
+For secrets (API keys, passwords, etc.), use `is_secret=True` when setting. Secrets are encrypted in the database using Fernet encryption.
+</Aside>
 
 <Tabs>
   <TabItem label="Get Config" icon="approve-check">
@@ -259,9 +181,8 @@ from bifrost import config
 # Get with default
 api_url = await config.get("api_url", default="https://api.example.com")
 
-# Check if exists first
-if await config.get("api_key"):
-    api_key = await config.get("api_key")
+# Get a secret (retrieved the same way)
+api_key = await config.get("api_key")
 ```
   </TabItem>
 
@@ -269,8 +190,11 @@ if await config.get("api_key"):
 ```python
 from bifrost import config
 
-# Set configuration value
+# Set regular configuration value
 await config.set("api_url", "https://new-api.example.com")
+
+# Set a secret (encrypted in database)
+await config.set("api_key", "sk_live_xxxx", is_secret=True)
 ```
   </TabItem>
 
@@ -286,63 +210,9 @@ for key, value in all_configs.items():
   </TabItem>
 </Tabs>
 
-### secrets
-
-Azure Key Vault secret management.
-
-<Aside type="caution">
-All secrets methods are **async** and must be awaited.
-</Aside>
-
-**Functions**:
-
-| Function | Parameters | Returns | Description |
-|----------|-----------|---------|-------------|
-| `get(key)` | key: str | str \| None | Get secret value |
-| `set(key, value)` | key: str, value: str | None | Store secret |
-| `list()` | - | list[str] | List secret keys (not values) |
-| `delete(key)` | key: str | bool | Delete secret (returns success) |
-
-**Scoping**: Secrets automatically scoped as `{org_id}--{key}` in Key Vault.
-
-<Tabs>
-  <TabItem label="Get Secret" icon="approve-check">
-```python
-from bifrost import secrets
-
-# Get secret from Key Vault
-api_key = await secrets.get("api_key")
-
-if api_key:
-    # Use in API call
-    headers = {"Authorization": f"Bearer {api_key}"}
-```
-  </TabItem>
-
-  <TabItem label="Set Secret" icon="pencil">
-```python
-from bifrost import secrets
-
-# Store secret in Key Vault
-await secrets.set("api_key", "new_secret_value")
-```
-  </TabItem>
-
-  <TabItem label="List Keys" icon="list">
-```python
-from bifrost import secrets
-
-# List secret keys (values not returned for security)
-secret_keys = await secrets.list()
-for key in secret_keys:
-    print(f"Secret exists: {key}")
-```
-  </TabItem>
-</Tabs>
-
 ### oauth
 
-OAuth token management.
+OAuth connection and token management.
 
 <Aside type="caution">
 All oauth methods are **async** and must be awaited.
@@ -352,40 +222,40 @@ All oauth methods are **async** and must be awaited.
 
 | Function | Parameters | Returns | Description |
 |----------|-----------|---------|-------------|
-| `get_token(provider)` | provider: str | dict \| None | Get OAuth token data |
-| `set_token(provider, token_data)` | provider: str, token_data: dict | None | Store token |
-| `list_providers()` | - | list[str] | List provider names |
-| `delete_token(provider)` | provider: str | bool | Delete token (returns success) |
-| `refresh_token(provider)` | provider: str | dict | Refresh and return new token |
+| `get(provider, org_id=None)` | provider: str, org_id: str \| None | dict \| None | Get full OAuth connection config |
 
-**Token Data Structure**:
+**Connection Data Structure**:
 
-The `get_token()` method returns a dictionary with:
+The `get()` method returns a dictionary with full OAuth configuration:
 
 ```python
 {
-    "access_token": str,      # Current access token
-    "refresh_token": str,     # Refresh token (if available)
-    "expires_at": int,        # Unix timestamp
-    "token_type": str,        # Usually "Bearer"
-    "scope": str              # Granted scopes
+    "connection_name": str,    # Provider/connection name
+    "client_id": str,          # OAuth client ID
+    "client_secret": str,      # OAuth client secret (decrypted)
+    "authorization_url": str,  # Authorization endpoint
+    "token_url": str,          # Token endpoint
+    "scopes": list[str],       # Configured scopes
+    "access_token": str,       # Current access token (decrypted)
+    "refresh_token": str,      # Refresh token (decrypted, if available)
+    "expires_at": str          # ISO timestamp when token expires
 }
 ```
 
 <Tabs>
-  <TabItem label="Get Token" icon="approve-check">
+  <TabItem label="Simple API Call" icon="approve-check">
 ```python
 from bifrost import oauth
 import aiohttp
 
-# Get OAuth token
-token_data = await oauth.get_token("microsoft")
-if not token_data:
+# Get OAuth connection
+conn = await oauth.get("microsoft")
+if not conn:
     raise ValueError("Microsoft OAuth not configured")
 
-# Use in API call
+# Use access_token for API calls
 url = "https://graph.microsoft.com/v1.0/me"
-headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+headers = {"Authorization": f"Bearer {conn['access_token']}"}
 
 async with aiohttp.ClientSession() as session:
     async with session.get(url, headers=headers) as resp:
@@ -393,71 +263,76 @@ async with aiohttp.ClientSession() as session:
 ```
   </TabItem>
 
-  <TabItem label="Refresh Token" icon="refresh">
+  <TabItem label="Cross-Tenant Exchange" icon="key">
 ```python
 from bifrost import oauth
+import aiohttp
 
-# Refresh token if expired
-token_data = await oauth.get_token("microsoft")
+# Get full credentials for token exchange (e.g., GDAP)
+conn = await oauth.get("Microsoft_GDAP")
+if not conn:
+    raise ValueError("GDAP OAuth not configured")
 
-if token_data and token_data["expires_at"] < time.time():
-    # Token expired, refresh it
-    token_data = await oauth.refresh_token("microsoft")
-```
-  </TabItem>
-
-  <TabItem label="List Providers" icon="list">
-```python
-from bifrost import oauth
-
-# List all configured OAuth providers
-providers = await oauth.list_providers()
-for provider in providers:
-    print(f"Provider configured: {provider}")
+# Exchange refresh token for tenant-specific access
+token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+async with aiohttp.ClientSession() as session:
+    async with session.post(token_url, data={
+        "grant_type": "refresh_token",
+        "refresh_token": conn["refresh_token"],
+        "client_id": conn["client_id"],
+        "client_secret": conn["client_secret"],
+        "scope": "https://graph.microsoft.com/.default"
+    }) as resp:
+        result = await resp.json()
+        return result["access_token"]
 ```
   </TabItem>
 </Tabs>
 
 <Aside type="note">
-Bifrost automatically refreshes expired tokens when using `get_token()`. Manual refresh is rarely needed.
+Bifrost automatically refreshes expired tokens before execution.
 </Aside>
 
 ### files
 
-File operations (synchronous).
+File operations for workspace and temporary storage.
 
-<Aside type="tip">
-The files module is **synchronous** - no await needed!
+<Aside type="caution">
+All files methods are **async** and must be awaited.
 </Aside>
 
 **Functions**:
 
 | Function | Parameters | Returns | Description |
 |----------|-----------|---------|-------------|
-| `read(path)` | path: str | str | Read file as text |
-| `read_bytes(path)` | path: str | bytes | Read file as bytes |
-| `write(path, content)` | path: str, content: str | None | Write text file |
-| `write_bytes(path, content)` | path: str, content: bytes | None | Write binary file |
-| `list(directory)` | directory: str | list[str] | List directory contents |
-| `delete(path)` | path: str | None | Delete file |
-| `exists(path)` | path: str | bool | Check if file exists |
+| `read(path, location)` | path: str, location: str | str | Read file as text |
+| `read_bytes(path, location)` | path: str, location: str | bytes | Read file as bytes |
+| `write(path, content, location)` | path: str, content: str, location: str | None | Write text file |
+| `write_bytes(path, content, location)` | path: str, content: bytes, location: str | None | Write binary file |
+| `list(directory, location)` | directory: str, location: str | list[str] | List directory contents |
+| `delete(path, location)` | path: str, location: str | None | Delete file |
+| `exists(path, location)` | path: str, location: str | bool | Check if file exists |
 
 **Location Parameter**:
 
-All functions accept optional `location` parameter:
-- `"workspace"` (default) - Persistent workspace files
-- `"temp"` - Temporary files cleared after execution
+All functions accept an optional `location` parameter:
+- `"workspace"` (default) - Persistent workspace files (synced via S3)
+- `"temp"` - Temporary files cleared periodically
+- `"uploads"` - Files uploaded via form file fields (read-only, from S3)
 
 <Tabs>
   <TabItem label="Read File" icon="document">
 ```python
 from bifrost import files
 
-# Read text file (no await!)
-content = files.read("data/config.json")
+# Read text file
+content = await files.read("data/config.json")
 
 # Read binary file
-image_bytes = files.read_bytes("images/logo.png")
+image_bytes = await files.read_bytes("images/logo.png")
+
+# Read uploaded file from form
+uploaded = await files.read("uploads/form_id/uuid/file.txt", location="uploads")
 ```
   </TabItem>
 
@@ -466,10 +341,10 @@ image_bytes = files.read_bytes("images/logo.png")
 from bifrost import files
 
 # Write CSV file
-files.write("data/output.csv", "id,name\n1,Alice\n")
+await files.write("data/output.csv", "id,name\n1,Alice\n")
 
 # Write binary file
-files.write_bytes("images/chart.png", image_data)
+await files.write_bytes("images/chart.png", image_data)
 ```
   </TabItem>
 
@@ -478,13 +353,13 @@ files.write_bytes("images/chart.png", image_data)
 from bifrost import files
 
 # List directory
-items = files.list("data/")
+items = await files.list("data/")
 for item in items:
     print(f"Found: {item}")
 
 # Check if exists
-if files.exists("data/config.json"):
-    config = files.read("data/config.json")
+if await files.exists("data/config.json"):
+    content = await files.read("data/config.json")
 ```
   </TabItem>
 
@@ -493,9 +368,9 @@ if files.exists("data/config.json"):
 from bifrost import files
 
 # Write to temp location
-files.write("temp_report.html", html_content, location="temp")
+await files.write("temp_report.html", html_content, location="temp")
 
-# Temp files are automatically cleaned up after execution
+# Temp files are automatically cleaned up periodically
 ```
   </TabItem>
 </Tabs>
@@ -503,54 +378,44 @@ files.write("temp_report.html", html_content, location="temp")
 ## Complete Example
 
 ```python
-from bifrost import (
-    workflow, param, data_provider, ExecutionContext,
-    config, secrets, oauth, files
-)
+from bifrost import workflow, data_provider, context, config, files
 import aiohttp
+import json
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Data provider
+# Data provider - no context parameter needed
 @data_provider(
     name="get_departments",
     description="List departments",
     cache_ttl_seconds=600
 )
-async def get_departments(context: ExecutionContext):
+async def get_departments():
     return [
         {"label": "Engineering", "value": "eng"},
         {"label": "Sales", "value": "sales"}
     ]
 
-# Workflow
-@workflow(
-    name="create_user",
-    description="Create user in system",
-    category="User Management",
-    timeout_seconds=60
-)
-@param("email", type="email", required=True)
-@param("name", type="string", required=True)
-@param("department", type="string", data_provider="get_departments")
+# Workflow - parameters auto-inferred from function signature
+@workflow(category="User Management", timeout_seconds=60)
 async def create_user(
-    context: ExecutionContext,
     email: str,
     name: str,
-    department: str
+    department: str = "General"
 ):
     """Create a new user with department assignment."""
 
     logger.info("Creating user", extra={
         "email": email,
-        "department": department
+        "department": department,
+        "org_id": context.org_id  # Access context via proxy
     })
 
     try:
-        # Get config and secrets (both async!)
+        # Get config values (async!)
         api_url = await config.get("api_url")
-        api_key = await secrets.get("api_key")
+        api_key = await config.get("api_key")  # Secrets retrieved same as config
 
         # Call external API
         headers = {"Authorization": f"Bearer {api_key}"}
@@ -565,8 +430,8 @@ async def create_user(
                 if resp.status == 201:
                     user = await resp.json()
 
-                    # Write to file (synchronous!)
-                    files.write(
+                    # Write to file (async)
+                    await files.write(
                         f"users/{user['id']}.json",
                         json.dumps(user, indent=2)
                     )
@@ -605,13 +470,12 @@ class Organization:
 
 ## Best Practices
 
-1. **Type Hints**: Always use `ExecutionContext` type hint
-2. **Async/Await**: Remember config, secrets, and oauth are async
-3. **Files Are Sync**: No await for files module
-4. **Logging**: Use `logging.getLogger(__name__)`
-5. **Error Handling**: Return error states, log with context
-6. **Secrets**: Never log or return secret values
-7. **Caching**: Set appropriate cache TTL for data providers
+1. **Context Proxy**: Use `from bifrost import context` to access execution context
+2. **All Async**: All SDK modules (config, oauth, files) are async and require `await`
+3. **Logging**: Use `logging.getLogger(__name__)`
+4. **Error Handling**: Return error states, log with context
+5. **Secrets**: Use `config.set(key, value, is_secret=True)` for sensitive data; never log or return secrets
+6. **Caching**: Set appropriate cache TTL for data providers
 
 ## Next Steps
 

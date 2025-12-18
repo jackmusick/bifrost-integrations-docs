@@ -35,7 +35,7 @@ Want to understand the "why" behind Bifrost? Check out [Why This Matters](/about
   <Card title="Centralized Connection Management" icon="setting">
     - Automated OAuth refresh flows
     - Key/value configuration storage per organization
-    - Secure secrets management with Azure Key Vault
+    - Encrypted secrets storage
   </Card>
 
   <Card title="Dynamic Forms and Workflows" icon="document">
@@ -61,25 +61,39 @@ Want to understand the "why" behind Bifrost? Check out [Why This Matters](/about
 
 ```
 ┌─────────────────────────────────────────┐
-│  Client (React SPA)                      │
+│  Client (React)                          │
 │  Forms | Workflows | Admin               │
 └────────────────┬────────────────────────┘
-                 │ REST API
+                 │ REST API / WebSocket
                  ▼
 ┌─────────────────────────────────────────┐
-│  Azure Functions Runtime                 │
-│  ┌───────────────────────────────────┐  │
-│  │ HTTP Handlers                     │  │
-│  │ Workflow Registry                 │  │
-│  │ Execution Context                 │  │
-│  └───────────────────────────────────┘  │
+│  API (FastAPI)                           │
+│  HTTP Handlers | Auth | Workflow Engine  │
 └────────────────┬────────────────────────┘
                  │
+    ┌────────────┼────────────┐
+    ▼            ▼            ▼
+┌────────┐  ┌────────┐  ┌────────┐
+│Worker  │  │Scheduler│  │ MinIO  │
+│(async) │  │(cron)  │  │  (S3)  │
+└────────┘  └────────┘  └────────┘
+    │            │            │
+    └────────────┼────────────┘
                  ▼
 ┌─────────────────────────────────────────┐
-│  Azure Storage | Key Vault | Services   │
+│  PostgreSQL | RabbitMQ | Redis          │
 └─────────────────────────────────────────┘
 ```
+
+| Component | Purpose |
+|-----------|---------|
+| **API** | HTTP endpoints, authentication, workflow execution |
+| **Worker** | Background job processing (scalable, downloads workspace from S3) |
+| **Scheduler** | Runs scheduled workflows and cleanup jobs |
+| **MinIO/S3** | Object storage for workspace files |
+| **PostgreSQL** | Primary database for all data |
+| **RabbitMQ** | Message queue for async job dispatch |
+| **Redis** | Sessions, cache, sync execution results |
 
 ## Core Concepts
 
@@ -88,13 +102,13 @@ Want to understand the "why" behind Bifrost? Check out [Why This Matters](/about
 Python async functions decorated with `@workflow`:
 
 ```python
-@workflow(name="create_user", description="Create new user")
-@param("email", "email", required=True)
-async def create_user(context, email: str):
+@workflow
+async def create_user(email: str, name: str):
+    """Create a new user in the system."""
     return {"user_id": "123"}
 ```
 
-These are used to simply tell the platform what code is available to be tied to things like forms, and register things like scheduled jobs and webhooks.
+The decorator auto-infers name, description, and parameters from your function. These workflows are automatically discovered and can be tied to forms, scheduled jobs, and webhooks.
 
 ### Forms
 
@@ -110,24 +124,27 @@ UI for workflows with:
 Dynamic options for dropdowns:
 
 ```python
+from bifrost import data_provider, context
+
 @data_provider(name="get_departments")
-async def get_departments(context):
+async def get_departments():
+    org_id = context.org_id  # Access via proxy if needed
     return [
         {"label": "Engineering", "value": "eng"},
         {"label": "Sales", "value": "sales"}
     ]
 ```
 
-### Discovery System
+### Workflow Discovery
 
-Workflows auto-register on startup and during execution:
+Workflows are discovered automatically when the API starts:
 
-1. Scans your workspace directory
-1. Imports Python files with the proper decorators
-1. Registers metadata
-1. Exposes via REST API
+1. Scans workspace files (stored in S3, synced locally)
+2. Imports Python files with `@workflow` and `@data_provider` decorators
+3. Registers metadata in the database
+4. Exposes via REST API
 
-This can be an intense process, but it's important to allow your code base to be organic and organized how you want, rather than struggling with organizing it within a web interface. This enables you organize things by feature, customer or whatever you find the most useful.
+When you edit files in the UI editor, changes are pushed to workers via RabbitMQ, keeping all instances in sync. This enables you to organize your code by feature, customer, or whatever you find most useful.
 
 ## Multi-Tenancy
 
@@ -137,11 +154,11 @@ This can be an intense process, but it's important to allow your code base to be
 
 ## Security
 
--   **Authentication**: Entra ID (untested, but you should be able to configure any oauth provider)
+-   **Authentication**: Local auth, Microsoft, Google, or any OIDC provider
 -   **Authorization**: Role-based access control (RBAC) to forms
--   **Secret Management**: Azure Key Vault
+-   **Secret Management**: Encrypted secrets stored in PostgreSQL
 -   **Audit Logging**: Most actions logged with user context
--   **OAuth Flow**: Secure OAuth 2.0 token management, also stored in Key Vault
+-   **OAuth Flow**: Secure OAuth 2.0 token management with automatic refresh
 
 ## Use Cases
 
@@ -170,12 +187,11 @@ This can be an intense process, but it's important to allow your code base to be
 ## Open Source
 
 -   **License**: AGPL
--   **API Repo**: [github.com/jackmusick/bifrost-api](https://github.com/jackmusick/bifrost-api)
--   **Client Repo**: [github.com/jackmusick/bifrost-client](https://github.com/jackmusick/bifrost-client)
+-   **Repository**: [github.com/jackmusick/bifrost](https://github.com/jackmusick/bifrost)
 
 ## Next Steps
 
--   [Installation Guide](/getting-started/installation) - Deploy to Azure
+-   [Installation Guide](/getting-started/installation) - Deploy with Docker Compose
 -   [First Workflow Tutorial](/getting-started/first-workflow) - Build your first workflow
 -   [Create Forms](/getting-started/creating-forms) - Build dynamic forms
 -   [OAuth Integration](/getting-started/oauth-integration) - Connect external APIs

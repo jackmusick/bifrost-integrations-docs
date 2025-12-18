@@ -145,18 +145,23 @@ Here's how you might build a workflow with AI assistance:
 **AI generates:**
 
 ```python
-from bifrost import workflow, param, secrets, oauth
+from bifrost import workflow, param, oauth
 
-@workflow(name="onboard_user", description="Onboard new user to M365")
-@param("email", "email", required=True, description="User email")
-@param("first_name", "text", required=True, description="First name")
-@param("last_name", "text", required=True, description="Last name")
-@param("department", "select", required=True, description="Department")
-async def onboard_user(context, email, first_name, last_name, department):
+@workflow(category="User Management")
+@param("department", data_provider="get_departments")  # Dropdown from data provider
+async def onboard_user(
+    email: str,
+    first_name: str,
+    last_name: str,
+    department: str
+):
+    """Onboard new user to M365 with groups and welcome email."""
     # AI generates the implementation
     # with proper error handling, logging, etc.
     pass
 ```
+
+The decorator automatically infers name (`"onboard_user"`) and description from the docstring. Parameters are extracted from the function signature with proper types.
 
 **Then you can ask:**
 

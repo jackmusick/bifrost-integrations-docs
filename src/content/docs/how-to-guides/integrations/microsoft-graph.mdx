@@ -23,7 +23,7 @@ import aiohttp
 @workflow(name="graph_workflow")
 async def graph_workflow(context: ExecutionContext):
     # Get OAuth token
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
     if not token_data:
         raise ValueError("Microsoft Graph OAuth not configured")
 
@@ -51,7 +51,7 @@ import aiohttp
 
 @workflow(name="list_users", description="Get all users")
 async def list_users(context: ExecutionContext):
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
 
     url = "https://graph.microsoft.com/v1.0/users"
     headers = {"Authorization": f"Bearer {token_data['access_token']}"}
@@ -81,7 +81,7 @@ async def create_user(
     display_name: str,
     password: str
 ):
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
 
     url = "https://graph.microsoft.com/v1.0/users"
     headers = {
@@ -125,7 +125,7 @@ async def update_user(
     job_title: str = None,
     department: str = None
 ):
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
 
     url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
     headers = {
@@ -157,7 +157,7 @@ Add users to security or Microsoft 365 groups:
 @param("user_id", type="string", required=True)
 @param("group_id", type="string", required=True)
 async def add_to_group(context: ExecutionContext, user_id: str, group_id: str):
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
 
     url = f"https://graph.microsoft.com/v1.0/groups/{group_id}/members/$ref"
     headers = {
@@ -186,7 +186,7 @@ Assign Microsoft 365 licenses to users:
 @param("user_id", type="string", required=True)
 @param("sku_id", type="string", required=True)
 async def assign_license(context: ExecutionContext, user_id: str, sku_id: str):
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
 
     url = f"https://graph.microsoft.com/v1.0/users/{user_id}/assignLicense"
     headers = {
@@ -214,7 +214,7 @@ Get all results from large datasets:
 ```python
 @workflow(name="get_all_users", description="Get all users with pagination")
 async def get_all_users(context: ExecutionContext):
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
     headers = {"Authorization": f"Bearer {token_data['access_token']}"}
 
     all_users = []
@@ -265,7 +265,7 @@ Handle common Graph API errors:
 @workflow(name="safe_get_user")
 @param("user_id", type="string", required=True)
 async def safe_get_user(context: ExecutionContext, user_id: str):
-    token_data = await oauth.get_token("microsoft")
+    token_data = await oauth.get("microsoft")
     if not token_data:
         return {"success": False, "error": "OAuth not configured"}
 
@@ -299,7 +299,7 @@ async def safe_get_user(context: ExecutionContext, user_id: str):
 
 ## Best Practices
 
-1. **Always check token**: Verify `oauth.get_token()` doesn't return `None`
+1. **Always check token**: Verify `oauth.get()` doesn't return `None`
 2. **Use raise_for_status()**: Let HTTP errors bubble as exceptions
 3. **Select only needed fields**: Use `$select` to reduce payload size
 4. **Handle pagination**: Large result sets require paging

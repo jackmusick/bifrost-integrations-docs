@@ -25,6 +25,13 @@ export default defineConfig({
             },
             favicon: "/src/assets/logo-square.svg",
             customCss: ["./src/styles/custom.css"],
+            social: [
+                {
+                    icon: "github",
+                    label: "GitHub",
+                    href: "https://github.com/jackmusick/bifrost",
+                },
+            ],
             sidebar: [
                 {
                     label: "About",
@@ -78,7 +85,7 @@ export default defineConfig({
                         { label: "Workflows", slug: "core-concepts/workflows" },
                         { label: "Forms", slug: "core-concepts/forms" },
                         {
-                            label: "Discovery System",
+                            label: "Workflow Discovery",
                             slug: "core-concepts/discovery-system",
                         },
                         {
@@ -189,6 +196,10 @@ export default defineConfig({
                             collapsed: true,
                             items: [
                                 {
+                                    label: "Bifrost Module",
+                                    slug: "sdk-reference/sdk/bifrost-module",
+                                },
+                                {
                                     label: "Context API",
                                     slug: "sdk-reference/sdk/context-api",
                                 },
@@ -197,8 +208,8 @@ export default defineConfig({
                                     slug: "sdk-reference/sdk/decorators",
                                 },
                                 {
-                                    label: "Bifrost Module",
-                                    slug: "sdk-reference/sdk/bifrost-module",
+                                    label: "External SDK",
+                                    slug: "sdk-reference/sdk/external-sdk",
                                 },
                             ],
                         },
@@ -208,10 +219,6 @@ export default defineConfig({
                     label: "Troubleshooting",
                     collapsed: true,
                     items: [
-                        {
-                            label: "Azure Functions",
-                            slug: "troubleshooting/azure-functions",
-                        },
                         { label: "OAuth", slug: "troubleshooting/oauth" },
                         {
                             label: "Workflow Engine",
@@ -224,20 +231,7 @@ export default defineConfig({
             components: {
                 // Override default components if needed
             },
-            plugins: [
-                starlightThemeBlack({
-                    navLinks: [
-                        {
-                            label: "API",
-                            link: "https://github.com/jackmusick/bifrost-api",
-                        },
-                        {
-                            label: "Client",
-                            link: "https://github.com/jackmusick/bifrost-client",
-                        },
-                    ],
-                }),
-            ],
+            plugins: [starlightThemeBlack({})],
         }),
     ],
 });

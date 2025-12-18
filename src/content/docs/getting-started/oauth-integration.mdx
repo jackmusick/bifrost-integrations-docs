@@ -168,8 +168,8 @@ An OAuth connection to Microsoft Graph for reading user information.
     async def list_users(context: ExecutionContext):
         """Fetch user information from Microsoft Graph."""
 
-        # Get OAuth credentials
-        oauth_response = await oauth.get_token("Microsoft_Graph")
+        # Get OAuth connection
+        oauth_response = await oauth.get("Microsoft_Graph")
 
         logger.info("Retrieved oauth response")
         url = "https://graph.microsoft.com/v1.0/users"
@@ -202,7 +202,7 @@ OAuth connections are organization-scoped:
 -   Workflows automatically use the executing org's credentials or fall back on the global connection, but you can specify something else if you want like this:
 
     ```python
-    await oauth.get_token("Microsoft_Graph", 'some-other-org-id')
+    await oauth.get("Microsoft_Graph", 'some-other-org-id')
     ```
 
 -   No code changes needed for multi-tenancy!

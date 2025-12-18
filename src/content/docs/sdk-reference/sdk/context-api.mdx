@@ -1,26 +1,27 @@
 ---
-title: ExecutionContext API
-description: Complete reference for the ExecutionContext object
+title: Context API
+description: Complete reference for the execution context
 ---
 
 import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Overview
 
-`ExecutionContext` provides access to organization, user, and execution information in every workflow and data provider.
+The `context` proxy provides access to organization, user, and execution information in workflows and data providers. No need to pass it as a parameter—just import and use it.
 
 ```python
-from bifrost import workflow, ExecutionContext
+from bifrost import workflow, context
 
 @workflow(name="example")
-async def example(context: ExecutionContext):
-    # Access context properties
+async def example(name: str):
+    # Access context via proxy - no parameter needed
     org_id = context.org_id
     user_id = context.user_id
+    return {"org": org_id, "user": user_id}
 ```
 
 <Aside type="note">
-Every workflow and data provider receives `ExecutionContext` as the first parameter. It's read-only and provides identity, organization, and execution metadata.
+The `context` proxy is read-only and provides identity, organization, and execution metadata. It's automatically available during workflow execution.
 </Aside>
 
 ## Properties
@@ -117,8 +118,10 @@ if context.organization:
 <Tabs>
   <TabItem label="Check Permissions" icon="lock">
 ```python
+from bifrost import workflow, context
+
 @workflow(name="admin_task")
-async def admin_task(context: ExecutionContext):
+async def admin_task():
     if not context.is_platform_admin:
         return {
             "success": False,
@@ -132,8 +135,10 @@ async def admin_task(context: ExecutionContext):
 
   <TabItem label="Org-Scoped Query" icon="seti:folder">
 ```python
+from bifrost import workflow, context
+
 @workflow(name="get_org_data")
-async def get_org_data(context: ExecutionContext):
+async def get_org_data():
     if not context.org_id:
         return {"error": "Organization context required"}
 
@@ -148,12 +153,13 @@ async def get_org_data(context: ExecutionContext):
 
   <TabItem label="Logging" icon="log">
 ```python
+from bifrost import workflow, context
 import logging
 
 logger = logging.getLogger(__name__)
 
 @workflow(name="example")
-async def example(context: ExecutionContext):
+async def example():
     logger.info("Workflow started", extra={
         "org_id": context.org_id,
         "user_id": context.user_id,
@@ -164,8 +170,10 @@ async def example(context: ExecutionContext):
 
   <TabItem label="Global vs Org" icon="world">
 ```python
+from bifrost import workflow, context
+
 @workflow(name="flexible_query")
-async def flexible_query(context: ExecutionContext):
+async def flexible_query():
     if context.is_global_scope:
         # Platform admin viewing all data
         results = await db.query("SELECT * FROM resources")
@@ -182,8 +190,13 @@ async def flexible_query(context: ExecutionContext):
 
   <TabItem label="Auth Type" icon="approve-check">
 ```python
+from bifrost import workflow, context
+import logging
+
+logger = logging.getLogger(__name__)
+
 @workflow(name="api_endpoint")
-async def api_endpoint(context: ExecutionContext):
+async def api_endpoint():
     if context.is_function_key:
         # Called via API key - automated system
         logger.info("API key authentication")
@@ -196,13 +209,13 @@ async def api_endpoint(context: ExecutionContext):
 
 ## Context in Data Providers
 
-Data providers receive the same context:
+Data providers can access context the same way:
 
 ```python
-from bifrost import data_provider, ExecutionContext
+from bifrost import data_provider, context
 
 @data_provider(name="get_org_users")
-async def get_org_users(context: ExecutionContext):
+async def get_org_users():
     # Filter users by organization
     users = await db.query(
         "SELECT id, name FROM users WHERE org_id = ?",
@@ -214,18 +227,6 @@ async def get_org_users(context: ExecutionContext):
         for u in users
     ]
 ```
-
-## Backward Compatibility
-
-<Aside type="caution">
-Legacy properties are deprecated but still available for backward compatibility. Use new properties in all new code.
-</Aside>
-
-| Old Property | New Property |
-|-------------|--------------|
-| `executed_by` | `user_id` |
-| `executed_by_email` | `email` |
-| `executed_by_name` | `name` |
 
 ## Type Definition
 
@@ -263,9 +264,9 @@ class ExecutionContext:
 Follow these patterns for clean, maintainable workflows:
 </Aside>
 
-1. **Always Check org_id**: Verify org context before org-scoped operations
-2. **Log Context**: Include context in log messages for debugging
-3. **Type Hints**: Always use `ExecutionContext` type hint
+1. **Use the Proxy**: Import `from bifrost import context` - no parameter needed
+2. **Always Check org_id**: Verify org context before org-scoped operations
+3. **Log Context**: Include context in log messages for debugging
 4. **Don't Mutate**: Context is read-only, don't try to modify it
 5. **Use Properties**: Use `context.org_id` not `context.organization.id`
 6. **Never Log Secrets**: Don't include sensitive data in log messages

@@ -3,12 +3,12 @@ title: AI System Instructions
 description: System instructions for AI coding assistants building Bifrost workflows
 ---
 
-This page provides instructions for AI coding assistants working on Bifrost projects. Copy the instructions below into your AI assistant's context.
+This page provides instructions for AI coding assistants working on Bifrost projects. Copy the instructions below into your AI assistant's context or save as `AGENTS.md` in your workspace.
 
 ````markdown
 # Bifrost AI System Instructions
 
-You are helping build workflows for Bifrost, a workflow automation platform.
+You are helping build workflows for Bifrost, a workflow automation platform for MSPs. Bifrost enables creating Python-based workflows that can be triggered via forms, APIs, or schedules.
 
 ## Documentation Access
 
@@ -25,67 +25,591 @@ Before coding, fetch relevant documentation:
 
 Always check the documentation first before writing code to ensure accuracy.
 
+---
+
 ## Critical Rules (Always Apply)
 
-1. **Async/Await**:
-   - `config`, `secrets`, `oauth`, `forms`, `organizations`, `executions`, `roles` are **ASYNC** - must `await`
-   - `files` and `workflows` modules are **SYNCHRONOUS** - no `await`
+### 1. Async/Await Requirements
 
-2. **OAuth API**: Use `await oauth.get_token("provider")` returning dict with `access_token`
-   - NOT `get_oauth_connection()` (doesn't exist)
+| Module | Async? | Requires `await` |
+|--------|--------|------------------|
+| `config` | ✅ Yes | `await config.get()`, `await config.set()` |
+| `oauth` | ✅ Yes | `await oauth.get()` |
+| `forms` | ✅ Yes | `await forms.list()`, `await forms.get()` |
+| `organizations` | ✅ Yes | `await organizations.list()` |
+| `executions` | ✅ Yes | `await executions.list()` |
+| `roles` | ✅ Yes | `await roles.list()` |
+| `files` | ❌ No | `files.read()`, `files.write()` (synchronous!) |
+| `workflows` | ❌ No | `workflows.execute()`, `workflows.list()` (synchronous!) |
 
-3. **Files API**: Use `files.list()` NOT `files.list_dir()`
+> **Secrets**: Use `config.set(key, value, is_secret=True)` for sensitive data. Retrieve with `config.get(key)`.
 
-4. **Logger Syntax**: Use `logger.info("msg", extra={})` NOT `logger.info( "msg", {})`
-
-5. **No has_config()**: ExecutionContext has no `has_config()` method - use `await config.get(key)`
-
-6. **Check None**: OAuth/config/secrets can return None - always check before using
-
-7. **Never Log Secrets**: No passwords, tokens, API keys, or full email addresses
-
-8. **Check org_id**: Always verify `context.org_id` exists before org-scoped operations
-
-## Quick Reference
-
-| Module | Async? | Key Functions |
-|--------|--------|---------------|
-| config | ✅ Yes | get, set, list, delete |
-| secrets | ✅ Yes | get, set, list, delete |
-| oauth | ✅ Yes | get_token, set_token, list_providers, delete_token, refresh_token |
-| files | ❌ No | read, read_bytes, write, write_bytes, list, delete, exists |
-| forms | ✅ Yes | list, get |
-| organizations | ✅ Yes | create, get, list, update, delete |
-| workflows | ❌ No | execute, list, get_status |
-| executions | ✅ Yes | list, get, delete |
-| roles | ✅ Yes | create, get, list, update, delete, list_users, list_forms, assign_users, assign_forms |
-
-## Workflow Structure Example
+### 2. Common API Mistakes to Avoid
 
 ```python
-from bifrost import workflow, param, ExecutionContext
+# WRONG - these methods don't exist
+oauth.get_oauth_connection("provider")  # ❌ Does not exist
+oauth.get_token("provider")              # ❌ Removed - use oauth.get() instead
+files.list_dir("path")                   # ❌ Does not exist
+context.has_config("key")                # ❌ Does not exist
+logger.info("msg", {"key": "value"})     # ❌ Wrong syntax
 
-@workflow(name="my_workflow", description="What it does")
-@param("email", "email", required=True)
-async def my_workflow(context: ExecutionContext, email: str):
-    # Access context
-    org_id = context.org_id
-    user_id = context.user_id
+# CORRECT
+conn = await oauth.get("provider")         # ✅ Returns full OAuth config
+files_list = files.list("path")            # ✅ Correct method name
+value = await config.get("key")            # ✅ Use config.get instead
+logger.info("msg", extra={"key": "value"}) # ✅ Use extra= keyword
+```
 
-    # Use SDK modules (async!)
-    api_key = await secrets.get("api_key")
+### 3. Always Handle None Returns
 
-    # Files are synchronous (no await)
-    content = files.read("data/file.txt")
+```python
+# OAuth and config can return None
+conn = await oauth.get("microsoft")
+if conn is None:
+    raise UserError("Microsoft OAuth not configured")
 
-    return {"success": True}
-\```
+api_key = await config.get("api_key")
+if not api_key:
+    raise UserError("API key not configured")
+```
 
-## Before You Code
+### 4. Security Rules
 
-1. Use Context7 MCP to fetch relevant documentation
-2. Verify APIs against the documentation
-3. Check async/sync requirements
-4. Validate parameters with @param decorators
-5. Handle errors and None returns gracefully
+- **Never log secrets**: No passwords, tokens, API keys, or sensitive data
+- **Mask email addresses**: Log `user@...` not full emails
+- **Check org_id**: Always verify `context.org_id` exists before org-scoped operations
+
+---
+
+## Workflow Structure
+
+### Basic Workflow with Context
+
+```python
+"""
+My Workflow - Brief description
+"""
+import logging
+from bifrost import workflow, param, ExecutionContext, UserError
+
+logger = logging.getLogger(__name__)
+
+@workflow(
+    name="my_workflow",
+    description="Human-readable description shown in UI",
+    category="Category Name",
+    tags=["tag1", "tag2"]
+)
+@param("email", type="email", label="Email Address", required=True)
+@param("department", type="select", label="Department",
+       data_provider="get_departments", required=True)
+@param("notify", type="bool", label="Send Notification",
+       required=False, default_value=True)
+async def my_workflow(
+    context: ExecutionContext,
+    email: str,
+    department: str,
+    notify: bool = True
+) -> dict:
+    """Workflow implementation."""
+
+    # Access context properties
+    logger.info(f"Running for org: {context.org_id}")
+    logger.info(f"Executed by: {context.name}")
+
+    # Use async SDK modules
+    api_key = await config.get("api_key")
+    if not api_key:
+        raise UserError("API key not configured")
+
+    # Use sync SDK modules (no await!)
+    if files.exists("data/template.txt"):
+        template = files.read("data/template.txt")
+
+    return {
+        "success": True,
+        "message": f"Processed {email}"
+    }
+```
+
+### Workflow Without Context (SDK-Only)
+
+When you only need SDK functions and don't need direct context access:
+
+```python
+from bifrost import workflow, param, config
+
+@workflow(name="simple_task", description="Uses SDK only")
+@param("api_endpoint", type="string", required=True)
+async def simple_task(api_endpoint: str) -> dict:
+    # SDK functions work without explicit context parameter
+    api_key = await config.get("api_key")
+    base_url = await config.get("base_url")
+    return {"endpoint": f"{base_url}/{api_endpoint}"}
+```
+
+---
+
+## @workflow Decorator Options
+
+```python
+@workflow(
+    name="workflow_name",              # Required: URL-friendly name (snake_case)
+    description="Description",          # Required: Shown in UI
+    category="Category",                # Optional: For grouping (default: "General")
+    tags=["tag1", "tag2"],              # Optional: For filtering
+    execution_mode="async",             # Optional: "sync" or "async" (default: "async")
+    timeout_seconds=300,                # Optional: Max execution time (default: 300)
+    requires_org=True,                  # Optional: Requires org context (default: True)
+    expose_in_forms=True,               # Optional: Can be used in forms (default: True)
+)
+```
+
+---
+
+## @param Decorator Options
+
+```python
+@param(
+    "param_name",                       # Required: Must match function argument name
+    type="string",                      # Required: See types below
+    label="Display Label",              # Optional: Human-readable label (default: param_name)
+    required=False,                     # Optional: Is required (default: False)
+    default_value="default",            # Optional: Default value
+    help_text="Help text",              # Optional: Shown below field
+    validation={                        # Optional: Validation rules
+        "pattern": r"^[a-z]+$",
+        "min": 0,
+        "max": 100,
+        "message": "Custom error message"
+    },
+    data_provider="provider_name",      # Optional: For select fields
+)
+```
+
+### Parameter Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `string` | Single-line text | `@param("name", type="string")` |
+| `email` | Email with validation | `@param("email", type="email")` |
+| `number` | Numeric input | `@param("count", type="number")` |
+| `int` | Integer input | `@param("count", type="int")` |
+| `bool` | Checkbox/toggle | `@param("enabled", type="bool")` |
+| `select` | Dropdown (use with data_provider) | `@param("dept", type="select", data_provider="get_departments")` |
+
+---
+
+## Data Providers
+
+Data providers supply dynamic options for select fields in forms.
+
+### Basic Data Provider
+
+```python
+from bifrost import data_provider
+
+@data_provider(
+    name="get_departments",
+    description="Returns department list",
+    category="Organization",
+    cache_ttl_seconds=300  # Cache for 5 minutes
+)
+async def get_departments(context) -> list[dict]:
+    """Return options for department dropdown."""
+    return [
+        {"label": "IT", "value": "it", "metadata": {"head_count": 10}},
+        {"label": "Sales", "value": "sales", "metadata": {"head_count": 25}},
+        {"label": "HR", "value": "hr", "metadata": {"head_count": 5}},
+    ]
+```
+
+### Data Provider with Parameters
+
+```python
+from bifrost import data_provider, param
+
+@data_provider(
+    name="get_users_by_department",
+    description="Get users filtered by department",
+    cache_ttl_seconds=180
+)
+@param("department", type="string", required=True)
+async def get_users_by_department(context, department: str) -> list[dict]:
+    """Return users for a specific department."""
+    # Fetch users from API or database
+    return [
+        {"label": "John Doe", "value": "john@example.com"},
+        {"label": "Jane Smith", "value": "jane@example.com"},
+    ]
+```
+
+### Data Provider Return Format
+
+Each option must have `label` and `value`. Optional `metadata` is passed to the form:
+
+```python
+{
+    "label": "Display Text",    # Required: Shown in dropdown
+    "value": "stored_value",    # Required: Sent to workflow
+    "metadata": {...}           # Optional: Additional data
+}
+```
+
+---
+
+## SDK Modules Reference
+
+### config - Configuration & Secrets Management
+
+```python
+from bifrost import config
+
+# Get value (returns None if not found)
+api_url = await config.get("api_url")
+api_url = await config.get("api_url", default="https://default.com")
+
+# Set regular value
+await config.set("api_url", "https://api.example.com")
+
+# Set secret (encrypted in database)
+await config.set("api_key", "sk_live_xxx", is_secret=True)
+
+# List all config for current org
+all_config = await config.list()
+
+# Delete config
+deleted = await config.delete("old_key")
+```
+
+### oauth - OAuth Connection Management
+
+```python
+from bifrost import oauth
+
+# Get OAuth connection - returns full config including credentials
+conn = await oauth.get("microsoft")
+if conn:
+    # For simple API calls, use the access_token
+    access_token = conn["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    # For cross-tenant operations (e.g., GDAP), also available:
+    # conn["client_id"], conn["client_secret"], conn["refresh_token"]
+    # conn["token_url"], conn["scopes"]
+
+# List configured OAuth providers
+providers = await oauth.list_providers()
+
+# Refresh token (if refresh_token available)
+new_token = await oauth.refresh_token("microsoft")
+```
+
+### files - Local Filesystem (Synchronous!)
+
+```python
+from bifrost import files
+
+# Read text file
+content = files.read("data/input.txt")
+
+# Read binary file
+data = files.read_bytes("data/image.png")
+
+# Write text file
+files.write("output/result.txt", "Content here")
+
+# Write binary file
+files.write_bytes("output/data.bin", binary_data)
+
+# List directory
+items = files.list("data/")
+
+# Check existence
+if files.exists("data/config.json"):
+    config = files.read("data/config.json")
+
+# Delete file
+files.delete("temp/old_file.txt")
+```
+
+### workflows - Execute Other Workflows (Synchronous!)
+
+```python
+from bifrost import workflows
+
+# Execute another workflow
+result = workflows.execute("other_workflow", {"param1": "value1"})
+
+# List available workflows
+all_workflows = workflows.list()
+
+# Get execution details
+execution = workflows.get("execution-id")
+```
+
+---
+
+## ExecutionContext Properties
+
+```python
+context.user_id        # User ID who triggered execution
+context.email          # User's email address
+context.name           # User's display name
+context.org_id         # Organization ID (None for global scope)
+context.org_name       # Organization name
+context.execution_id   # Unique execution ID
+context.is_platform_admin  # Whether user is platform admin
+context.is_global_scope    # True if no organization context
+```
+
+---
+
+## Error Handling
+
+### UserError - Display to End Users
+
+```python
+from bifrost import UserError, config
+
+@workflow(name="my_workflow", description="...")
+async def my_workflow(context, email: str):
+    if not email.endswith("@company.com"):
+        raise UserError("Only company email addresses are allowed")
+
+    api_key = await config.get("api_key")
+    if not api_key:
+        raise UserError("API key not configured. Contact your administrator.")
+```
+
+### General Exception Handling
+
+```python
+import logging
+from bifrost import UserError
+
+logger = logging.getLogger(__name__)
+
+@workflow(name="api_call", description="...")
+async def api_call(context, endpoint: str):
+    try:
+        response = requests.get(endpoint)
+        response.raise_for_status()
+        return response.json()
+    except requests.HTTPError as e:
+        logger.error(f"API error: {e}", extra={"endpoint": endpoint})
+        raise UserError(f"Failed to fetch data: {e.response.status_code}")
+    except Exception as e:
+        logger.exception("Unexpected error")
+        raise UserError("An unexpected error occurred. Please try again.")
+```
+
+---
+
+## Form JSON Schema
+
+Forms can be created via the UI or by placing `*.form.json` files in the `forms/` directory of your workspace.
+
+### Complete Form Schema
+
+```json
+{
+  "name": "Create New User",
+  "description": "Create a new user in the system",
+  "linkedWorkflow": "create_user",
+  "accessLevel": "role_based",
+  "isGlobal": false,
+  "launchWorkflowId": null,
+  "allowedQueryParams": ["email", "department"],
+  "defaultLaunchParams": {},
+  "formSchema": {
+    "fields": [
+      {
+        "name": "email",
+        "label": "Email Address",
+        "type": "email",
+        "required": true,
+        "placeholder": "user@company.com",
+        "helpText": "User's email address",
+        "validation": {
+          "pattern": "^[a-zA-Z0-9._%+-]+@company\\.com$",
+          "message": "Must be a company email address"
+        },
+        "allowAsQueryParam": true
+      },
+      {
+        "name": "department",
+        "label": "Department",
+        "type": "select",
+        "required": true,
+        "dataProvider": "get_departments",
+        "helpText": "Select the user's department"
+      },
+      {
+        "name": "manager",
+        "label": "Manager",
+        "type": "select",
+        "required": false,
+        "dataProvider": "get_users_by_department",
+        "dataProviderInputs": {
+          "department": {
+            "mode": "fieldRef",
+            "fieldName": "department"
+          }
+        },
+        "visibilityExpression": "context.department !== null"
+      }
+    ]
+  }
+}
+```
+
+### Form Field Types
+
+| Type | Description | Required Properties |
+|------|-------------|---------------------|
+| `text` | Single-line text input | `name`, `label` |
+| `email` | Email with validation | `name`, `label` |
+| `number` | Numeric input | `name`, `label` |
+| `select` | Dropdown | `name`, `label`, + `dataProvider` or `options` |
+| `checkbox` | Boolean toggle | `name`, `label` |
+| `textarea` | Multi-line text | `name`, `label` |
+| `radio` | Radio button group | `name`, `label`, `options` |
+| `datetime` | Date/time picker | `name`, `label` |
+| `markdown` | Static markdown content | `name`, `content` |
+| `html` | Static HTML content | `name`, `content` |
+| `file` | File upload | `name`, `label`, + `allowedTypes`, `maxSizeMB` |
+
+### Field Properties Reference
+
+```json
+{
+  "name": "field_name",           // Required: Parameter name sent to workflow
+  "label": "Display Label",       // Required: Shown above field
+  "type": "text",                 // Required: Field type (see above)
+  "required": false,              // Is field required?
+  "defaultValue": null,           // Default value
+  "placeholder": "Hint text",     // Placeholder in input
+  "helpText": "Help message",     // Shown below field
+
+  // Validation (optional)
+  "validation": {
+    "pattern": "^[a-z]+$",        // Regex pattern
+    "min": 0,                     // Min value (number) or length (string)
+    "max": 100,                   // Max value (number) or length (string)
+    "message": "Error message"    // Custom validation message
+  },
+
+  // For select/radio fields
+  "options": [                    // Static options (alternative to dataProvider)
+    {"label": "Option 1", "value": "opt1"},
+    {"label": "Option 2", "value": "opt2"}
+  ],
+  "dataProvider": "provider_name", // Dynamic options from data provider
+
+  // For cascading selects (dataProvider with parameters)
+  "dataProviderInputs": {
+    "param_name": {
+      "mode": "static",           // Use static value
+      "value": "fixed_value"
+    },
+    "other_param": {
+      "mode": "fieldRef",         // Use value from another field
+      "fieldName": "department"
+    },
+    "computed_param": {
+      "mode": "expression",       // Use JavaScript expression
+      "expression": "context.field1 + '-' + context.field2"
+    }
+  },
+
+  // Conditional visibility
+  "visibilityExpression": "context.show_advanced === true",
+
+  // URL query parameter population
+  "allowAsQueryParam": true,      // Allow populating from URL ?field_name=value
+
+  // File upload specific
+  "allowedTypes": ["application/pdf", "image/*"],
+  "multiple": false,              // Allow multiple files
+  "maxSizeMB": 10,                // Max file size in MB
+
+  // Static content (markdown/html types)
+  "content": "# Header\nMarkdown content here"
+}
+```
+
+### Access Levels
+
+| Level | Description |
+|-------|-------------|
+| `public` | Future: Unauthenticated access |
+| `authenticated` | Any authenticated user |
+| `role_based` | Only users with assigned roles (default) |
+
+### Launch Workflows
+
+Launch workflows run when a form loads to populate initial context:
+
+```json
+{
+  "name": "Edit User",
+  "linkedWorkflow": "update_user",
+  "launchWorkflowId": "get_user_details",
+  "allowedQueryParams": ["user_id"],
+  "formSchema": {
+    "fields": [
+      {
+        "name": "email",
+        "label": "Email",
+        "type": "email",
+        "defaultValue": "{{context.user.email}}"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Logging Best Practices
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+@workflow(name="my_workflow", description="...")
+async def my_workflow(context, email: str):
+    # INFO: Normal operations
+    logger.info("Starting workflow", extra={"org_id": context.org_id})
+
+    # DEBUG: Detailed debugging (only visible to admins)
+    logger.debug(f"Processing email: {email[:3]}...@{email.split('@')[1]}")
+
+    # WARNING: Something unexpected but not fatal
+    logger.warning("API returned empty result", extra={"endpoint": url})
+
+    # ERROR: Something failed
+    logger.error("Failed to process", extra={"error": str(e)})
+
+    # NEVER log full secrets, tokens, or sensitive data!
+    # logger.info(f"Using key: {api_key}")  # ❌ DON'T DO THIS
+    logger.info("API key loaded successfully")  # ✅ Do this instead
+```
+
+---
+
+## Before You Code Checklist
+
+1. ☐ Check if using Context7 MCP for up-to-date documentation
+2. ☐ Verify async vs sync requirements for SDK modules
+3. ☐ Handle None returns from config/oauth
+4. ☐ Use UserError for user-facing errors
+5. ☐ Never log sensitive data (secrets, tokens, full emails)
+6. ☐ Add @param decorators matching function arguments
+7. ☐ Check context.org_id before org-scoped operations
+8. ☐ Use proper logger syntax: `logger.info("msg", extra={})`
+9. ☐ Use `config.set(key, value, is_secret=True)` for secrets
 ````

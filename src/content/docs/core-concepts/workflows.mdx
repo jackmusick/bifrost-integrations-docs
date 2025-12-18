@@ -15,13 +15,19 @@ Workflows are Python functions decorators to describe functionality to the platf
 ## How They Work
 
 ```python
-from bifrost import workflow, ExecutionContext
+from bifrost import workflow
 
-@workflow(name="create_user", description="Create new user")
-async def create_user(context: ExecutionContext, email: str):
+@workflow
+async def create_user(email: str, name: str):
+    """Create a new user in the system."""
     # Business logic here
     return {"user_id": "123"}
 ```
+
+The decorator automatically infers:
+- **name**: from the function name (`create_user`)
+- **description**: from the docstring
+- **parameters**: from the function signature (type hints determine field types)
 
 **Workflow lifecycle**:
 
@@ -38,7 +44,7 @@ async def create_user(context: ExecutionContext, email: str):
 
 Workflows auto-register - no manual configuration needed:
 
-The `workspace` is configurable, but the Azure deployment will automatically set the location so it can be mounted using Azure Files for persistence.
+The `workspace` location is configurable via the `BIFROST_WORKSPACE_LOCATION` environment variable and mounted as a Docker volume.
 
 ```
 /workspace
@@ -51,14 +57,29 @@ Platform scans these files, finds `@workflow` decorators, registers them.
 
 ### Parameters
 
-Define inputs with `@param`:
+Parameters are automatically extracted from your function signature:
 
 ```python
-@param("email", type="email", required=True)
-@param("department", type="string", data_provider="get_departments")
+@workflow
+async def create_user(
+    email: str,              # Required string
+    name: str,               # Required string
+    department: str = "IT",  # Optional with default
+    active: bool = True      # Optional boolean
+):
+    """Create a new user."""
+    pass
 ```
 
-Parameters automatically generate fields availble to forms with validation.
+For advanced features like data providers or validation, use `@param`:
+
+```python
+@workflow
+@param("department", data_provider="get_departments")
+async def create_user(email: str, department: str):
+    """Create a new user."""
+    pass
+```
 
 ### Execution Context
 
