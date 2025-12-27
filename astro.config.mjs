@@ -157,7 +157,7 @@ export default defineConfig({
                                 },
                                 {
                                     label: "Custom REST APIs",
-                                    slug: "how-to-guides/integrations/custom-apis",
+                                    slug: "how-to-guides/integrations/creating-integrations",
                                 },
                             ],
                         },
@@ -172,6 +172,20 @@ export default defineConfig({
                                 {
                                     label: "AI Coding Guide",
                                     slug: "how-to-guides/local-dev/ai-coding",
+                                },
+                            ],
+                        },
+                        {
+                            label: "Authentication",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Configure SSO",
+                                    slug: "how-to-guides/authentication/sso",
+                                },
+                                {
+                                    label: "Passkeys (WebAuthn)",
+                                    slug: "how-to-guides/authentication/passkeys",
                                 },
                             ],
                         },

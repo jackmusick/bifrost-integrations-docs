@@ -13,9 +13,20 @@ from bifrost import workflow, data_provider, context
 
 # SDK modules (all async)
 from bifrost import ai, knowledge, config, integrations, files
+from bifrost import organizations, users, roles, forms, executions, workflows
 
 # Types (optional, for type hints)
-from bifrost import ExecutionContext, Organization
+from bifrost import (
+    ExecutionContext, Organization, Role, UserPublic, FormPublic,
+    WorkflowMetadata, WorkflowExecution, IntegrationData, OAuthCredentials,
+    ConfigData, AIResponse, AIStreamChunk, KnowledgeDocument, NamespaceInfo,
+)
+
+# Enums
+from bifrost import ExecutionStatus, ConfigType, FormFieldType
+
+# Errors
+from bifrost import UserError, WorkflowError, ValidationError, IntegrationError, ConfigurationError
 ```
 
 <Aside type="note">
@@ -346,20 +357,26 @@ All files methods are **async** and must be awaited.
 
 | Function | Parameters | Returns | Description |
 |----------|-----------|---------|-------------|
-| `read(path, location)` | path: str, location: str | str | Read file as text |
-| `read_bytes(path, location)` | path: str, location: str | bytes | Read file as bytes |
-| `write(path, content, location)` | path: str, content: str, location: str | None | Write text file |
-| `write_bytes(path, content, location)` | path: str, content: bytes, location: str | None | Write binary file |
-| `list(directory, location)` | directory: str, location: str | list[str] | List directory contents |
-| `delete(path, location)` | path: str, location: str | None | Delete file |
-| `exists(path, location)` | path: str, location: str | bool | Check if file exists |
+| `read(path, location, mode)` | path: str, location: str, mode: str | str | Read file as text |
+| `read_bytes(path, location, mode)` | path: str, location: str, mode: str | bytes | Read file as bytes |
+| `write(path, content, location, mode)` | path: str, content: str, location: str, mode: str | None | Write text file |
+| `write_bytes(path, content, location, mode)` | path: str, content: bytes, location: str, mode: str | None | Write binary file |
+| `list(directory, location, mode)` | directory: str, location: str, mode: str | list[str] | List directory contents |
+| `delete(path, location, mode)` | path: str, location: str, mode: str | None | Delete file |
+| `exists(path, location, mode)` | path: str, location: str, mode: str | bool | Check if file exists |
 
 **Location Parameter**:
 
 All functions accept an optional `location` parameter:
-- `"workspace"` (default) - Persistent workspace files (synced via S3)
+- `"workspace"` (default) - Persistent workspace files
 - `"temp"` - Temporary files cleared periodically
-- `"uploads"` - Files uploaded via form file fields (read-only, from S3)
+- `"uploads"` - Files uploaded via form file fields (read-only)
+
+**Mode Parameter**:
+
+All functions accept an optional `mode` parameter:
+- `"cloud"` (default) - S3 storage (for platform execution)
+- `"local"` - Local filesystem (for CLI/local development)
 
 <Tabs>
   <TabItem label="Read File" icon="document">
@@ -415,6 +432,186 @@ await files.write("temp_report.html", html_content, location="temp")
 ```
   </TabItem>
 </Tabs>
+
+### organizations
+
+Organization management (platform admin only).
+
+<Aside type="caution">
+All organization methods are **async** and require platform admin privileges.
+</Aside>
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `create(name, domain, is_active)` | name: str, domain: str \| None, is_active: bool | Organization | Create organization |
+| `get(org_id)` | org_id: str | Organization | Get organization by ID |
+| `list()` | - | list[Organization] | List all organizations |
+| `update(org_id, **updates)` | org_id: str, updates: dict | Organization | Update organization |
+| `delete(org_id)` | org_id: str | bool | Soft delete organization |
+
+**Example**:
+
+```python
+from bifrost import organizations
+
+# Create organization
+org = await organizations.create("Acme Corp", domain="acme.com")
+
+# List organizations
+orgs = await organizations.list()
+for org in orgs:
+    print(f"{org.name}: {org.domain}")
+```
+
+### users
+
+User management (platform admin only).
+
+<Aside type="caution">
+All user methods are **async** and require platform admin privileges.
+</Aside>
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `create(email, name, is_superuser, org_id, is_active)` | email: str, name: str, ... | UserPublic | Create user |
+| `get(user_id)` | user_id: str | UserPublic \| None | Get user by ID |
+| `list(org_id)` | org_id: str \| None | list[UserPublic] | List users |
+| `update(user_id, **updates)` | user_id: str, updates: dict | UserPublic | Update user |
+| `delete(user_id)` | user_id: str | bool | Soft delete user |
+
+**Example**:
+
+```python
+from bifrost import users
+
+# Create user
+user = await users.create(
+    email="john@example.com",
+    name="John Doe",
+    org_id="org-123"
+)
+
+# List users in organization
+org_users = await users.list(org_id="org-123")
+```
+
+### roles
+
+Role management with user and form assignments.
+
+<Aside type="caution">
+All role methods are **async** and require admin privileges.
+</Aside>
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `create(name, description)` | name: str, description: str | Role | Create role |
+| `get(role_id)` | role_id: str | Role | Get role by ID |
+| `list()` | - | list[Role] | List roles in current org |
+| `update(role_id, **updates)` | role_id: str, updates: dict | Role | Update role |
+| `delete(role_id)` | role_id: str | None | Soft delete role |
+| `list_users(role_id)` | role_id: str | list[str] | List user IDs assigned to role |
+| `list_forms(role_id)` | role_id: str | list[str] | List form IDs assigned to role |
+| `assign_users(role_id, user_ids)` | role_id: str, user_ids: list[str] | None | Assign users to role |
+| `assign_forms(role_id, form_ids)` | role_id: str, form_ids: list[str] | None | Assign forms to role |
+
+**Example**:
+
+```python
+from bifrost import roles
+
+# Create role
+role = await roles.create("Manager", description="Can manage team data")
+
+# Assign users and forms
+await roles.assign_users(role.id, ["user-1", "user-2"])
+await roles.assign_forms(role.id, ["form-1", "form-2"])
+```
+
+### forms
+
+Form definitions (read-only access).
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `list()` | - | list[FormPublic] | List available forms |
+| `get(form_id)` | form_id: str | FormPublic | Get form by ID |
+
+**Example**:
+
+```python
+from bifrost import forms
+
+# List forms
+all_forms = await forms.list()
+for form in all_forms:
+    print(f"{form.name}: {form.description}")
+
+# Get specific form
+form = await forms.get("form-123")
+print(form.form_schema)
+```
+
+### executions
+
+Workflow execution history.
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `list(workflow_name, status, start_date, end_date, limit)` | filters: various | list[WorkflowExecution] | List executions with filtering |
+| `get(execution_id)` | execution_id: str | WorkflowExecution | Get execution details |
+
+**Example**:
+
+```python
+from bifrost import executions
+
+# List recent executions
+recent = await executions.list(limit=10)
+for exec in recent:
+    print(f"{exec.workflow_name}: {exec.status}")
+
+# Get failed executions
+failed = await executions.list(status="Failed")
+
+# Get specific execution
+details = await executions.get("exec-123")
+print(details.result)
+```
+
+### workflows
+
+Workflow metadata and execution status.
+
+**Functions**:
+
+| Function | Parameters | Returns | Description |
+|----------|-----------|---------|-------------|
+| `list()` | - | list[WorkflowMetadata] | List all workflows |
+| `get(execution_id)` | execution_id: str | WorkflowExecution | Get execution details |
+
+**Example**:
+
+```python
+from bifrost import workflows
+
+# List all workflows
+wf_list = await workflows.list()
+for wf in wf_list:
+    print(f"{wf.name}: {wf.description}")
+    if wf.schedule:
+        print(f"  Scheduled: {wf.schedule}")
+```
 
 ## Complete Example
 
@@ -494,11 +691,82 @@ async def create_user(
 ### Organization
 
 ```python
-@dataclass
-class Organization:
+class Organization(BaseModel):
     id: str
     name: str
     is_active: bool
+    domain: str | None
+```
+
+### Role
+
+```python
+class Role(BaseModel):
+    id: str
+    name: str
+    description: str
+    organization_id: str
+    is_active: bool
+```
+
+### UserPublic
+
+```python
+class UserPublic(BaseModel):
+    id: str
+    email: str
+    name: str
+    organization_id: str | None
+    is_active: bool
+    is_superuser: bool
+```
+
+### FormPublic
+
+```python
+class FormPublic(BaseModel):
+    id: str
+    name: str
+    description: str | None
+    workflow_id: str | None
+    form_schema: dict | None
+    access_level: str
+    organization_id: str | None
+    is_active: bool
+```
+
+### WorkflowMetadata
+
+```python
+class WorkflowMetadata(BaseModel):
+    id: str
+    name: str
+    description: str | None
+    category: str
+    tags: list[str]
+    execution_mode: str
+    timeout_seconds: int
+    schedule: str | None
+    endpoint_enabled: bool
+    is_tool: bool
+    time_saved: int
+```
+
+### WorkflowExecution
+
+```python
+class WorkflowExecution(BaseModel):
+    execution_id: str
+    workflow_name: str
+    org_id: str | None
+    executed_by: str
+    status: str
+    input_data: dict
+    result: Any
+    error_message: str | None
+    duration_ms: int | None
+    started_at: datetime | None
+    completed_at: datetime | None
 ```
 
 ### Enums
@@ -506,17 +774,52 @@ class Organization:
 **ExecutionStatus**:
 - `PENDING` - Queued for execution
 - `RUNNING` - Currently executing
-- `SUCCESS` - Completed successfully
+- `COMPLETED` - Completed successfully
 - `FAILED` - Failed with error
+- `CANCELLED` - Cancelled by user
+
+**ConfigType**:
+- `STRING` - Plain text value
+- `SECRET` - Encrypted value
+- `JSON` - JSON object
+- `BOOL` - Boolean value
+- `INT` - Integer value
+
+**FormFieldType**:
+- `TEXT` - Text input
+- `NUMBER` - Number input
+- `SELECT` - Dropdown select
+- `CHECKBOX` - Checkbox
+- `DATE` - Date picker
+
+### Errors
+
+```python
+class UserError(Exception):
+    """User-facing error with formatted message."""
+
+class WorkflowError(Exception):
+    """Workflow execution error."""
+
+class ValidationError(Exception):
+    """Validation error."""
+
+class IntegrationError(Exception):
+    """Integration error."""
+
+class ConfigurationError(Exception):
+    """Configuration error."""
+```
 
 ## Best Practices
 
 1. **Context Proxy**: Use `from bifrost import context` to access execution context
-2. **All Async**: All SDK modules (config, oauth, files) are async and require `await`
+2. **All Async**: All SDK modules are async and require `await`
 3. **Logging**: Use `logging.getLogger(__name__)`
 4. **Error Handling**: Return error states, log with context
 5. **Secrets**: Use `config.set(key, value, is_secret=True)` for sensitive data; never log or return secrets
 6. **Caching**: Set appropriate cache TTL for data providers
+7. **Integrations**: Use `integrations.get()` to access OAuth tokens and config for external services
 
 ## Next Steps
 

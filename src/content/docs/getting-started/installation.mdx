@@ -72,25 +72,11 @@ The `setup.sh` script generates all required secrets automatically. You only nee
 | `BIFROST_DEFAULT_USER_PASSWORD` | Password for default admin user |
 | `BIFROST_CORS_ORIGINS` | Allowed origins for CORS (default: http://localhost:3000) |
 
-### OAuth SSO (Optional)
+### Single Sign-On (Optional)
 
-To enable single sign-on, configure one or more providers:
+SSO providers (Microsoft, Google, OIDC) are configured in the UI, not via environment variables.
 
-```bash
-# Microsoft Entra ID
-BIFROST_MICROSOFT_CLIENT_ID=your-client-id
-BIFROST_MICROSOFT_CLIENT_SECRET=your-client-secret
-BIFROST_MICROSOFT_TENANT_ID=common
-
-# Google
-BIFROST_GOOGLE_CLIENT_ID=your-client-id
-BIFROST_GOOGLE_CLIENT_SECRET=your-client-secret
-
-# Generic OIDC
-BIFROST_OIDC_DISCOVERY_URL=https://your-idp/.well-known/openid-configuration
-BIFROST_OIDC_CLIENT_ID=your-client-id
-BIFROST_OIDC_CLIENT_SECRET=your-client-secret
-```
+See [Configure SSO](/how-to-guides/authentication/sso) for setup instructions.
 
 ## Verify Installation
 

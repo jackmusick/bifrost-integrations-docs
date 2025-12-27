@@ -46,7 +46,8 @@ This automatically:
     public_endpoint: bool = False,
     is_tool: bool = False,
     tool_description: str | None = None,
-    time_saved: int | None = None
+    time_saved: int = 0,
+    value: float = 0.0,
 )
 ```
 
@@ -68,7 +69,8 @@ This automatically:
 | `public_endpoint` | bool | False | Skip authentication for webhooks |
 | `is_tool` | bool | False | Make callable by AI agents |
 | `tool_description` | str | None | Description for AI agent tool use |
-| `time_saved` | int | None | Estimated minutes saved per execution (for ROI tracking) |
+| `time_saved` | int | 0 | Estimated minutes saved per execution (for ROI tracking) |
+| `value` | float | 0.0 | Custom value metric per execution |
 
 ### Auto-Generated ID
 

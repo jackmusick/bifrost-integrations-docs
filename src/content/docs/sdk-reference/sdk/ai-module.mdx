@@ -114,6 +114,17 @@ async def stream(
 
 Same as `ai.complete()` except no `response_format`.
 
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `prompt` | str | Simple prompt string |
+| `messages` | list[dict] | Chat messages with `role` and `content` |
+| `system` | str | System prompt (prepended to messages) |
+| `knowledge` | list[str] | Knowledge namespaces for RAG |
+| `max_tokens` | int | Override default max tokens |
+| `temperature` | float | Override default temperature (0.0-2.0) |
+| `org_id` | str | Organization context (auto-set in workflows) |
+| `model` | str | Override default model |
+
 #### Yields
 
 `AIStreamChunk` objects with:
@@ -129,6 +140,25 @@ async for chunk in ai.stream("Write a story"):
     print(chunk.content, end="", flush=True)
     if chunk.done:
         print(f"\nTokens: {chunk.input_tokens + chunk.output_tokens}")
+```
+
+### ai.get_model_info()
+
+Get information about the configured LLM provider.
+
+```python
+async def get_model_info() -> dict[str, Any]
+```
+
+#### Returns
+
+Dictionary with provider, model, and configuration details.
+
+#### Example
+
+```python
+info = await ai.get_model_info()
+print(f"Using {info['provider']}/{info['model']}")
 ```
 
 ## Types
