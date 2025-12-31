@@ -145,10 +145,9 @@ Here's how you might build a workflow with AI assistance:
 **AI generates:**
 
 ```python
-from bifrost import workflow, param, oauth
+from bifrost import workflow
 
 @workflow(category="User Management")
-@param("department", data_provider="get_departments")  # Dropdown from data provider
 async def onboard_user(
     email: str,
     first_name: str,
@@ -161,7 +160,7 @@ async def onboard_user(
     pass
 ```
 
-The decorator automatically infers name (`"onboard_user"`) and description from the docstring. Parameters are extracted from the function signature with proper types.
+The decorator automatically infers name (`"onboard_user"`) and description from the docstring. Parameters are extracted from the function signature with proper types. Data providers for dropdowns (like departments) are configured in the form builder.
 
 **Then you can ask:**
 

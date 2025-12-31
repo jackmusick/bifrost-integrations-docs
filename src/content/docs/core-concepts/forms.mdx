@@ -98,9 +98,8 @@ Every form executes a workflow:
 ```python
 # Form submits to this workflow
 @workflow(name="create_user", description="Create user")
-@param("email", type="email", required=True)
-@param("name", type="string", required=True)
-async def create_user(context, email, name):
+async def create_user(email: str, name: str):
+    """Create a new user."""
     return {"user_id": "123"}
 ```
 
@@ -123,9 +122,8 @@ Form fields → Workflow parameters:
 
 ```python
 @workflow(name="create_user")
-@param("email", type="email", required=True)
-@param("department", type="string", required=True)
-async def create_user(context, email, department):
+async def create_user(email: str, department: str):
+    """Create a new user."""
     return {"user_id": "123"}
 ```
 
@@ -143,15 +141,14 @@ Cascade selections:
 async def get_departments(context):
     return [{"label": "Sales", "value": "sales"}]
 
-# Second dropdown depends on first
-@data_provider(name="get_users_by_dept")
-@param("department", type="string", required=True)
-async def get_users_by_dept(context, department):
+# Second dropdown depends on first - receives department from form field
+@data_provider(name="get_users_by_dept", description="Get users by department")
+async def get_users_by_dept(department: str):
     users = await fetch_users(department)
     return [{"label": u.name, "value": u.id} for u in users]
 ```
 
-User selects department → User dropdown updates.
+User selects department -> User dropdown updates.
 
 ### Conditional Required
 

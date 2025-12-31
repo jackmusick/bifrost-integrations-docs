@@ -48,6 +48,8 @@ The `context` proxy is read-only and provides identity, organization, and execut
 | Property | Type | Description | Example |
 |----------|------|-------------|---------|
 | `execution_id` | str | Unique execution ID | `"exec-789"` |
+| `parameters` | dict[str, Any] | Extra parameters passed to workflow | `{"custom_key": "value"}` |
+| `startup` | dict[str, Any] \| None | Results from launch workflow | `{"user_data": {...}}` |
 
 ### Authorization Flags
 
@@ -56,6 +58,25 @@ The `context` proxy is read-only and provides identity, organization, and execut
 | `is_platform_admin` | bool | User is platform administrator |
 | `is_function_key` | bool | Called via API key (not user) |
 | `is_global_scope` | bool | Executing in global scope (no org) |
+
+### ROI Tracking
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `roi` | ROIContext | ROI tracking context |
+| `roi.time_saved` | int | Minutes saved (from workflow definition) |
+| `roi.value` | float | Value metric (from workflow definition) |
+
+### Methods
+
+| Method | Parameters | Returns | Description |
+|--------|-----------|---------|-------------|
+| `get_config(key, default=None)` | key: str, default: Any | Any | Async method to get config value |
+
+```python
+# Using get_config method
+api_url = await context.get_config("api_url", default="https://api.example.com")
+```
 
 ## Computed Properties
 
@@ -233,6 +254,12 @@ async def get_org_users():
 ```python
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
+
+@dataclass
+class ROIContext:
+    time_saved: int  # Minutes saved per execution
+    value: float     # Value metric per execution
 
 @dataclass
 class ExecutionContext:
@@ -244,6 +271,9 @@ class ExecutionContext:
     is_platform_admin: bool
     is_function_key: bool
     execution_id: str
+    parameters: dict[str, Any]      # Extra parameters passed to workflow
+    startup: dict[str, Any] | None  # Results from launch workflow
+    roi: ROIContext                 # ROI tracking context
 
     @property
     def org_id(self) -> str | None:
@@ -256,6 +286,10 @@ class ExecutionContext:
     @property
     def is_global_scope(self) -> bool:
         return self.scope == "GLOBAL"
+
+    async def get_config(self, key: str, default: Any = None) -> Any:
+        """Get a config value for the current scope."""
+        ...
 ```
 
 ## Best Practices

@@ -70,8 +70,8 @@ export default defineConfig({
                             slug: "getting-started/creating-forms",
                         },
                         {
-                            label: "OAuth Integration",
-                            slug: "getting-started/oauth-integration",
+                            label: "Integrations",
+                            slug: "getting-started/integrations",
                         },
                     ],
                 },

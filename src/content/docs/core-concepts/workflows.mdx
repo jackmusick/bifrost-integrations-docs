@@ -44,7 +44,7 @@ The decorator automatically infers:
 
 Workflows auto-register - no manual configuration needed:
 
-The `workspace` location is configurable via the `BIFROST_WORKSPACE_LOCATION` environment variable and mounted as a Docker volume.
+Workflow files are stored in S3 and automatically synced to the `/workspace` directory in containers.
 
 ```
 /workspace
@@ -71,11 +71,10 @@ async def create_user(
     pass
 ```
 
-For advanced features like data providers or validation, use `@param`:
+To use a data provider for a parameter, configure it in the form builder by selecting the data provider for the field. The form will populate the dropdown dynamically while the workflow receives the selected value:
 
 ```python
 @workflow
-@param("department", data_provider="get_departments")
 async def create_user(email: str, department: str):
     """Create a new user."""
     pass
@@ -223,15 +222,15 @@ Workflows inherit user permissions:
 
 -   Run as executing user
 -   Access org-scoped resources only
--   Can require specific permissions via `required_permission`
+-   Permission checks can be done via the context
 
 ```python
-@workflow(
-    name="admin_task",
-    required_permission="canManageOrganization"
-)
-async def admin_task(context):
-    # Only runs if user has permission
+@workflow(name="admin_task")
+async def admin_task():
+    # Check permissions in the workflow
+    if not context.is_platform_admin:
+        return {"error": "Admin privileges required"}
+    # Perform admin operation
     pass
 ```
 

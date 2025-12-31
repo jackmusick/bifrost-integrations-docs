@@ -15,9 +15,8 @@ An integration with Microsoft Graph that reads user information using OAuth.
 
 -   [Installation complete](/getting-started/installation)
 -   Administrator permissions to Entra ID
--   Administrator permissions in Bifrost
 
-## Create Azure AD App Registration
+## Create Entra ID App Registration
 
 <Steps>
 
@@ -29,22 +28,24 @@ An integration with Microsoft Graph that reads user information using OAuth.
     - **Supported account type**: Single Tenant
     - **Redirect URI**: `https://your-domain.com/oauth/callback/Microsoft_Graph`
 
-    ![alt text](../../../assets/oauth-integration/image-3.png)
+    Please note that you'll change the Redirect URI later as Bifrost will get you the real redirect URL.
+
+    ![alt text](../../../assets/integrations/image-3.png)
 
 1. Copy **Application (client) ID** and **Tenant ID**
 
-    ![alt text](../../../assets/oauth-integration/image-1.png)
+    ![alt text](../../../assets/integrations/image-1.png)
 
 1. Click **Endpoints** and copy your `OAuth 2.0 authorization endpoint (v2)` and `OAuth 2.0 token endpoint (v2)`.
 
-    ![alt text](../../../assets/oauth-integration/image-4.png)
+    ![alt text](../../../assets/integrations/image-4.png)
 
 1. Go to **Certificates & secrets** → **+ New client secret**:
 
     - Set expiration to 6 months
     - Copy secret value immediately
 
-    ![alt text](../../../assets/oauth-integration/image-2.png)
+    ![alt text](../../../assets/integrations/image-2.png)
 
 1. Go to **API permissions**:
     - Click **+ Add permission** → **Microsoft Graph** → **Delegated**
@@ -67,8 +68,11 @@ An integration with Microsoft Graph that reads user information using OAuth.
 
 1. Fill in details:
 
+    - **Organization**: Global, or scoped to a specific organization
     - **Name**: Microsoft_Graph
     - **Description**: Microsoft Graph API connection
+
+    You can skip Entity Data Provider for now. For Default Entity ID, you can use `common`.
 
 1. Configure OAuth:
 
@@ -76,16 +80,21 @@ An integration with Microsoft Graph that reads user information using OAuth.
     - **Client ID**: The Client ID you copied earlier
     - **Client Secret**: The Client Secret you copied earlier
     - **Authorization URL**: The OAuth 2.0 authorization endpoint (v2)
+
+        Our token and authorization URL incldue `{entity_id}` to demonstrate the templating engine. This will be replaced with `common`, but you can also just use `common` directly here and not specify a Default Entity ID.
+
     - **Token URL**: The OAuth 2.0 token endpoint (v2)
     - **Scope**: offline_access Directory.Read.All
 
     <Aside type="tip">
-        `offline_access` requests a refresh token for continuous access without re-authentication.
+        `offline_access` requests a refresh token for continuous access without
+        re-authentication.
     </Aside>
 
-    ![alt text](../../../assets/oauth-integration/image-6.png)
+    ![alt text](../../../assets/integrations/image-8.png)
 
 1. Click **Save**
+1. Copy the Redirect URI at the top and update your App Registration.
 
 </Steps>
 
@@ -101,7 +110,7 @@ An integration with Microsoft Graph that reads user information using OAuth.
 
 1. Connection status changes to **Active**
 
-    ![alt text](../../../assets/oauth-integration/image-7.png)
+    ![alt text](../../../assets/integrations/image-7.png)
 
 </Steps>
 
@@ -165,6 +174,16 @@ Integrations support per-organization OAuth tokens:
 # Automatically uses the right token for the current org
 integration = await integrations.get("Microsoft_Graph")
 token = integration.oauth.access_token
+```
+
+You can also specify the organization:
+
+```python
+# Access a specific organization's integration
+integration = await integrations.get("Microsoft_Graph", org_id="org-123")
+
+# Access platform-level integration defaults (no org mapping)
+integration = await integrations.get("Microsoft_Graph", scope="global")
 ```
 
 ## Next Steps

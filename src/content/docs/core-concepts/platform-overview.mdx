@@ -3,7 +3,7 @@ title: Platform Overview
 description: Understanding Bifrost's architecture and core concepts
 ---
 
-import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+import { Card, CardGrid, Aside } from "@astrojs/starlight/components";
 
 Bifrost Integrations is an open-source automation platform designed to democratize best-in-class tooling for the emerging Integration Services industry - before venture capital gets the chance to own something we're all incredibly passionate about: solving problems with automation.
 
@@ -14,7 +14,8 @@ Existing RPA platforms are great for rapid development and provide helpful abstr
 Bifrost Integrations removes those limitations by creating a light management layer with the features that make RPA's uniquely valuable and letting Python do what it's good at. It's architected with multi-tenancy at its core, enabling you to scale your Integration Services business without duplicating work across customers. **This is not another RPA tool trying to be everything to everyone**; it's a platform designed specifically to help you build scalable automation businesses the right way, without vendor lock-in, and without the limitations of RPA.
 
 <Aside type="tip">
-Want to understand the "why" behind Bifrost? Check out [Why This Matters](/about/why-open-source) to learn about our mission.
+    Want to understand the "why" behind Bifrost? Check out [Why This
+    Matters](/about/why-open-source) to learn about our mission.
 </Aside>
 
 ## What You Can Do with Bifrost
@@ -26,29 +27,32 @@ Want to understand the "why" behind Bifrost? Check out [Why This Matters](/about
     - Test locally before deploying to production
   </Card>
 
-  <Card title="Build Reusable Integrations" icon="puzzle">
-    - Create integration modules for common platforms (NinjaOne, HaloPSA, Pax8, Microsoft CSP)
-    - Abstract authentication, pagination, and API complexity
-    - Share functionality across all your workflows
-  </Card>
+{" "}
+<Card title="Build Reusable Integrations" icon="puzzle">
+    - Create integration modules for common platforms (NinjaOne, HaloPSA, Pax8,
+    Microsoft CSP) - Abstract authentication, pagination, and API complexity -
+    Share functionality across all your workflows
+</Card>
 
-  <Card title="Centralized Connection Management" icon="setting">
-    - Automated OAuth refresh flows
-    - Key/value configuration storage per organization
-    - Encrypted secrets storage
-  </Card>
+{" "}
+<Card title="Centralized Connection Management" icon="setting">
+    - Automated OAuth refresh flows - Key/value configuration storage per
+    organization - Encrypted secrets storage
+</Card>
 
-  <Card title="Dynamic Forms and Workflows" icon="document">
-    - Create flexible forms for you and your customers
-    - Build context-aware workflows that adapt based on organization and user
-    - Generate form inputs programmatically from data providers
-  </Card>
+{" "}
+<Card title="Dynamic Forms and Workflows" icon="document">
+    - Create flexible forms for you and your customers - Build context-aware
+    workflows that adapt based on organization and user - Generate form inputs
+    programmatically from data providers
+</Card>
 
-  <Card title="Multi-Tenant Architecture" icon="users">
-    - Scope functionality globally or to specific organizations
-    - Deliver value to customers without code duplication or redeployment
-    - Complete data isolation between tenants
-  </Card>
+{" "}
+<Card title="Multi-Tenant Architecture" icon="users">
+    - Scope functionality globally or to specific organizations - Deliver value
+    to customers without code duplication or redeployment - Complete data
+    isolation between tenants
+</Card>
 
   <Card title="AI-Assisted Development" icon="star">
     - Built for modern AI coding workflows
@@ -85,15 +89,15 @@ Want to understand the "why" behind Bifrost? Check out [Why This Matters](/about
 └─────────────────────────────────────────┘
 ```
 
-| Component | Purpose |
-|-----------|---------|
-| **API** | HTTP endpoints, authentication, workflow execution |
-| **Worker** | Background job processing (scalable, downloads workspace from S3) |
-| **Scheduler** | Runs scheduled workflows and cleanup jobs |
-| **MinIO/S3** | Object storage for workspace files |
-| **PostgreSQL** | Primary database for all data |
-| **RabbitMQ** | Message queue for async job dispatch |
-| **Redis** | Sessions, cache, sync execution results |
+| Component      | Purpose                                                           |
+| -------------- | ----------------------------------------------------------------- |
+| **API**        | HTTP endpoints, authentication, workflow execution                |
+| **Worker**     | Background job processing (scalable, downloads workspace from S3) |
+| **Scheduler**  | Runs scheduled workflows and cleanup jobs                         |
+| **MinIO/S3**   | Object storage for workspace files                                |
+| **PostgreSQL** | Primary database for all data                                     |
+| **RabbitMQ**   | Message queue for async job dispatch                              |
+| **Redis**      | Sessions, cache, sync execution results                           |
 
 ## Core Concepts
 
@@ -194,4 +198,4 @@ When you edit files in the UI editor, changes are pushed to workers via RabbitMQ
 -   [Installation Guide](/getting-started/installation) - Deploy with Docker Compose
 -   [First Workflow Tutorial](/getting-started/first-workflow) - Build your first workflow
 -   [Create Forms](/getting-started/creating-forms) - Build dynamic forms
--   [OAuth Integration](/getting-started/oauth-integration) - Connect external APIs
+-   [OAuth Integration](/getting-started/integrations) - Connect external APIs

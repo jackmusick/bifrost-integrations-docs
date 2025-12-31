@@ -177,7 +177,78 @@ async def update_ticket(ticket_id: str, status: str, note: str = ""):
 Create an agent with these tools and a prompt like:
 > "You are a helpful support agent. Use the tools to look up and update tickets. Always confirm before making changes."
 
+## The Coding Agent
+
+The Coding Agent is a special system agent for creating and modifying Bifrost workflows using Claude. It provides AI-assisted development capabilities directly within the platform.
+
+### Characteristics
+
+- **System agent**: Auto-created on platform startup, cannot be deleted
+- **Claude-powered**: Uses the Claude Agent SDK with MCP tools
+- **Workspace access**: Has full access to workspace files and system tools
+- **Development focus**: Optimized for workflow creation and modification
+
+### System Tools
+
+The Coding Agent has access to the following system tools:
+
+| Tool | Description |
+|------|-------------|
+| `execute_workflow` | Execute a workflow by name or ID |
+| `list_workflows` | List all registered workflows |
+| `validate_workflow` | Validate workflow Python syntax |
+| `get_workflow` | Get workflow metadata |
+| `get_workflow_schema` | Documentation about decorators |
+| `list_executions` | List recent executions |
+| `get_execution` | Get execution details and logs |
+| `list_integrations` | List integrations and their status |
+| `list_forms` | List all forms |
+| `get_form` | Get form details |
+| `get_form_schema` | Form structure documentation |
+| `validate_form_schema` | Validate form JSON |
+| `search_knowledge` | Search the knowledge base |
+| `read_file` | Read a workspace file |
+| `write_file` | Write a workspace file |
+| `list_files` | List files and directories |
+| `delete_file` | Delete a file or folder |
+| `search_files` | Search for text patterns in files |
+| `create_folder` | Create a new folder |
+| `create_form` | Create a new form |
+| `update_form` | Update an existing form |
+
+## Making Workflows Available as Tools
+
+Workflows can be exposed as tools for agents to call:
+
+```python
+from bifrost import workflow
+
+@workflow(
+    is_tool=True,
+    tool_description="Fetch customer data by email"
+)
+async def get_customer(email: str):
+    """Look up customer information."""
+    # ... implementation
+    return {"name": "John Doe", "account": "12345"}
+```
+
+When `is_tool=True`:
+1. The workflow appears in the platform's tool list
+2. Assign it to agents via the UI or API
+3. The agent can then call the workflow as a tool during conversations
+
+## Tool Assignment
+
+Tools are assigned to agents in two ways:
+
+- **System tools**: Assigned via the `system_tools` array on the agent configuration
+- **Workflow tools**: Assigned via the agent-tools relationship in the UI or API
+
+The Coding Agent receives all system tools by default. Custom agents only receive the tools explicitly assigned to them.
+
 ## Next Steps
 
 - [Using AI in Workflows](/how-to-guides/ai/using-ai-in-workflows) - Direct AI completions
 - [Knowledge Bases](/how-to-guides/ai/knowledge-bases) - RAG setup
+- [MCP Server](/how-to-guides/integrations/mcp-server) - External AI tool access

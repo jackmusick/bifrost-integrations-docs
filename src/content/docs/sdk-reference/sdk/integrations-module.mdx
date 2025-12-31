@@ -21,6 +21,7 @@ Get integration configuration with OAuth tokens.
 async def get(
     name: str,
     org_id: str | None = None,
+    scope: str | None = None,
 ) -> IntegrationData | None
 ```
 
@@ -30,6 +31,7 @@ async def get(
 |-----------|------|-------------|
 | `name` | str | Integration name (e.g., "HaloPSA", "Microsoft_Graph") |
 | `org_id` | str | Organization ID (auto-set in workflows) |
+| `scope` | str | When set to `"global"`, accesses platform-level integration defaults regardless of org_id |
 
 #### Returns
 
@@ -68,6 +70,94 @@ for mapping in mappings:
     print(f"Org: {mapping.organization_id}, Entity: {mapping.entity_id}")
 ```
 
+### integrations.get_mapping()
+
+Get a specific organization mapping for an integration.
+
+```python
+async def get_mapping(
+    name: str,
+    org_id: str | None = None,
+    entity_id: str | None = None,
+) -> IntegrationMappingResponse | None
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | str | Integration name |
+| `org_id` | str | Organization ID (auto-set in workflows) |
+| `entity_id` | str | External entity ID to filter by |
+
+#### Example
+
+```python
+mapping = await integrations.get_mapping("HaloPSA", org_id="org-123")
+if mapping:
+    print(f"Entity: {mapping.entity_id}, Config: {mapping.config}")
+```
+
+### integrations.upsert_mapping()
+
+Create or update an organization mapping for an integration.
+
+```python
+async def upsert_mapping(
+    name: str,
+    org_id: str,
+    entity_id: str,
+    entity_name: str | None = None,
+    config: dict | None = None,
+) -> IntegrationMappingResponse
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | str | Integration name |
+| `org_id` | str | Organization ID |
+| `entity_id` | str | External entity ID (tenant, company, etc.) |
+| `entity_name` | str | Display name for the entity |
+| `config` | dict | Organization-specific configuration overrides |
+
+#### Example
+
+```python
+mapping = await integrations.upsert_mapping(
+    "HaloPSA",
+    org_id="org-123",
+    entity_id="tenant-456",
+    entity_name="Acme Corp",
+    config={"custom_field": "value"}
+)
+```
+
+### integrations.delete_mapping()
+
+Delete an organization mapping for an integration.
+
+```python
+async def delete_mapping(
+    name: str,
+    org_id: str,
+) -> bool
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | str | Integration name |
+| `org_id` | str | Organization ID |
+
+#### Example
+
+```python
+deleted = await integrations.delete_mapping("HaloPSA", org_id="org-123")
+```
+
 ## Types
 
 ### IntegrationData
@@ -94,6 +184,21 @@ class OAuthCredentials(BaseModel):
     access_token: str | None      # Decrypted
     refresh_token: str | None     # Decrypted
     expires_at: str | None        # ISO format
+```
+
+### IntegrationMappingResponse
+
+```python
+class IntegrationMappingResponse(BaseModel):
+    id: str
+    integration_id: str
+    organization_id: str
+    entity_id: str | None
+    entity_name: str | None
+    oauth_token_id: str | None
+    config: dict
+    created_at: datetime
+    updated_at: datetime
 ```
 
 ## Usage Pattern

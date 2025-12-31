@@ -49,13 +49,10 @@ context.field.email && context.field.email.length > 0
   </TabItem>
 
   <TabItem label="Default Value" icon="pencil">
-```javascript
-// Pre-fill from another field
-context.field.primary_email
+Default values only support static values, not context expressions. Set default values directly in the field configuration:
 
-// Use workflow data
-context.workflow.user_email
-```
+- Use literal strings, numbers, or booleans
+- For dynamic defaults, use a launch workflow to pre-populate fields
   </TabItem>
 
   <TabItem label="HTML Content" icon="document">
@@ -126,16 +123,13 @@ context.query.edit_mode === "true"
 
 ### Pre-fill Fields
 
-```javascript
-// From launch workflow
-context.workflow.customer_email
+Default values only support static values. For dynamic pre-filling, use a launch workflow:
 
-// From another field
-context.field.billing_email
+1. Create a launch workflow that returns the values you want to pre-fill
+2. Configure the form to use that launch workflow
+3. The workflow results populate the form fields automatically
 
-// From URL parameter
-context.query.preset_value
-```
+For URL parameters, enable "Allow as Query Parameter" on the field.
 
 ### Display Dynamic Content
 

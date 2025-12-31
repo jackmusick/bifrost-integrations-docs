@@ -65,23 +65,23 @@ API keys are shown only once when created. Store them securely.
 from bifrost import files
 
 # Write a file
-files.write("data/output.txt", "Hello from external SDK!")
+await files.write("data/output.txt", "Hello from external SDK!")
 
 # Read a file
-content = files.read("data/output.txt")
+content = await files.read("data/output.txt")
 print(content)
 
 # List files
-items = files.list("data/")
+items = await files.list("data/")
 for item in items:
     print(item)
 
 # Check if file exists
-if files.exists("data/config.json"):
-    config = files.read("data/config.json")
+if await files.exists("data/config.json"):
+    config = await files.read("data/config.json")
 
 # Delete a file
-files.delete("data/old-file.txt")
+await files.delete("data/old-file.txt")
 ```
 
 ### Config Operations
@@ -160,7 +160,7 @@ async def sync_data():
         data = response.json()
 
     # Write to Bifrost workspace
-    files.write(
+    await files.write(
         "data/external-sync.json",
         json.dumps(data, indent=2)
     )

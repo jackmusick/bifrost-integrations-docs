@@ -107,14 +107,13 @@ Create dynamic dropdowns with data providers:
 1. Create `workspace/data_providers/departments.py`:
 
 ```python
-from bifrost import data_provider, ExecutionContext
+from bifrost import data_provider
 
 @data_provider(
     name="get_departments",
-    description="List of departments",
-    cache_ttl_seconds=600
+    description="List of departments"
 )
-async def get_departments(context: ExecutionContext):
+async def get_departments():
     return [
         {"label": "Engineering", "value": "eng"},
         {"label": "Sales", "value": "sales"},

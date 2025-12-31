@@ -87,17 +87,15 @@ async def create_user(email: str, name: str):
 Registers a function that provides dynamic options.
 
 ```python
-@data_provider(name: str, description: str, **options)
+@data_provider(name: str | None = None, description: str | None = None)
 ```
 
 **Parameters**:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `name` | str | Required | Unique identifier |
-| `description` | str | Required | What it provides |
-| `category` | str | "General" | Category |
-| `cache_ttl_seconds` | int | 300 | Cache duration (0 = no cache) |
+| `name` | str | None | Unique identifier (auto-derived from function name if not provided) |
+| `description` | str | None | What it provides (auto-derived from docstring if not provided) |
 
 **Return Format**:
 ```python
@@ -116,10 +114,10 @@ from bifrost import data_provider, context
 
 @data_provider(
     name="get_departments",
-    description="List departments",
-    cache_ttl_seconds=600
+    description="List departments"
 )
 async def get_departments():
+    """List available departments."""
     # Access context via proxy if needed
     org_id = context.org_id
     return [

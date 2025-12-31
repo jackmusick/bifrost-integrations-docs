@@ -10,12 +10,14 @@ description: Common OAuth connection issues
 ### Check 1: OAuth Connection Configured
 
 Verify the OAuth connection exists:
-- Go to **Settings** → **OAuth Connections**
-- Check that the connection shows as "Connected"
+
+-   Go to **Settings** → **OAuth Connections**
+-   Check that the connection shows as "Connected"
 
 ### Check 2: Token Expired
 
 Bifrost automatically refreshes tokens, but if the refresh token has expired:
+
 1. Delete the existing OAuth connection
 2. Re-authorize to get a fresh token
 
@@ -48,13 +50,13 @@ async def call_graph_api():
 
 ## Common Errors
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| "OAuth not configured" | Connection doesn't exist | Add OAuth connection in Settings |
-| 401 Unauthorized | Token expired or wrong scopes | Re-authorize or check scopes |
-| "refresh_token invalid" | Refresh token revoked | Delete and re-authorize |
+| Error                   | Cause                         | Fix                              |
+| ----------------------- | ----------------------------- | -------------------------------- |
+| "OAuth not configured"  | Connection doesn't exist      | Add OAuth connection in Settings |
+| 401 Unauthorized        | Token expired or wrong scopes | Re-authorize or check scopes     |
+| "refresh_token invalid" | Refresh token revoked         | Delete and re-authorize          |
 
 ## See Also
 
-- [OAuth Integration Guide](/getting-started/oauth-integration)
-- [Microsoft Graph Guide](/how-to-guides/integrations/microsoft-graph)
+-   [OAuth Integration Guide](/getting-started/integrations)
+-   [Microsoft Graph Guide](/how-to-guides/integrations/microsoft-graph)

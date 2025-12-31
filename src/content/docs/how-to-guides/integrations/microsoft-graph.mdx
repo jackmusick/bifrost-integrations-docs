@@ -9,8 +9,8 @@ Automate common Microsoft 365 user management tasks using Microsoft Graph API. T
 
 ## Prerequisites
 
-- [OAuth connection configured](/getting-started/oauth-integration) for Microsoft Graph
-- Required scopes: `User.ReadWrite.All`, `Group.ReadWrite.All`
+-   [OAuth connection configured](/getting-started/integrations) for Microsoft Graph
+-   Required scopes: `User.ReadWrite.All`, `Group.ReadWrite.All`
 
 ## Basic Pattern
 
@@ -38,7 +38,8 @@ async def graph_workflow(context: ExecutionContext):
 ```
 
 <Aside type="note">
-Bifrost automatically refreshes expired tokens. Always get a fresh token at the start of your workflow.
+    Bifrost automatically refreshes expired tokens. Always get a fresh token at
+    the start of your workflow.
 </Aside>
 
 ## List Users
@@ -244,11 +245,12 @@ url = "https://graph.microsoft.com/v1.0/users?$filter=department eq 'Sales'"
 ```
   </TabItem>
 
-  <TabItem label="Select Specific Fields" icon="list">
-```python
-url = "https://graph.microsoft.com/v1.0/users?$select=displayName,mail,jobTitle"
-```
-  </TabItem>
+{" "}
+<TabItem label="Select Specific Fields" icon="list">
+    ```python url =
+    "https://graph.microsoft.com/v1.0/users?$select=displayName,mail,jobTitle"
+    ```
+</TabItem>
 
   <TabItem label="Combine Filters" icon="setting">
 ```python
@@ -288,14 +290,14 @@ async def safe_get_user(context: ExecutionContext, user_id: str):
 
 ## Common Scopes
 
-| Operation | Required Scope |
-|-----------|---------------|
-| Read users | `User.Read.All` |
-| Create/update users | `User.ReadWrite.All` |
-| Read groups | `Group.Read.All` |
-| Manage group membership | `GroupMember.ReadWrite.All` |
-| Read licenses | `Organization.Read.All` |
-| Assign licenses | `Organization.ReadWrite.All` |
+| Operation               | Required Scope               |
+| ----------------------- | ---------------------------- |
+| Read users              | `User.Read.All`              |
+| Create/update users     | `User.ReadWrite.All`         |
+| Read groups             | `Group.Read.All`             |
+| Manage group membership | `GroupMember.ReadWrite.All`  |
+| Read licenses           | `Organization.Read.All`      |
+| Assign licenses         | `Organization.ReadWrite.All` |
 
 ## Best Practices
 
@@ -307,6 +309,6 @@ async def safe_get_user(context: ExecutionContext, user_id: str):
 
 ## Next Steps
 
-- [OAuth Integration](/getting-started/oauth-integration) - Set up Microsoft Graph OAuth
-- [Store API Keys Securely](/how-to-guides/integrations/secrets-management) - Manage credentials
-- [Custom APIs](/how-to-guides/integrations/custom-apis) - Integrate any REST API
+-   [OAuth Integration](/getting-started/integrations) - Set up Microsoft Graph OAuth
+-   [Store API Keys Securely](/how-to-guides/integrations/secrets-management) - Manage credentials
+-   [Custom APIs](/how-to-guides/integrations/custom-apis) - Integrate any REST API
