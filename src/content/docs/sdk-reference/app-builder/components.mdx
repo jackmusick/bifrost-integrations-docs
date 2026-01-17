@@ -61,7 +61,29 @@ Horizontal flex container.
 | `padding` | number | 0 | Internal padding (pixels) |
 | `align` | string | `stretch` | `start`, `center`, `end`, `stretch` |
 | `justify` | string | `start` | `start`, `center`, `end`, `between`, `around` |
+| `autoSize` | boolean | false | When false, children expand equally (flex-1). When true, children keep natural size. |
 | `children` | array | [] | Nested layouts or components |
+
+#### Auto-Sizing Behavior
+
+By default (`autoSize: false`), children in a Row expand equally to fill available space. This is useful for balanced layouts.
+
+Set `autoSize: true` when you want children to keep their natural size. This is especially useful for button groups:
+
+```json
+{
+  "type": "row",
+  "justify": "end",
+  "autoSize": true,
+  "gap": 8,
+  "children": [
+    {"type": "button", "props": {"label": "Cancel", "variant": "outline"}},
+    {"type": "button", "props": {"label": "Save"}}
+  ]
+}
+```
+
+Without `autoSize: true`, these buttons would expand to fill the entire row. With it, they stay compact and align to the end.
 
 ### Column
 
@@ -77,7 +99,14 @@ Vertical flex container.
 }
 ```
 
-Same properties as Row.
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `gap` | number | 0 | Space between children (pixels) |
+| `padding` | number | 0 | Internal padding (pixels) |
+| `align` | string | `stretch` | `start`, `center`, `end`, `stretch` |
+| `justify` | string | `start` | `start`, `center`, `end`, `between`, `around` |
+| `autoSize` | boolean | false | When false, children expand equally (flex-1). When true, children keep natural size. |
+| `children` | array | [] | Nested layouts or components |
 
 ### Grid
 
@@ -321,7 +350,11 @@ Container with optional header.
 
 ### DataTable
 
-Full-featured data table with sorting, pagination, and actions.
+Full-featured data table with sorting, pagination, and actions. The `dataSource` prop binds to workflow results via the `launchWorkflowDataSourceId`.
+
+<Aside type="tip">
+When using `launchWorkflowId` with `launchWorkflowDataSourceId: "customers"`, set `dataSource: "customers"` on the table. The table automatically reads from `{{ workflow.customers.result }}`.
+</Aside>
 
 ```json
 {
@@ -612,7 +645,9 @@ Form inputs automatically register their values in the expression context under 
 |----------|------|-------------|
 | `options` | array | `[{ label, value }, ...]` |
 
-#### Dynamic Options (from data source)
+#### Dynamic Options (from workflow)
+
+Use `optionsSource` to bind options to workflow results. The value references the `launchWorkflowDataSourceId`:
 
 ```json
 {
@@ -627,9 +662,11 @@ Form inputs automatically register their values in the expression context under 
 }
 ```
 
+This binds to `{{ workflow.categories.result }}` when the page has `launchWorkflowDataSourceId: "categories"`.
+
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `optionsSource` | string | - | Data source ID |
+| `optionsSource` | string | - | Data source ID (references `launchWorkflowDataSourceId`) |
 | `valueField` | string | `value` | Field for option value |
 | `labelField` | string | `label` | Field for option label |
 

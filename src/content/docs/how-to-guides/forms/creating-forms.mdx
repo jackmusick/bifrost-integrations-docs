@@ -119,20 +119,32 @@ Access via `context.query.field_name` in expressions.
 
 **Settings**: Allowed types (`.pdf`, `image/*`), max size, multiple files
 
-**Returns** to workflow:
+**Returns** to workflow (single file):
 
 ```json
-[
-    {
-        "filename": "document.pdf",
-        "content_type": "application/pdf",
-        "size_bytes": 1024000,
-        "sas_uri": "https://..."
-    }
-]
+{
+    "name": "document.pdf",
+    "content_type": "application/pdf",
+    "size": 1024000,
+    "path": "form-id/uuid/document.pdf"
+}
 ```
 
-The `sas_uri` is a secure, time-limited URL.
+**Access in workflow** using the files SDK:
+
+```python
+from bifrost import files
+
+async def process_upload(context, document):
+    # Read the uploaded file content
+    content = await files.read(document["path"], location="uploads")
+
+    # Or get file info
+    info = await files.info(document["path"], location="uploads")
+    print(f"File size: {info.size} bytes")
+```
+
+For multiple files, the field returns an array of file metadata objects.
 
 ## Best Practices
 

@@ -46,6 +46,15 @@ Text with embedded expressions returns a string:
 
 Expressions have access to these context variables:
 
+| Variable | Description |
+|----------|-------------|
+| `user` | Current authenticated user |
+| `variables` | Page-level mutable state |
+| `workflow` | Workflow results by data source ID |
+| `field` | Form input values |
+| `params` | Route parameters from URL |
+| `row` | Current row in DataTable actions |
+
 ### user
 
 Current authenticated user:
@@ -69,9 +78,32 @@ Page-level mutable state:
 
 Set variables using the `set-variable` action.
 
-### data
+### workflow
 
-Data from page data sources:
+Access workflow results by their data source ID. This is the recommended way to access data loaded by `launchWorkflowId`:
+
+```javascript
+{{ workflow.customers.result }}           // Array from workflow with dataSourceId "customers"
+{{ workflow.stats.result.totalRevenue }}  // Nested property from stats workflow
+{{ workflow.customers.result.0.name }}    // Array index access
+
+// Workflow execution state
+{{ workflow.customers.status }}           // "pending" | "running" | "completed" | "failed"
+{{ workflow.customers.executionId }}      // UUID of the execution
+{{ workflow.customers.error }}            // Error message if failed
+```
+
+<Aside type="tip">
+When using `launchWorkflowId` with `launchWorkflowDataSourceId`, access results via `{{ workflow.<dataSourceId>.result }}`. For example, if `launchWorkflowDataSourceId: "stats"`, use `{{ workflow.stats.result.revenue }}`.
+</Aside>
+
+### data (Legacy)
+
+<Aside type="caution" title="Deprecated">
+The `data` context is deprecated. Use `{{ workflow.<key>.result }}` instead. The `data` context is maintained for backwards compatibility with apps using the legacy `dataSources` array.
+</Aside>
+
+Data from legacy page data sources:
 
 ```javascript
 {{ data.customers }}           // Array from "customers" data source
@@ -89,16 +121,36 @@ Form input values (by fieldId):
 {{ field.isActive }}
 ```
 
-### workflow
+### params
 
-Last workflow execution result:
+Route parameters from the current URL path:
 
 ```javascript
-{{ workflow.executionId }}    // UUID of execution
-{{ workflow.status }}         // "pending" | "running" | "completed" | "failed"
-{{ workflow.result }}         // Workflow return value
-{{ workflow.result.orderId }} // Nested result property
-{{ workflow.error }}          // Error message if failed
+{{ params.id }}           // From path "/customers/:id"
+{{ params.projectId }}    // From path "/projects/:projectId"
+{{ params.customerId }}   // From path "/customers/:customerId/orders"
+```
+
+<Aside type="tip">
+Route parameters are extracted from the page's `path` definition. For example, if a page has `path: "/customers/:id"` and the URL is `/customers/abc123`, then `{{ params.id }}` evaluates to `"abc123"`.
+</Aside>
+
+**Common patterns with route parameters:**
+
+```javascript
+// Pass to launch workflow
+"launchWorkflowParams": {
+  "customerId": "{{ params.id }}"
+}
+
+// Use in workflow action
+"actionParams": {
+  "id": "{{ params.id }}",
+  "name": "{{ field.name }}"
+}
+
+// Dynamic navigation
+"navigateTo": "/customers/{{ params.customerId }}/orders/{{ row.orderId }}"
 ```
 
 ### row (DataTable only)

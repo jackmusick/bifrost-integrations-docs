@@ -37,6 +37,44 @@ Define pages → Add components → Configure actions → Publish
 5. Set up permissions
 6. Publish and share
 
+## Architecture
+
+App Builder uses a three-level data model that enables granular management and efficient updates:
+
+### Apps
+
+The top-level container. An app has:
+
+- **Metadata**: Name, description, slug, version
+- **Settings**: Theme configuration, default page
+- **Navigation**: Menu structure and routing
+- **Permissions**: Application-level access controls
+
+### Pages
+
+Pages belong to an app and define individual screens. Each page has:
+
+- **Layout structure**: Rows, columns, grids for component arrangement
+- **Component references**: The building blocks placed within the layout
+- **Data sources**: Data loaded when the page mounts
+- **Page-specific settings**: Title, path, permissions, launch workflow
+
+### Components
+
+Components are the atomic building blocks placed within pages:
+
+- **Display components**: Text, Heading, Image, StatCard, Badge, Progress
+- **Input components**: TextInput, NumberInput, Select, Checkbox
+- **Data components**: DataTable, Tabs, FileViewer
+- **Layout containers**: Row, Column, Grid, Card
+
+This three-table architecture enables:
+
+- **Granular updates**: Modify a single component without touching the entire app
+- **Efficient syncing**: Only changed entities are transmitted
+- **Precise MCP operations**: AI assistants can make targeted changes
+- **Optimistic UI**: Immediate feedback while changes persist
+
 ## Core Concepts
 
 ### Pages
@@ -45,9 +83,12 @@ Pages are the screens of your application. Each page has:
 
 - **Path**: URL route (e.g., `/dashboard`, `/users/:id`)
 - **Layout**: Component arrangement (rows, columns, grids)
-- **Data Sources**: Data loaded when page mounts
-- **Launch Workflow**: Optional workflow to run on page load
+- **Launch Workflow**: Workflow to run on page load (recommended for data loading)
 - **Permissions**: Who can access the page
+
+<Aside type="tip" title="Data Loading Pattern">
+All data loading uses workflows. Set `launchWorkflowId` and `launchWorkflowDataSourceId` on the page, then access results via `{{ workflow.<dataSourceId>.result }}` in expressions.
+</Aside>
 
 ### Layouts
 
@@ -88,8 +129,9 @@ Dynamic content uses `{{ expression }}` syntax:
 // Access form field values
 {{ field.customerName }}
 
-// Access workflow results
-{{ workflow.result.orderId }}
+// Access workflow results (recommended pattern)
+{{ workflow.customers.result }}           // Full result from "customers" workflow
+{{ workflow.stats.result.revenue }}       // Nested property
 
 // Comparisons and logic
 {{ user.role == 'admin' }}
@@ -110,9 +152,28 @@ Components trigger actions on user interaction:
 
 See [Actions Reference](/sdk-reference/app-builder/actions) for configuration.
 
-## Quick Example
+## Building Apps with MCP
 
-A simple dashboard with a data table:
+<Aside type="tip" title="Granular Creation">
+Apps are built in pieces using MCP tools, not as a single JSON blob. This enables AI assistants to make precise, targeted changes.
+</Aside>
+
+**Recommended workflow:**
+
+1. `create_app` - Create app metadata (name, description)
+2. `create_page` - Add pages one at a time
+3. `create_component` - Add components to pages
+4. `update_component` - Modify individual components
+5. Preview in draft mode at `/apps/{slug}?draft=true`
+6. `publish_app` when ready to go live
+
+Each step validates automatically - there's no separate validation tool needed.
+
+**Draft mode:** Apps stay in draft until explicitly published. Users can preview and test before going live.
+
+## Data Model Example
+
+The JSON below shows the recommended data model using `launchWorkflowId` for data loading. When using MCP tools, you work with individual pieces rather than this full structure:
 
 ```json
 {
@@ -124,13 +185,8 @@ A simple dashboard with a data table:
       "id": "home",
       "title": "Customers",
       "path": "/",
-      "dataSources": [
-        {
-          "id": "customers",
-          "type": "workflow",
-          "workflowId": "get_customers"
-        }
-      ],
+      "launchWorkflowId": "get_customers",
+      "launchWorkflowDataSourceId": "customers",
       "layout": {
         "type": "column",
         "gap": 16,
@@ -170,6 +226,8 @@ A simple dashboard with a data table:
   ]
 }
 ```
+
+The `launchWorkflowId` runs the workflow on page load, and `launchWorkflowDataSourceId` makes the result available as `{{ workflow.customers.result }}`. The DataTable's `dataSource: "customers"` automatically binds to this workflow result.
 
 ## Permissions
 
@@ -220,9 +278,7 @@ Hide components with expressions:
 ```
 Page Load
     ↓
-Run Launch Workflow (optional)
-    ↓
-Load Data Sources
+Run Launch Workflow (loads data)
     ↓
 Render Layout with Expression Context
     ↓
@@ -241,18 +297,53 @@ Components receive context for expression evaluation:
 |----------|-------------|
 | `user` | Current user (id, name, email, role) |
 | `variables` | Page-level mutable state |
-| `data` | Loaded data sources by ID |
+| `workflow` | Workflow results by data source ID (e.g., `workflow.customers.result`) |
 | `field` | Form input values |
-| `workflow` | Last workflow execution result |
 | `row` | Current row (in table actions only) |
+
+## Managing Apps via MCP
+
+Apps can be managed programmatically using MCP tools at three levels, matching the architecture hierarchy.
+
+### App-Level Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_apps` | List all applications |
+| `get_app` | Get app metadata and structure |
+| `update_app` | Update app settings and navigation |
+| `publish_app` | Publish app for end users |
+
+### Page-Level Tools
+
+| Tool | Description |
+|------|-------------|
+| `create_page` | Add a new page to an app |
+| `get_page` | Get page definition and layout |
+| `update_page` | Update page settings and layout structure |
+| `delete_page` | Remove a page from an app |
+
+### Component-Level Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_components` | List all components on a page |
+| `create_component` | Add a component to a page |
+| `get_component` | Get component details and props |
+| `update_component` | Update component props and settings |
+| `delete_component` | Remove a component from a page |
+| `move_component` | Reposition a component within the layout |
+
+This granular tool hierarchy enables AI coding assistants to make precise, targeted changes without rewriting entire app definitions. For example, updating a button's label only requires an `update_component` call rather than replacing the full page JSON.
 
 ## Best Practices
 
 1. **Keep pages focused**: One purpose per page
-2. **Use data sources**: Don't hardcode data in components
+2. **Use launchWorkflowId**: Load all page data via workflows, not hardcoded in components
 3. **Validate in workflows**: Backend validation is required
 4. **Test permissions**: Verify access controls work correctly
 5. **Use variables sparingly**: Complex state should live in workflows
+6. **Access data via workflow namespace**: Use `{{ workflow.<key>.result }}` for all data access
 
 ## Next Steps
 

@@ -43,16 +43,18 @@ The root structure for an App Builder application:
 
 ## PageDefinition
 
+Pages load data using workflows. The recommended pattern uses `launchWorkflowId` with `launchWorkflowDataSourceId` to run a workflow on page mount and make its results available to components.
+
 ```json
 {
   "id": "dashboard",
   "title": "Dashboard",
   "path": "/",
   "layout": {},
-  "dataSources": [],
-  "variables": {},
   "launchWorkflowId": "load_dashboard_data",
-  "launchWorkflowParams": {},
+  "launchWorkflowDataSourceId": "dashboardData",
+  "launchWorkflowParams": { "includeStats": true },
+  "variables": {},
   "permission": {}
 }
 ```
@@ -63,11 +65,16 @@ The root structure for an App Builder application:
 | `title` | string | Yes | Page title (shown in browser tab) |
 | `path` | string | Yes | URL path (e.g., `/`, `/users/:id`) |
 | `layout` | LayoutContainer | Yes | Root layout for page content |
-| `dataSources` | DataSource[] | No | Page-specific data sources |
-| `variables` | object | No | Initial page variables |
-| `launchWorkflowId` | string | No | Workflow to run on page mount |
+| `launchWorkflowId` | string | No | Workflow to run on page mount (recommended) |
+| `launchWorkflowDataSourceId` | string | No | Key for accessing workflow result via `{{ workflow.<key>.result }}` |
 | `launchWorkflowParams` | object | No | Parameters for launch workflow |
+| `variables` | object | No | Initial page variables |
+| `dataSources` | DataSource[] | No | Legacy data sources array (use launchWorkflowId instead) |
 | `permission` | PagePermission | No | Page access control |
+
+<Aside type="tip" title="Recommended Pattern">
+Use `launchWorkflowId` + `launchWorkflowDataSourceId` for all data loading. Access results via `{{ workflow.dashboardData.result }}`. The `dataSources` array is supported for backwards compatibility but is not recommended for new apps.
+</Aside>
 
 ### Path Parameters
 
@@ -138,7 +145,11 @@ Base structure for all components:
 
 ---
 
-## DataSource
+## DataSource (Legacy)
+
+<Aside type="caution" title="Legacy Pattern">
+The `dataSources` array is maintained for backwards compatibility. For new applications, use `launchWorkflowId` + `launchWorkflowDataSourceId` on the page instead. See [PageDefinition](#pagedefinition) for the recommended pattern.
+</Aside>
 
 ```json
 {
@@ -446,6 +457,8 @@ Page-level access control:
 
 ## Complete Example
 
+This example demonstrates the recommended pattern using `launchWorkflowId` and `launchWorkflowDataSourceId` for data loading. Workflow results are accessed via `{{ workflow.<dataSourceId>.result }}`.
+
 ```json
 {
   "id": "customer-portal",
@@ -469,13 +482,8 @@ Page-level access control:
       "id": "dashboard",
       "title": "Dashboard",
       "path": "/",
-      "dataSources": [
-        {
-          "id": "stats",
-          "type": "workflow",
-          "workflowId": "get_dashboard_stats"
-        }
-      ],
+      "launchWorkflowId": "get_dashboard_stats",
+      "launchWorkflowDataSourceId": "stats",
       "layout": {
         "type": "column",
         "gap": 24,
@@ -499,7 +507,7 @@ Page-level access control:
                 "type": "stat-card",
                 "props": {
                   "title": "Total Customers",
-                  "value": "{{ data.stats.customerCount }}",
+                  "value": "{{ workflow.stats.result.customerCount }}",
                   "icon": "users"
                 }
               },
@@ -508,7 +516,7 @@ Page-level access control:
                 "type": "stat-card",
                 "props": {
                   "title": "Revenue",
-                  "value": "${{ data.stats.revenue }}",
+                  "value": "${{ workflow.stats.result.revenue }}",
                   "icon": "dollar-sign"
                 }
               },
@@ -517,7 +525,7 @@ Page-level access control:
                 "type": "stat-card",
                 "props": {
                   "title": "Active Orders",
-                  "value": "{{ data.stats.activeOrders }}",
+                  "value": "{{ workflow.stats.result.activeOrders }}",
                   "icon": "shopping-cart"
                 }
               }
@@ -530,13 +538,8 @@ Page-level access control:
       "id": "customers",
       "title": "Customers",
       "path": "/customers",
-      "dataSources": [
-        {
-          "id": "customers",
-          "type": "workflow",
-          "workflowId": "list_customers"
-        }
-      ],
+      "launchWorkflowId": "list_customers",
+      "launchWorkflowDataSourceId": "customers",
       "layout": {
         "type": "column",
         "gap": 16,
@@ -597,6 +600,10 @@ Page-level access control:
   ]
 }
 ```
+
+<Aside type="note">
+The DataTable's `dataSource` prop references the `launchWorkflowDataSourceId`. The table automatically binds to `{{ workflow.customers.result }}`.
+</Aside>
 
 ---
 
