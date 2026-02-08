@@ -256,20 +256,8 @@ export default defineConfig({
                             collapsed: true,
                             items: [
                                 {
-                                    label: "Components",
-                                    slug: "sdk-reference/app-builder/components",
-                                },
-                                {
-                                    label: "Expressions",
-                                    slug: "sdk-reference/app-builder/expressions",
-                                },
-                                {
-                                    label: "Actions",
-                                    slug: "sdk-reference/app-builder/actions",
-                                },
-                                {
-                                    label: "JSON Schema",
-                                    slug: "sdk-reference/app-builder/schema",
+                                    label: "Code-Based Apps",
+                                    slug: "sdk-reference/app-builder/code-apps",
                                 },
                             ],
                         },

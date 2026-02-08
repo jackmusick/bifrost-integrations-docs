@@ -17,7 +17,7 @@ Resources in Bifrost exist at two levels:
 <Aside type="tip">
     Most resources you work with will be globally scoped so you can maximize
     reusability. Scope things to organizations that are truly specific to that
-    oranization, like automations or forms you're developing specifically for
+    organization, like automations or forms you're developing specifically for
     them.
 </Aside>
 
@@ -82,13 +82,15 @@ async def example():
 
 </Steps>
 
-### Scope Resolution
+### Scope Resolution (Cascade)
 
 Bifrost looks for resources in this order:
 
 1. **Organization-level** - Your organization's specific resource
 2. **Global-level** - Platform-wide fallback (if exists)
-3. **Error** - Resource not found
+3. **Not found** - Returns None or default value
+
+If your org has a resource with the same name as a global one, **your org's version takes precedence** and the global one is shadowed. Other orgs still see the global version.
 
 **Example:**
 
@@ -100,6 +102,8 @@ smtp = await config.get("smtp_server")
 # 2. (If not found) Check: Is there a global "smtp_server"? -> Use it as fallback
 # 3. (If still not found) Return None or default value
 ```
+
+This cascade applies uniformly to workflows, forms, agents, apps, tables, integration mappings, knowledge entries, and data providers.
 
 ## TL;DR
 
