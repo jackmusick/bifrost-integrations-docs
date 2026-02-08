@@ -179,18 +179,31 @@ Create an agent with these tools and a prompt like:
 
 ## The Coding Agent
 
-The Coding Agent is a special system agent for creating and modifying Bifrost workflows using Claude. It provides AI-assisted development capabilities directly within the platform.
+The Coding Agent is a special system agent for creating and modifying Bifrost workflows. It provides AI-assisted development capabilities directly within the platform.
 
 ### Characteristics
 
 - **System agent**: Auto-created on platform startup, cannot be deleted
-- **Claude-powered**: Uses the Claude Agent SDK with MCP tools
+- **Claude-powered**: Uses Claude with MCP tools for code editing
 - **Workspace access**: Has full access to workspace files and system tools
 - **Development focus**: Optimized for workflow creation and modification
+- **Precision editing**: Uses search → read → patch workflow for surgical code changes
 
-### System Tools
+### Precision Editing Tools
 
-The Coding Agent has access to the following system tools:
+The Coding Agent uses precision editing tools that mirror professional code editor patterns:
+
+| Tool | Description |
+|------|-------------|
+| `list_content` | List files by entity type (app_file, workflow, module) |
+| `search_content` | Regex search across code with context lines |
+| `read_content_lines` | Read specific line range from a file |
+| `get_content` | Get entire file content |
+| `patch_content` | Surgical string replacement (old → new) |
+| `replace_content` | Full content replacement or create new file |
+| `delete_content` | Delete a file (deactivates workflows, marks modules deleted) |
+
+### Other System Tools
 
 | Tool | Description |
 |------|-------------|
@@ -207,12 +220,6 @@ The Coding Agent has access to the following system tools:
 | `get_form_schema` | Form structure documentation |
 | `validate_form_schema` | Validate form JSON |
 | `search_knowledge` | Search the knowledge base |
-| `read_file` | Read a workspace file |
-| `write_file` | Write a workspace file |
-| `list_files` | List files and directories |
-| `delete_file` | Delete a file or folder |
-| `search_files` | Search for text patterns in files |
-| `create_folder` | Create a new folder |
 | `create_form` | Create a new form |
 | `update_form` | Update an existing form |
 

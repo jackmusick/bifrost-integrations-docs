@@ -1,0 +1,438 @@
+---
+title: Code-Based Apps
+description: Build applications with TypeScript/TSX files
+---
+
+import { Aside, Code, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Overview
+
+Bifrost applications are built using TypeScript/TSX files. The runtime automatically provides all necessary modules - **you do not write import statements**.
+
+<Aside type="danger" title="Critical Rules">
+1. **NO IMPORT STATEMENTS** - All modules are auto-provided
+2. **USE WORKFLOW IDs** - Always use UUIDs from `list_workflows`, not names
+3. **USE `<Outlet />`** - Layouts must use `<Outlet />` for routing
+</Aside>
+
+## File Structure
+
+```
+_layout.tsx          # Root layout wrapper (required)
+pages/
+  index.tsx          # Home page (/)
+  about.tsx          # About page (/about)
+  clients/
+    index.tsx        # Clients list (/clients)
+    [id].tsx         # Client detail (/clients/:id)
+components/
+  MyComponent.tsx    # Shared components
+modules/
+  utils.ts           # Utility modules
+```
+
+### File Path Conventions
+
+- **Root files**: `_layout.tsx`, `_providers.tsx` only
+- **Pages**: `pages/*.tsx` - automatically become routes
+- **Components**: `components/*.tsx` - reusable UI
+- **Modules**: `modules/*.ts` - utilities and helpers
+- **Dynamic routes**: `[param].tsx` syntax (e.g., `[id].tsx`)
+
+---
+
+## Auto-Provided Modules
+
+The Bifrost runtime automatically provides these in scope - **do not import them**:
+
+### React Hooks
+- `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useContext`
+
+### Bifrost Hooks
+- `useWorkflow` - Execute workflows
+- `useUser` - Get current user
+- `useNavigate` - Programmatic navigation
+- `useLocation` - Current location
+- `useParams` - Route parameters
+
+### Routing
+- `Outlet` - Renders child routes in layouts
+- `Link` - Navigation links
+
+### UI Components (shadcn/ui)
+All components from `@/components/ui`:
+- `Button`, `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`
+- `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`
+- `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`
+- `Input`, `Textarea`, `Checkbox`, `Badge`, `Skeleton`
+- `Tooltip`, `TooltipProvider`, `TooltipTrigger`, `TooltipContent`
+- `Dialog`, `Alert`, `Tabs`, etc.
+
+### Icons (lucide-react)
+All icons: `Loader2`, `RefreshCw`, `Check`, `X`, `Building2`, `Play`, `AlertTriangle`, etc.
+
+### Utilities
+- `cn` - Class name merging utility
+
+<Aside type="caution" title="Common Error">
+If you add import statements, you'll get: `Cannot use import statement outside a module`
+</Aside>
+
+---
+
+## useWorkflow Hook
+
+The primary way to interact with backend workflows.
+
+<Aside type="danger" title="Use Workflow IDs, Not Names">
+Always use the workflow UUID from `list_workflows`. Names do not work.
+</Aside>
+
+```tsx
+// CORRECT - use workflow ID
+const workflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+
+// WRONG - names don't work
+const workflow = useWorkflow("list_customers");
+```
+
+### Return Value
+
+```tsx
+const { result, loading, error, execute } = useWorkflow("workflow-id");
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `result` | `any` | Workflow return value |
+| `loading` | `boolean` | True while executing |
+| `error` | `Error \| null` | Error if execution failed |
+| `execute` | `(params?) => Promise` | Execute the workflow |
+
+### Usage Pattern
+
+```tsx
+export default function MyPage() {
+  const customersWorkflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+
+  useEffect(() => {
+    customersWorkflow.execute();
+  }, []);
+
+  if (customersWorkflow.loading) {
+    return <Skeleton className="h-32 w-full" />;
+  }
+
+  const customers = customersWorkflow.result?.customers || [];
+
+  return (
+    <div>
+      {customers.map(c => <div key={c.id}>{c.name}</div>)}
+    </div>
+  );
+}
+```
+
+### With Parameters
+
+```tsx
+const detailWorkflow = useWorkflow("abc123-workflow-id");
+
+// Execute with parameters
+await detailWorkflow.execute({ customer_id: "123" });
+```
+
+---
+
+## Layout Pattern
+
+The root `_layout.tsx` is required and must use `<Outlet />` for routing.
+
+<Aside type="danger" title="Do NOT Use Children Props">
+The `{children}` pattern doesn't work with Bifrost routing. Always use `<Outlet />`.
+</Aside>
+
+```tsx
+// _layout.tsx - CORRECT
+export default function RootLayout() {
+  return (
+    <div className="h-full bg-background overflow-hidden">
+      <Outlet />
+    </div>
+  );
+}
+```
+
+### With Navigation
+
+```tsx
+// _layout.tsx with sidebar
+const navItems = [
+  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/customers", label: "Customers", icon: Building2 },
+];
+
+export default function Layout() {
+  const location = useLocation();
+  const nav = useNavigate();
+
+  return (
+    <div className="flex h-full bg-background overflow-hidden">
+      <aside className="w-64 border-r bg-card flex flex-col shrink-0">
+        <nav className="flex-1 p-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+
+            return (
+              <button
+                key={item.path}
+                onClick={() => nav(item.path)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm",
+                  isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      <main className="flex-1 min-w-0 min-h-0 flex flex-col p-6 overflow-hidden">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+```
+
+---
+
+## Scrolling and Layout
+
+For pages with scrollable content (tables, lists), use flex layout with overflow control.
+
+### Key Classes
+
+| Element | Classes | Purpose |
+|---------|---------|---------|
+| Layout root | `h-full overflow-hidden` | Contains page height |
+| Page root | `flex flex-col h-full overflow-hidden` | Enables flex layout |
+| Headers | `shrink-0` | Prevents shrinking |
+| Scrollable content | `flex-1 min-h-0 overflow-auto` | Scrolls within bounds |
+
+### Example
+
+```tsx
+export default function CustomersPage() {
+  const workflow = useWorkflow("customer-list-workflow-id");
+
+  useEffect(() => { workflow.execute(); }, []);
+
+  return (
+    <div className="flex flex-col h-full p-6 overflow-hidden">
+      {/* Header - fixed */}
+      <div className="flex items-center justify-between mb-6 shrink-0">
+        <h1 className="text-3xl font-bold">Customers</h1>
+        <Button onClick={() => workflow.execute()}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Content - scrollable */}
+      <Card className="flex flex-col min-h-0 flex-1">
+        <CardHeader className="shrink-0">
+          <CardTitle>Customer List</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 min-h-0 overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(workflow.result?.customers || []).map((customer) => (
+                <TableRow key={customer.id}>
+                  <TableCell>{customer.name}</TableCell>
+                  <TableCell>{customer.email}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+```
+
+---
+
+## Complete Example
+
+A full page with workflow integration, loading states, and actions.
+
+```tsx
+// pages/index.tsx - NO IMPORTS NEEDED
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  status: "active" | "inactive";
+}
+
+export default function CustomersPage() {
+  // Workflow IDs from list_workflows
+  const listWorkflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+  const deleteWorkflow = useWorkflow("abc12345-delete-workflow-id");
+
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    listWorkflow.execute();
+  }, []);
+
+  useEffect(() => {
+    if (listWorkflow.result?.customers) {
+      setCustomers(listWorkflow.result.customers);
+    }
+  }, [listWorkflow.result]);
+
+  const handleDelete = async (id: string) => {
+    setDeleting(id);
+    try {
+      await deleteWorkflow.execute({ customer_id: id });
+      setCustomers((prev) => prev.filter((c) => c.id !== id));
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  // Loading state
+  if (listWorkflow.loading && customers.length === 0) {
+    return (
+      <div className="p-6">
+        <Skeleton className="h-9 w-48 mb-4" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full p-6 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 shrink-0">
+        <div>
+          <h1 className="text-3xl font-bold">Customers</h1>
+          <p className="text-muted-foreground">Manage your customer list</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => listWorkflow.execute()}
+          disabled={listWorkflow.loading}
+        >
+          {listWorkflow.loading ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 mr-2" />
+          )}
+          Refresh
+        </Button>
+      </div>
+
+      {/* Table */}
+      <Card className="flex flex-col min-h-0 flex-1">
+        <CardHeader className="shrink-0">
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Customer List
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 min-h-0 overflow-auto">
+          {customers.length === 0 ? (
+            <div className="flex flex-col items-center py-12">
+              <Building2 className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No customers found</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {customers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell className="font-medium">{customer.name}</TableCell>
+                    <TableCell>{customer.email}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={customer.status === "active" ? "default" : "secondary"}
+                      >
+                        {customer.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(customer.id)}
+                        disabled={deleting === customer.id}
+                      >
+                        {deleting === customer.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <X className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+```
+
+---
+
+## Building Apps via MCP
+
+Use these MCP tools to build apps:
+
+1. **`create_app`** - Create app metadata (name, slug, description)
+2. **`list_workflows`** - Get workflow IDs you'll need
+3. **`replace_content`** - Create/update files (entity_type: `app_file`)
+4. **`get_content`** - Read existing files
+5. **`publish_app`** - Publish when ready (only when user requests)
+
+### Workflow
+
+```
+1. create_app (name, slug)
+2. list_workflows → get IDs
+3. replace_content → _layout.tsx
+4. replace_content → pages/index.tsx
+5. Preview at /apps/{slug}
+6. publish_app (when user requests)
+```
+
+<Aside type="tip" title="Draft Mode">
+Apps are in draft mode until published. Users can preview and test before going live.
+</Aside>

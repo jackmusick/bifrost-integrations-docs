@@ -84,13 +84,33 @@ Apps are managed at three levels:
 **Component Level:**
 - `list_components`, `create_component`, `get_component`, `update_component`, `delete_component`, `move_component`
 
-### File Operations
+### Precision Editing Tools (Code Files)
+
+For editing code stored in the database (workflows, app files, modules), use precision editing tools:
+
+**Entity Types:** `app_file` (TSX/TypeScript), `workflow` (Python), `module` (Python helpers)
+
+| Tool | Description |
+|------|-------------|
+| `list_content` | List files by entity type |
+| `search_content` | Regex search with context lines |
+| `read_content_lines` | Read specific line range |
+| `get_content` | Get entire file content |
+| `patch_content` | Surgical string replacement |
+| `replace_content` | Full content replacement or create new |
+| `delete_content` | Delete a file |
+
+**Workflow:** Search → Read Range → Patch (for surgical edits)
+
+### Workspace File Tools (Non-Code Files)
+
+For non-code files (data, configuration):
 
 | Tool | Description |
 |------|-------------|
 | `list_files` | List files and directories in workspace |
 | `read_file` | Read a file from workspace |
-| `write_file` | Write content to a file (for non-platform artifacts) |
+| `write_file` | Write content to a file |
 | `delete_file` | Delete a file or directory |
 | `search_files` | Search for text patterns across files |
 | `create_folder` | Create a new folder |
@@ -103,23 +123,19 @@ Apps are managed at three levels:
 | `list_executions` | List recent executions |
 | `get_execution` | Get execution details and logs |
 
-## Coding Mode Features
+## Coding Agent Features
 
-When using MCP with a coding-capable AI (like Claude Code), additional features are available:
+When using the Coding Agent (Bifrost's in-app AI assistant), additional features are available:
 
-### Plan/Execute Mode
+### Precision Editing Workflow
 
-The coding agent supports dynamic mode switching via `permission_mode`:
+The coding agent uses a search → read → patch workflow for surgical code changes:
 
-- **Plan Mode** (`plan`): Agent can read and explore but cannot make changes. Use for reviewing and planning.
-- **Execute Mode** (`acceptEdits`): Agent can create and modify artifacts. Default mode.
+1. **Search** - Use `search_content` with regex to find code patterns
+2. **Read Range** - Use `read_content_lines` to see context around matches
+3. **Patch** - Use `patch_content` for targeted string replacement
 
-### Task Progress
-
-The coding agent uses the TodoWrite tool to track task progress. When enabled, you'll see:
-- Persistent checklist of tasks
-- Real-time status updates (pending, in progress, completed)
-- Progress indicators
+This approach minimizes context usage and reduces errors compared to full file replacement.
 
 ### Testing Workflow
 
