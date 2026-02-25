@@ -7,13 +7,17 @@ import { Aside } from '@astrojs/starlight/components';
 
 ## What is App Builder?
 
-App Builder lets you create custom web applications using TypeScript/TSX files. Applications consist of pages, layouts, and components - all rendered by the Bifrost runtime.
+App Builder lets you create custom web applications using TypeScript/TSX files. Applications consist of pages, layouts, and components -- all rendered by the Bifrost runtime with full creative control over UI.
+
+![Applications List](../../../assets/core-concepts/apps.png)
 
 **Key capabilities:**
 
 - TypeScript/TSX file-based development
-- Pre-built UI components (shadcn/ui)
-- Workflow integration for backend logic
+- Pre-built UI components (shadcn/ui) plus custom components
+- Custom CSS with dark mode support
+- Workflow integration for backend logic via `useWorkflowQuery` and `useWorkflowMutation`
+- External npm dependencies (up to 20 packages via esm.sh)
 - Role-based permissions
 - Automatic routing from file structure
 
@@ -28,51 +32,66 @@ Create app → Add layout → Add pages → Connect workflows → Publish
 1. Create application with `create_app`
 2. Add `_layout.tsx` with `<Outlet />` for routing
 3. Add pages in `pages/` directory
-4. Connect to workflows using `useWorkflow` hook
+4. Connect to workflows using `useWorkflowQuery` and `useWorkflowMutation` hooks
 5. Preview in draft mode
 6. Publish when ready
 
 ## Critical Rules
 
 <Aside type="danger" title="Must Follow">
-1. **NO IMPORT STATEMENTS** - The runtime provides all modules automatically
-2. **USE WORKFLOW IDs** - Always use UUIDs, not workflow names
-3. **USE `<Outlet />`** - Layouts must use `<Outlet />`, not `{children}`
+1. **USE WORKFLOW IDs** - Always use UUIDs, not workflow names
+2. **USE `<Outlet />`** - Layouts must use `<Outlet />`, not `{children}`
 </Aside>
-
-If you add import statements, you'll get: `Cannot use import statement outside a module`
 
 ## File Structure
 
 ```
-_layout.tsx          # Root layout wrapper (required)
+app.yaml              # Metadata (name, description, dependencies)
+_layout.tsx           # Root layout wrapper (required)
+_providers.tsx        # Optional context providers
+styles.css            # Custom CSS (dark mode via .dark selector)
 pages/
-  index.tsx          # Home page (/)
-  about.tsx          # About page (/about)
+  index.tsx           # Home page (/)
+  about.tsx           # About page (/about)
   clients/
-    index.tsx        # Clients list (/clients)
-    [id].tsx         # Client detail (/clients/:id)
+    index.tsx         # Clients list (/clients)
+    [id].tsx          # Client detail (/clients/:id)
 components/
-  MyComponent.tsx    # Shared components
+  MyComponent.tsx     # Shared components
+modules/
+  utils.ts            # Utility modules
 ```
 
-## Auto-Provided Modules
+## Imports
 
-These are automatically available in scope - **do not import them**:
+Everything comes from a single `"bifrost"` import:
 
-- **React**: `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`
-- **Bifrost**: `useWorkflow`, `useUser`, `useNavigate`, `useLocation`, `useParams`
+```tsx
+import { Button, Card, useState, useWorkflowQuery, cn, toast } from "bifrost";
+```
+
+External npm packages (declared in `app.yaml`) use standard imports:
+
+```tsx
+import dayjs from "dayjs";
+```
+
+## Available Modules
+
+- **React**: `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useContext`
+- **Bifrost Hooks**: `useWorkflowQuery`, `useWorkflowMutation`, `useUser`, `useAppState`, `useNavigate`, `useLocation`, `useParams`, `useSearchParams`
 - **Routing**: `Outlet`, `Link`
-- **UI Components**: `Button`, `Card`, `Table`, `Select`, `Badge`, `Input`, `Skeleton`, etc.
-- **Icons**: All lucide-react icons (`Loader2`, `RefreshCw`, `Check`, `X`, etc.)
-- **Utilities**: `cn` (class name merging)
+- **UI Components**: Full shadcn/ui set -- Button, Card, Table, Select, Badge, Input, Dialog, Tabs, Combobox, CalendarPicker, DateRangePicker, and more
+- **Icons**: All lucide-react icons (`Settings`, `ChevronRight`, `Search`, `Plus`, etc.)
+- **Utilities**: `cn` (class merging), `toast` (notifications), `format` (date-fns)
 
 ## Layout Pattern
 
 The root `_layout.tsx` must use `<Outlet />`:
 
 ```tsx
-// _layout.tsx
+import { Outlet } from "bifrost";
+
 export default function RootLayout() {
   return (
     <div className="h-full bg-background overflow-hidden">
@@ -82,18 +101,19 @@ export default function RootLayout() {
 }
 ```
 
-## useWorkflow Hook
+## Workflow Hooks
 
-Connect to backend workflows using the `useWorkflow` hook:
+Connect to backend workflows using workflow UUIDs:
 
 ```tsx
-// Use workflow ID, NOT name
-const workflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+import { useWorkflowQuery, useWorkflowMutation } from "bifrost";
 
-// Returns: { result, loading, error, execute }
-useEffect(() => {
-  workflow.execute();
-}, []);
+// Auto-executes on mount -- for loading data
+const { data, isLoading, refetch } = useWorkflowQuery("ef8cf1f2-...");
+
+// Manual execution -- for user-triggered actions
+const { execute, isLoading } = useWorkflowMutation("abc12345-...");
+await execute({ customer_id: "123" });
 ```
 
 <Aside type="caution">
@@ -103,16 +123,15 @@ Get workflow IDs from `list_workflows` MCP tool before building your app.
 ## Example Page
 
 ```tsx
-// pages/index.tsx - NO IMPORTS
+// pages/index.tsx
+import {
+  useWorkflowQuery, Skeleton, Card, CardContent
+} from "bifrost";
 
 export default function HomePage() {
-  const workflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+  const { data, isLoading } = useWorkflowQuery("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
 
-  useEffect(() => {
-    workflow.execute();
-  }, []);
-
-  if (workflow.loading) {
+  if (isLoading) {
     return <Skeleton className="h-32 w-full" />;
   }
 
@@ -121,7 +140,7 @@ export default function HomePage() {
       <h1 className="text-2xl font-bold mb-4 shrink-0">Dashboard</h1>
       <Card className="flex-1 min-h-0 overflow-auto">
         <CardContent>
-          {workflow.result?.items?.map(item => (
+          {data?.items?.map(item => (
             <div key={item.id}>{item.name}</div>
           ))}
         </CardContent>
@@ -133,7 +152,7 @@ export default function HomePage() {
 
 ## Scrolling Content
 
-For pages with scrollable content, use flex layout:
+Your app renders in a fixed-height container. The platform does not scroll the page for you -- if a page needs scrolling, add `overflow-auto` to the element that should scroll.
 
 | Element | Classes | Purpose |
 |---------|---------|---------|

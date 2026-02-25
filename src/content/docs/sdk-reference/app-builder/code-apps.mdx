@@ -7,33 +7,48 @@ import { Aside, Code, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Overview
 
-Bifrost applications are built using TypeScript/TSX files. The runtime automatically provides all necessary modules - **you do not write import statements**.
+Bifrost applications are React + Tailwind applications that run inside the Bifrost platform. Apps are built with TypeScript/TSX files organized into pages, layouts, and components.
+
+Everything your app needs is available via a single import:
+
+```tsx
+import { Button, Card, useState, useWorkflowQuery } from "bifrost";
+```
+
+External npm packages (declared in `app.yaml`) use standard imports:
+
+```tsx
+import dayjs from "dayjs";
+import { LineChart, Line } from "recharts";
+```
 
 <Aside type="danger" title="Critical Rules">
-1. **NO IMPORT STATEMENTS** - All modules are auto-provided
-2. **USE WORKFLOW IDs** - Always use UUIDs from `list_workflows`, not names
-3. **USE `<Outlet />`** - Layouts must use `<Outlet />` for routing
+1. **USE WORKFLOW IDs** - Always use UUIDs from `list_workflows`, not names
+2. **USE `<Outlet />`** - Layouts must use `<Outlet />` for routing, not `{children}`
 </Aside>
 
 ## File Structure
 
 ```
-_layout.tsx          # Root layout wrapper (required)
+app.yaml              # Metadata (name, description, dependencies)
+_layout.tsx           # Root layout wrapper (required)
+_providers.tsx        # Optional context providers
+styles.css            # Custom CSS (dark mode via .dark selector)
 pages/
-  index.tsx          # Home page (/)
-  about.tsx          # About page (/about)
+  index.tsx           # Home page (/)
+  about.tsx           # About page (/about)
   clients/
-    index.tsx        # Clients list (/clients)
-    [id].tsx         # Client detail (/clients/:id)
+    index.tsx         # Clients list (/clients)
+    [id].tsx          # Client detail (/clients/:id)
 components/
-  MyComponent.tsx    # Shared components
+  MyComponent.tsx     # Shared components
 modules/
-  utils.ts           # Utility modules
+  utils.ts            # Utility modules
 ```
 
 ### File Path Conventions
 
-- **Root files**: `_layout.tsx`, `_providers.tsx` only
+- **Root files**: `_layout.tsx` (required), `_providers.tsx` (optional), `styles.css` (optional), `app.yaml`
 - **Pages**: `pages/*.tsx` - automatically become routes
 - **Components**: `components/*.tsx` - reusable UI
 - **Modules**: `modules/*.ts` - utilities and helpers
@@ -41,46 +56,23 @@ modules/
 
 ---
 
-## Auto-Provided Modules
+## Imports
 
-The Bifrost runtime automatically provides these in scope - **do not import them**:
+Everything comes from a single `"bifrost"` import -- React hooks, UI components, Bifrost hooks, icons, and utilities:
 
-### React Hooks
-- `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useContext`
-
-### Bifrost Hooks
-- `useWorkflow` - Execute workflows
-- `useUser` - Get current user
-- `useNavigate` - Programmatic navigation
-- `useLocation` - Current location
-- `useParams` - Route parameters
-
-### Routing
-- `Outlet` - Renders child routes in layouts
-- `Link` - Navigation links
-
-### UI Components (shadcn/ui)
-All components from `@/components/ui`:
-- `Button`, `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`
-- `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`
-- `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`
-- `Input`, `Textarea`, `Checkbox`, `Badge`, `Skeleton`
-- `Tooltip`, `TooltipProvider`, `TooltipTrigger`, `TooltipContent`
-- `Dialog`, `Alert`, `Tabs`, etc.
-
-### Icons (lucide-react)
-All icons: `Loader2`, `RefreshCw`, `Check`, `X`, `Building2`, `Play`, `AlertTriangle`, etc.
-
-### Utilities
-- `cn` - Class name merging utility
-
-<Aside type="caution" title="Common Error">
-If you add import statements, you'll get: `Cannot use import statement outside a module`
-</Aside>
+```tsx
+import {
+  useState, useEffect, useMemo, useCallback, useRef, useContext,
+  Button, Card, CardHeader, CardTitle, CardContent,
+  useWorkflowQuery, useUser, useNavigate,
+  Settings, ChevronRight,
+  cn, toast, format
+} from "bifrost";
+```
 
 ---
 
-## useWorkflow Hook
+## Workflow Hooks
 
 The primary way to interact with backend workflows.
 
@@ -88,59 +80,158 @@ The primary way to interact with backend workflows.
 Always use the workflow UUID from `list_workflows`. Names do not work.
 </Aside>
 
-```tsx
-// CORRECT - use workflow ID
-const workflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+### useWorkflowQuery(workflowId, params?, options?)
 
-// WRONG - names don't work
-const workflow = useWorkflow("list_customers");
-```
-
-### Return Value
+Auto-executes on mount. Use for loading data.
 
 ```tsx
-const { result, loading, error, execute } = useWorkflow("workflow-id");
+// Load data on mount
+const { data, isLoading } = useWorkflowQuery("workflow-uuid", { limit: 10 });
+
+// Conditional loading -- only runs when id is truthy
+const { data } = useWorkflowQuery("workflow-uuid", { id }, { enabled: !!id });
 ```
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `result` | `any` | Workflow return value |
-| `loading` | `boolean` | True while executing |
-| `error` | `Error \| null` | Error if execution failed |
-| `execute` | `(params?) => Promise` | Execute the workflow |
+| `data` | `T \| null` | Result data |
+| `isLoading` | `boolean` | True while executing |
+| `isError` | `boolean` | True if failed |
+| `error` | `string \| null` | Error message |
+| `refetch` | `() => Promise<T>` | Re-execute |
+| `logs` | `StreamingLog[]` | Real-time logs |
 
-### Usage Pattern
+Options: `{ enabled?: boolean }` -- set `false` to defer execution.
+
+### useWorkflowMutation(workflowId)
+
+Manual execution via `execute()`. Use for user-triggered actions.
 
 ```tsx
-export default function MyPage() {
-  const customersWorkflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+const { execute, isLoading } = useWorkflowMutation("workflow-uuid");
+const result = await execute({ name: "New Item" });
+```
 
-  useEffect(() => {
-    customersWorkflow.execute();
-  }, []);
+| Property | Type | Description |
+|----------|------|-------------|
+| `execute` | `(params?) => Promise<T>` | Run workflow |
+| `isLoading` | `boolean` | True while executing |
+| `data` | `T \| null` | Last result |
+| `error` | `string \| null` | Error message |
+| `reset` | `() => void` | Reset state |
 
-  if (customersWorkflow.loading) {
-    return <Skeleton className="h-32 w-full" />;
-  }
+---
 
-  const customers = customersWorkflow.result?.customers || [];
+## Other Hooks
 
-  return (
-    <div>
-      {customers.map(c => <div key={c.id}>{c.name}</div>)}
-    </div>
+| Hook | Description |
+|------|-------------|
+| `useUser()` | Current authenticated user `{ id, email, name }` |
+| `useAppState(key, initialValue)` | Persistent cross-page state |
+| `useParams()` | URL path parameters |
+| `useSearchParams()` | Query string parameters |
+| `useNavigate()` | Programmatic navigation: `navigate("/path")` |
+| `useLocation()` | Current location object |
+
+### React Hooks
+
+Standard React hooks are available from the `"bifrost"` import:
+
+`useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useContext`
+
+### Routing
+
+- `Outlet` - Renders child routes in layouts
+- `Link` - Navigation links
+
+---
+
+## Pre-included Components
+
+These are available from `"bifrost"` without installation. They are standard shadcn/ui components -- use them exactly as documented in the shadcn/ui docs.
+
+**Layout:** Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent
+
+**Forms:** Button, Input, Label, Textarea, Checkbox, Switch, Select (+ SelectTrigger, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectValue, SelectSeparator), RadioGroup, RadioGroupItem, Combobox, MultiCombobox, TagsInput
+
+**Display:** Badge, Avatar (+ AvatarImage, AvatarFallback), Alert (+ AlertTitle, AlertDescription), Skeleton, Progress
+
+**Navigation:** Tabs (+ TabsList, TabsTrigger, TabsContent), Pagination (+ PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious)
+
+**Feedback:** Dialog (+ DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger), AlertDialog (+ sub-components), Tooltip (+ TooltipContent, TooltipProvider, TooltipTrigger), Popover (+ PopoverContent, PopoverTrigger, PopoverAnchor)
+
+**Data:** Table (+ TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption)
+
+**Date:** CalendarPicker, DateRangePicker
+
+**Icons:** All lucide-react icons (e.g., `Settings`, `ChevronRight`, `Search`, `Plus`, `Trash2`, `Users`, `Mail`)
+
+**Utilities:** `cn(...)` (Tailwind class merging), `toast(message)` (Sonner notifications), `format(date, pattern)` (date-fns)
+
+### Custom Components
+
+Need a component not listed above? Build it in `components/`. shadcn/ui components are just TSX files -- recreate any shadcn component, customize it, or build entirely new ones from scratch with React and Tailwind.
+
+For example, to add a Sheet component, create `components/Sheet.tsx` using Radix primitives and Tailwind -- the same pattern shadcn/ui uses. Or build a rich text editor, a kanban board, a color picker -- anything you can build in React.
+
+---
+
+## Custom CSS
+
+Add a `styles.css` file to your app root for custom styles:
+
+```css
+/* CSS variables for theming */
+:root {
+  --app-primary: oklch(0.5 0.18 260);
+  --app-surface: #fffef9;
+}
+
+/* Dark mode -- inherits from platform toggle */
+.dark {
+  --app-primary: oklch(0.7 0.15 260);
+  --app-surface: #1e1e22;
+}
+
+/* Custom classes */
+.paper-bg {
+  background-color: var(--app-surface);
+  background-image: repeating-linear-gradient(
+    transparent, transparent 1.7rem,
+    rgba(0,0,0,0.06) 1.7rem, rgba(0,0,0,0.06) 1.75rem
   );
 }
 ```
 
-### With Parameters
+Use in components: `<div className="paper-bg rounded-lg">`. Tailwind classes and custom CSS classes can be mixed freely.
 
-```tsx
-const detailWorkflow = useWorkflow("abc123-workflow-id");
+---
 
-// Execute with parameters
-await detailWorkflow.execute({ customer_id: "123" });
+## External Dependencies
+
+Declare npm packages in `app.yaml`:
+
+```yaml
+name: My Dashboard
+description: Analytics dashboard
+dependencies:
+  recharts: "2.12"
+  dayjs: "1.11"
 ```
+
+Max 20 packages. Loaded at runtime from esm.sh CDN.
+
+---
+
+## Runtime Environment
+
+Apps run inside the Bifrost shell (not in an iframe). Browser globals (`window`, `document`, `fetch`, `ResizeObserver`, `MutationObserver`, etc.) are accessible -- use them directly when needed. External npm packages that depend on DOM APIs (rich text editors, drag-and-drop libraries, charting with DOM measurement) work normally.
+
+**Cannot use:**
+- ES dynamic `import()` -- all dependencies must be declared in `app.yaml`
+- Node.js APIs (`fs`, `path`, `process`, etc.)
+
+Use `useWorkflowQuery`/`useWorkflowMutation` for calling backend workflows. Use `fetch` directly for external HTTP calls that don't need backend logic.
 
 ---
 
@@ -152,7 +243,11 @@ The root `_layout.tsx` is required and must use `<Outlet />` for routing.
 The `{children}` pattern doesn't work with Bifrost routing. Always use `<Outlet />`.
 </Aside>
 
+Your app renders in a fixed-height container. The platform does not scroll the page for you -- if a page needs scrolling, add `overflow-auto` to the element that should scroll.
+
 ```tsx
+import { Outlet } from "bifrost";
+
 // _layout.tsx - CORRECT
 export default function RootLayout() {
   return (
@@ -166,7 +261,11 @@ export default function RootLayout() {
 ### With Navigation
 
 ```tsx
-// _layout.tsx with sidebar
+import {
+  useLocation, useNavigate, cn,
+  LayoutDashboard, Building2, Outlet
+} from "bifrost";
+
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/customers", label: "Customers", icon: Building2 },
@@ -211,75 +310,21 @@ export default function Layout() {
 
 ---
 
-## Scrolling and Layout
-
-For pages with scrollable content (tables, lists), use flex layout with overflow control.
-
-### Key Classes
-
-| Element | Classes | Purpose |
-|---------|---------|---------|
-| Layout root | `h-full overflow-hidden` | Contains page height |
-| Page root | `flex flex-col h-full overflow-hidden` | Enables flex layout |
-| Headers | `shrink-0` | Prevents shrinking |
-| Scrollable content | `flex-1 min-h-0 overflow-auto` | Scrolls within bounds |
-
-### Example
-
-```tsx
-export default function CustomersPage() {
-  const workflow = useWorkflow("customer-list-workflow-id");
-
-  useEffect(() => { workflow.execute(); }, []);
-
-  return (
-    <div className="flex flex-col h-full p-6 overflow-hidden">
-      {/* Header - fixed */}
-      <div className="flex items-center justify-between mb-6 shrink-0">
-        <h1 className="text-3xl font-bold">Customers</h1>
-        <Button onClick={() => workflow.execute()}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Content - scrollable */}
-      <Card className="flex flex-col min-h-0 flex-1">
-        <CardHeader className="shrink-0">
-          <CardTitle>Customer List</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(workflow.result?.customers || []).map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-```
-
----
-
 ## Complete Example
 
 A full page with workflow integration, loading states, and actions.
 
 ```tsx
-// pages/index.tsx - NO IMPORTS NEEDED
+// pages/index.tsx
+import {
+  useState, useEffect,
+  useWorkflowQuery, useWorkflowMutation,
+  Card, CardHeader, CardTitle, CardContent,
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+  Button, Badge, Skeleton,
+  Building2, Loader2, RefreshCw, X,
+  cn
+} from "bifrost";
 
 interface Customer {
   id: string;
@@ -289,35 +334,23 @@ interface Customer {
 }
 
 export default function CustomersPage() {
-  // Workflow IDs from list_workflows
-  const listWorkflow = useWorkflow("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
-  const deleteWorkflow = useWorkflow("abc12345-delete-workflow-id");
-
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { data, isLoading, refetch } = useWorkflowQuery("ef8cf1f2-b451-47f4-aee8-336f7cb21d33");
+  const deleteMutation = useWorkflowMutation("abc12345-delete-workflow-id");
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    listWorkflow.execute();
-  }, []);
-
-  useEffect(() => {
-    if (listWorkflow.result?.customers) {
-      setCustomers(listWorkflow.result.customers);
-    }
-  }, [listWorkflow.result]);
+  const customers: Customer[] = data?.customers || [];
 
   const handleDelete = async (id: string) => {
     setDeleting(id);
     try {
-      await deleteWorkflow.execute({ customer_id: id });
-      setCustomers((prev) => prev.filter((c) => c.id !== id));
+      await deleteMutation.execute({ customer_id: id });
+      refetch();
     } finally {
       setDeleting(null);
     }
   };
 
-  // Loading state
-  if (listWorkflow.loading && customers.length === 0) {
+  if (isLoading && customers.length === 0) {
     return (
       <div className="p-6">
         <Skeleton className="h-9 w-48 mb-4" />
@@ -336,10 +369,10 @@ export default function CustomersPage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => listWorkflow.execute()}
-          disabled={listWorkflow.loading}
+          onClick={() => refetch()}
+          disabled={isLoading}
         >
-          {listWorkflow.loading ? (
+          {isLoading ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
             <RefreshCw className="w-4 h-4 mr-2" />
