@@ -34,129 +34,12 @@ This automatically:
 
 ## @workflow Advanced Options
 
-### Scheduling Workflows
+### Scheduling, Endpoints, and Execution Modes
 
-Run workflows automatically on a schedule:
+Schedules, HTTP endpoints, retry policies, and execution modes are configured via the Bifrost UI or API after deploying your workflow — not in the decorator. See:
 
-```python
-@workflow(schedule="0 2 * * *")  # Daily at 2 AM UTC
-async def daily_cleanup():
-    """Daily cleanup task."""
-    await cleanup_old_records()
-    return {"cleaned": True}
-```
-
-**Cron Expressions**:
-
-- `0 9 * * *` - Daily at 9 AM
-- `0 */6 * * *` - Every 6 hours
-- `0 9 * * 1` - Every Monday at 9 AM
-- `0 0 1 * *` - First day of month at midnight
-
-<Aside type="tip">
-Use UTC times for schedules to ensure consistency across timezones.
-</Aside>
-
-### HTTP Endpoints
-
-Expose workflows as HTTP endpoints for webhooks:
-
-```python
-@workflow(
-    endpoint_enabled=True,
-    allowed_methods=["POST"],
-    public_endpoint=True  # Skip authentication
-)
-async def process_webhook(payload: dict):
-    """Process incoming webhook."""
-    # Available at: POST /api/endpoints/process_webhook
-    return {"status": "processed"}
-```
-
-<Tabs>
-  <TabItem label="Endpoint Options" icon="setting">
-
-**endpoint_enabled** (bool)
-: Expose at `/api/endpoints/{name}` (default: False)
-
-**allowed_methods** (list)
-: HTTP methods allowed (default: `["POST"]`)
-
-**public_endpoint** (bool)
-: Skip authentication for webhooks (default: False)
-
-**disable_global_key** (bool)
-: Only workflow-specific keys work (default: False)
-
-  </TabItem>
-  <TabItem label="Example" icon="seti:code">
-
-```python
-# Authenticated endpoint (requires API key)
-@workflow(
-    endpoint_enabled=True,
-    allowed_methods=["GET", "POST"]
-)
-async def sync_data():
-    """Sync data endpoint."""
-    pass
-
-# Public webhook (no auth required)
-@workflow(
-    endpoint_enabled=True,
-    public_endpoint=True
-)
-async def github_webhook(payload: dict):
-    """Handle GitHub webhooks."""
-    pass
-```
-
-  </TabItem>
-</Tabs>
-
-### Retry Policies
-
-Automatically retry failed workflows:
-
-```python
-@workflow(
-    retry_policy={
-        "max_attempts": 3,
-        "backoff_seconds": 5
-    }
-)
-async def api_call():
-    """Call external API with retries."""
-    # Will retry up to 3 times with 5 second delay
-    pass
-```
-
-### Execution Modes
-
-Execution mode is auto-selected based on `endpoint_enabled`:
-
-```python
-# Auto-selects sync (endpoint needs immediate response)
-@workflow(endpoint_enabled=True)
-async def quick_lookup(id: str):
-    """Quick lookup endpoint."""
-    pass
-
-# Auto-selects async (background execution)
-@workflow
-async def bulk_import(csv_url: str):
-    """Import data from CSV."""
-    pass
-
-# Explicit override when needed
-@workflow(
-    endpoint_enabled=True,
-    execution_mode="async"  # Returns 202 + execution_id
-)
-async def long_webhook(payload: dict):
-    """Webhook that triggers long process."""
-    pass
-```
+- [Scheduled Workflows](/how-to-guides/workflows/scheduled-workflows) for cron scheduling
+- [HTTP Endpoints](/how-to-guides/workflows/http-endpoints) for exposing workflows as REST endpoints
 
 ## Parameter Inference
 
@@ -251,35 +134,19 @@ async def send_message(contact: str, message: str):
 
 ## @data_provider Patterns
 
-### Caching Strategies
+### Caching
 
-<Tabs>
-  <TabItem label="Long Cache" icon="clock">
+Data provider results are cached automatically by the platform. Cache TTL is configured via the Bifrost UI or API, not in the decorator.
+
 ```python
 @data_provider(
     name="get_departments",
-    description="List departments",
-    cache_ttl_seconds=3600  # Cache for 1 hour
+    description="List departments"
 )
 async def get_departments():
-    # Expensive query, cache results
+    # Results are cached automatically by the platform
     return await fetch_departments()
 ```
-  </TabItem>
-
-  <TabItem label="No Cache" icon="refresh">
-```python
-@data_provider(
-    name="get_current_tickets",
-    description="Current open tickets",
-    cache_ttl_seconds=0  # Never cache
-)
-async def get_current_tickets():
-    # Always fetch latest
-    return await fetch_open_tickets()
-```
-  </TabItem>
-</Tabs>
 
 ### Options with Metadata
 

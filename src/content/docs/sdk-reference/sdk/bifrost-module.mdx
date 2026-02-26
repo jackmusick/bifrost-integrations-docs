@@ -57,8 +57,7 @@ async def create_user(email: str, name: str):
 ```python
 @workflow(
     category="User Management",
-    timeout_seconds=60,
-    schedule="0 9 * * *"  # Daily at 9 AM
+    tags=["onboarding"]
 )
 async def create_user(email: str, name: str):
     """Create a new user in the system."""
@@ -75,12 +74,11 @@ async def create_user(email: str, name: str):
 | `description` | str | Auto | Auto-derived from docstring |
 | `category` | str | "General" | Workflow category |
 | `tags` | list[str] | [] | Tags for filtering |
-| `execution_mode` | str | Auto | Auto-selects based on endpoint_enabled |
-| `timeout_seconds` | int | 1800 | Max execution time (30 min default) |
-| `schedule` | str | None | Cron expression |
-| `endpoint_enabled` | bool | False | Expose as HTTP endpoint |
-| `allowed_methods` | list[str] | ["POST"] | Allowed HTTP methods |
-| `public_endpoint` | bool | False | Skip authentication |
+| `is_tool` | bool | False | Make callable by AI agents |
+
+<Aside type="note">
+Settings like `timeout_seconds`, `schedule`, `endpoint_enabled`, `allowed_methods`, `public_endpoint`, and `execution_mode` are configured via the Bifrost UI or API, not in the decorator.
+</Aside>
 
 ### @data_provider
 
@@ -624,8 +622,7 @@ logger = logging.getLogger(__name__)
 # Data provider - no context parameter needed
 @data_provider(
     name="get_departments",
-    description="List departments",
-    cache_ttl_seconds=600
+    description="List departments"
 )
 async def get_departments():
     return [
@@ -634,7 +631,7 @@ async def get_departments():
     ]
 
 # Workflow - parameters auto-inferred from function signature
-@workflow(category="User Management", timeout_seconds=60)
+@workflow(category="User Management")
 async def create_user(
     email: str,
     name: str,

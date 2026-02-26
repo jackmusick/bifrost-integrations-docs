@@ -36,18 +36,7 @@ This automatically:
     description: str | None = None,    # Auto-derived from docstring
     category: str = "General",
     tags: list[str] | None = None,
-    execution_mode: Literal["sync", "async"] | None = None,  # Auto-selected
-    timeout_seconds: int = 1800,
-    retry_policy: dict[str, Any] | None = None,
-    schedule: str | None = None,
-    endpoint_enabled: bool = False,
-    allowed_methods: list[str] | None = None,
-    disable_global_key: bool = False,
-    public_endpoint: bool = False,
     is_tool: bool = False,
-    tool_description: str | None = None,
-    time_saved: int = 0,
-    value: float = 0.0,
 )
 ```
 
@@ -59,18 +48,11 @@ This automatically:
 | `description` | str | None | User-facing description. Auto-derived from docstring if not provided |
 | `category` | str | "General" | Category for grouping (e.g., "User Management") |
 | `tags` | list | None | Tags for filtering and search |
-| `execution_mode` | str | None | "sync" or "async". Auto-selects based on `endpoint_enabled` |
-| `timeout_seconds` | int | 1800 | Maximum execution time (30 min default, 2 hour max) |
-| `retry_policy` | dict | None | Retry configuration |
-| `schedule` | str | None | Cron schedule for scheduled execution |
-| `endpoint_enabled` | bool | False | Expose as HTTP endpoint at /api/endpoints/\{name\} |
-| `allowed_methods` | list | None | HTTP methods allowed (GET, POST, etc.) |
-| `disable_global_key` | bool | False | Require workflow-specific API key |
-| `public_endpoint` | bool | False | Skip authentication for webhooks |
 | `is_tool` | bool | False | Make callable by AI agents |
-| `tool_description` | str | None | Description for AI agent tool use |
-| `time_saved` | int | 0 | Estimated minutes saved per execution (for ROI tracking) |
-| `value` | float | 0.0 | Custom value metric per execution |
+
+<Aside type="note">
+The following settings are configured via the Bifrost UI or API, not in the decorator: `timeout_seconds`, `schedule`, `execution_mode`, `endpoint_enabled`, `allowed_methods`, `public_endpoint`, `disable_global_key`, `retry_policy`, `time_saved`, `value`, `tool_description`.
+</Aside>
 
 ### Auto-Generated ID
 
@@ -108,8 +90,7 @@ async def create_user(email: str, name: str, department: str = "General"):
 ```python
 @workflow(
     category="User Management",
-    tags=["onboarding"],
-    timeout_seconds=60
+    tags=["onboarding"]
 )
 async def create_user(email: str, name: str):
     """Create a new user in the system."""
@@ -117,44 +98,22 @@ async def create_user(email: str, name: str):
 ```
   </TabItem>
 
-  <TabItem label="Scheduled" icon="clock">
-```python
-@workflow(
-    schedule="0 9 * * *"  # Daily at 9 AM UTC
-)
-async def daily_report():
-    """Generate daily report."""
-    return {"status": "sent"}
-```
-  </TabItem>
-
-  <TabItem label="HTTP Endpoint" icon="link">
-```python
-@workflow(
-    endpoint_enabled=True,
-    allowed_methods=["POST"],
-    public_endpoint=True  # No auth required
-)
-async def handle_webhook(payload: dict):
-    """Handle incoming webhook."""
-    # Available at: POST /api/endpoints/handle_webhook
-    return {"status": "processed"}
-```
-  </TabItem>
-
   <TabItem label="AI Tool" icon="seti:ai">
 ```python
 @workflow(
-    is_tool=True,
-    tool_description="Look up a customer by email address and return their account details"
+    is_tool=True
 )
 async def lookup_customer(email: str):
-    """Look up customer information."""
+    """Look up a customer by email address and return their account details."""
     customer = await get_customer(email)
     return {"name": customer.name, "account": customer.id}
 ```
   </TabItem>
 </Tabs>
+
+<Aside type="tip">
+Features like schedules, HTTP endpoints, and timeouts are configured via the Bifrost UI or API after deploying your workflow. See [Scheduled Workflows](/how-to-guides/workflows/scheduled-workflows) and [HTTP Endpoints](/how-to-guides/workflows/http-endpoints) for details.
+</Aside>
 
 ## Parameter Inference
 

@@ -25,8 +25,7 @@ from bifrost import data_provider, ExecutionContext
 
 @data_provider(
     name="get_departments",
-    description="List all departments",
-    cache_ttl_seconds=3600  # Cache 1 hour
+    description="List all departments"
 )
 async def get_departments(context: ExecutionContext):
     return [

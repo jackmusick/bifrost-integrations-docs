@@ -34,6 +34,10 @@ The decorator automatically infers:
 - **description**: from the docstring
 - **parameters**: from the function signature with type hints
 
+<Aside type="note">
+Writing the file is only step one. You must also **register** the function before it appears in the platform. See [Workflow Registration](/core-concepts/discovery-system) for details.
+</Aside>
+
 ## Decorator Reference
 
 ### @workflow Options
@@ -240,8 +244,7 @@ Provide dynamic options for dropdowns:
 
     @data_provider(
         name="get_departments",
-        description="List departments",
-        cache_ttl_seconds=600
+        description="List departments"
     )
     async def get_departments():
         return [
