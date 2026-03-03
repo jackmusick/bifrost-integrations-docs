@@ -1,0 +1,151 @@
+---
+title: Manifest Structure
+description: Understanding the .bifrost/ directory and its split YAML manifest files
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+# Manifest Structure
+
+The `.bifrost/` directory contains system-generated YAML files that declare all platform entities in your workspace. These files are used for Git synchronization, validation, and portable workspace definitions.
+
+<Aside type="caution">
+Manifest files are **read-only**. The Code Editor blocks writes to `.bifrost/`. Do not edit these files manually — they are regenerated automatically when you create, update, or delete platform entities.
+</Aside>
+
+## Directory Layout
+
+```
+.bifrost/
+├── organizations.yaml
+├── roles.yaml
+├── workflows.yaml
+├── integrations.yaml
+├── configs.yaml
+├── tables.yaml
+├── knowledge.yaml
+├── events.yaml
+├── forms.yaml
+├── agents.yaml
+└── apps.yaml
+```
+
+Each file corresponds to one entity type. Files are omitted entirely if there are no entities of that type.
+
+## Key Files
+
+### workflows.yaml
+
+Declares all registered workflows, tools, and data providers:
+
+```yaml
+workflows:
+  create_user:
+    id: "a1b2c3d4-..."
+    path: "create_user.py"
+    function_name: "create_user"
+    type: "workflow"
+    category: "User Management"
+    tags:
+      - onboarding
+    endpoint_enabled: false
+    timeout_seconds: 1800
+  get_departments:
+    id: "e5f6g7h8-..."
+    path: "data_providers/departments.py"
+    function_name: "get_departments"
+    type: "data_provider"
+```
+
+### integrations.yaml
+
+Declares integrations with their config schemas and OAuth providers:
+
+```yaml
+integrations:
+  microsoft:
+    id: "i9j0k1l2-..."
+    config_schema:
+      - key: "tenant_id"
+        type: "string"
+        required: true
+        description: "Azure AD tenant ID"
+    oauth_provider:
+      provider_name: "microsoft"
+      oauth_flow_type: "authorization_code"
+      scopes:
+        - "https://graph.microsoft.com/.default"
+```
+
+### events.yaml
+
+Declares event sources (webhooks and schedules) with their subscriptions:
+
+```yaml
+events:
+  daily_sync:
+    id: "m3n4o5p6-..."
+    source_type: "schedule"
+    cron_expression: "0 6 * * *"
+    timezone: "America/New_York"
+    schedule_enabled: true
+    subscriptions:
+      - id: "q7r8s9t0-..."
+        workflow_id: "a1b2c3d4-..."
+        is_active: true
+  halopsa_tickets:
+    id: "u1v2w3x4-..."
+    source_type: "webhook"
+    adapter_name: "halopsa"
+    subscriptions:
+      - id: "y5z6a7b8-..."
+        workflow_id: "e5f6g7h8-..."
+        event_type: "ticket.created"
+        input_mapping:
+          ticket_id: "$.id"
+```
+
+### forms.yaml
+
+Declares forms with their access control:
+
+```yaml
+forms:
+  Create User:
+    id: "c9d0e1f2-..."
+    path: "forms/c9d0e1f2.form.yaml"
+    roles:
+      - "g3h4i5j6-..."
+    access_level: "role_based"
+```
+
+## How Manifests Are Generated
+
+Manifest files are regenerated automatically when:
+
+- **Entity CRUD** — Creating, updating, or deleting any entity (workflow, form, integration, etc.)
+- **Git sync** — Before committing changes to a connected repository
+- **Preflight checks** — During on-demand validation via `POST /api/maintenance/preflight`
+
+The generation process uses `exclude_defaults=True` to keep files concise — fields with default values are omitted.
+
+## Cross-Reference Validation
+
+The platform validates manifest integrity by checking that:
+
+- All `organization_id` references point to declared organizations
+- All role references point to declared roles
+- Integration config references point to declared integrations
+- Event subscription `workflow_id` references point to declared workflows
+- Table `application_id` references point to declared apps
+
+Validation errors surface during preflight checks and Git sync.
+
+## Legacy Format
+
+Older workspaces may contain a single `metadata.yaml` file instead of the split directory. The platform auto-detects the format:
+
+- If any split file exists in `.bifrost/` → uses the split format
+- Otherwise → falls back to `metadata.yaml`
+
+On the next write, the legacy file is removed and replaced with the split format.

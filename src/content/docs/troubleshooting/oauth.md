@@ -16,7 +16,14 @@ Verify the OAuth connection exists:
 
 ### Check 2: Token Expired
 
-Bifrost automatically refreshes tokens, but if the refresh token has expired:
+Bifrost automatically refreshes tokens, but if a token is rejected before its stated expiry (common with providers like Pax8), you can refresh it programmatically:
+
+```python
+integration = await integrations.get("Pax8")
+await integration.oauth.refresh()  # fetch fresh token
+```
+
+If the refresh token itself has expired:
 
 1. Delete the existing OAuth connection
 2. Re-authorize to get a fresh token
@@ -50,11 +57,11 @@ async def call_graph_api():
 
 ## Common Errors
 
-| Error                   | Cause                         | Fix                              |
-| ----------------------- | ----------------------------- | -------------------------------- |
-| "OAuth not configured"  | Connection doesn't exist      | Add OAuth connection in Settings |
-| 401 Unauthorized        | Token expired or wrong scopes | Re-authorize or check scopes     |
-| "refresh_token invalid" | Refresh token revoked         | Delete and re-authorize          |
+| Error                   | Cause                         | Fix                                          |
+| ----------------------- | ----------------------------- | -------------------------------------------- |
+| "OAuth not configured"  | Connection doesn't exist      | Add OAuth connection in Settings             |
+| 401 Unauthorized        | Token expired or wrong scopes | Call `oauth.refresh()`, or re-authorize      |
+| "refresh_token invalid" | Refresh token revoked         | Delete and re-authorize                      |
 
 ## See Also
 

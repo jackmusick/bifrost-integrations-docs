@@ -38,6 +38,8 @@ async def get(
 - Org UUID string: Target specific organization
 - `"global"`: Access platform-level config
 
+> **Note:** Targeting a specific org via UUID requires provider org context. Managed orgs can only access their own scope. Use `context.set_scope()` to override scope for all calls at once.
+
 #### Returns
 
 The configuration value, or `default` if not found. Secrets are automatically decrypted.

@@ -43,6 +43,8 @@ async def store(
 - Org UUID string: Target specific organization
 - `"global"`: Store at platform-level (visible to all orgs)
 
+> **Note:** Targeting a specific org via UUID requires provider org context. Managed orgs can only access their own scope. Use `context.set_scope()` to override scope for all calls at once.
+
 #### Returns
 
 Document ID string.

@@ -1,26 +1,62 @@
 ---
-title: Workflow Discovery
-description: How Bifrost automatically finds and registers your workflows
+title: Workflow Registration
+description: How to register workflows and data providers with the Bifrost platform
 ---
 
-# Workflow Discovery
+import { Aside } from "@astrojs/starlight/components";
 
-Bifrost automatically discovers workflows and data providers in your workspace. Just write your code with decorators—the platform finds and registers it for you.
+# Workflow Registration
+
+Bifrost uses a two-step process for workflows and data providers: **write your code**, then **register it**. Registration tells the platform to index the function's metadata (name, description, parameters) so it appears in the UI and becomes executable.
 
 ## How It Works
 
-When you add a Python file with a `@workflow` or `@data_provider` decorator:
+1. **Write your code** — Create a Python file with a `@workflow` or `@data_provider` decorator
+2. **Register the function** — Tell the platform which function to index
+3. **Platform indexes metadata** — Name, description, parameters, and category are extracted from the decorator and function signature
+4. **Workflow appears** — Shows up in the Workflows page, can be tied to forms, scheduled, or called via API
 
-1. **Files stored in S3** - Your workspace files are stored in S3-compatible storage
-2. **API imports on startup** - Decorated functions are discovered when the API starts
-3. **Workers stay in sync** - File changes are pushed to workers via RabbitMQ
-4. **Your workflow appears** - Shows up in the UI and becomes executable
+<Aside type="tip">
+Registration only needs to happen once per function. After that, saving changes to the file automatically updates the indexed metadata.
+</Aside>
 
-No configuration files, no manual registration—it just works.
+## Registration Methods
 
-## Making Your Workflows Discoverable
+### Code Editor (Recommended)
 
-### Create a Python file anywhere in your workspace
+The built-in Code Editor shows a **Register** button above each unregistered `@workflow` or `@data_provider` function. Click it to register.
+
+### API
+
+Send a POST request to register a function by file path and function name:
+
+```bash
+POST /api/workflows/register
+Content-Type: application/json
+
+{
+    "file_path": "create_user.py",
+    "function_name": "create_user"
+}
+```
+
+### MCP
+
+Use the `register_workflow` MCP tool from any MCP-compatible AI tool:
+
+```
+register_workflow(file_path="create_user.py", function_name="create_user")
+```
+
+## Preflight Validation
+
+The platform provides a preflight check that scans your workspace for decorated functions that haven't been registered yet. This helps catch functions you may have forgotten to register.
+
+Access it via `POST /api/maintenance/preflight` or through the Code Editor's diagnostics.
+
+## Writing Discoverable Code
+
+### Use the `@workflow` decorator
 
 ```python
 from bifrost import workflow
@@ -32,12 +68,10 @@ async def send_email(recipient: str, subject: str, body: str = ""):
     return {"sent": True}
 ```
 
-**That's it!** The decorator automatically infers:
+The decorator automatically infers:
 - **name**: `"send_email"` from the function name
 - **description**: `"Send email notification to a user."` from the docstring
 - **parameters**: from the function signature (types and defaults)
-
-Your workflow now appears in the UI and can be executed.
 
 ### Data providers work the same way
 
@@ -49,7 +83,6 @@ from bifrost import data_provider, context
     description="Available M365 licenses"
 )
 async def get_licenses():
-    # Access context if needed
     org_id = context.org_id
     return [
         {"label": "Microsoft 365 E3", "value": "SPE_E3"},
@@ -59,30 +92,15 @@ async def get_licenses():
 
 Use it in form dropdowns by referencing the data provider name.
 
-## Rules for Discovery
+## Rules for Registration
 
-Your files must follow these simple rules:
+Your files must follow these rules:
 
-1. **Use the `.py` extension** - Only Python files are discovered
-2. **Don't start filenames with `_`** - Files like `_helpers.py` are ignored
-3. **Use the `@workflow` or `@data_provider` decorator** - Undecorated functions won't appear
-4. **Import from `bifrost`** - Use `from bifrost import workflow`
-
-## Quick Example
-
-**Create a file:** `create_user.py`
-
-```python
-from bifrost import workflow
-
-@workflow
-async def create_user(email: str, first_name: str, last_name: str):
-    """Create a new user account."""
-    # Your user creation logic
-    return {"success": True, "email": email}
-```
-
-**Result:** Your workflow immediately appears in the Workflows page and can be executed via forms or API.
+1. **Use the `.py` extension** — Only Python files are scanned
+2. **Don't start filenames with `_`** — Files like `_helpers.py` are skipped
+3. **Use the `@workflow` or `@data_provider` decorator** — Undecorated functions won't be recognized
+4. **Import from `bifrost`** — Use `from bifrost import workflow`
+5. **Register the function** — Writing the file is not enough; you must register it
 
 ## Workspace Storage
 
@@ -90,7 +108,7 @@ Workspace files are stored in S3-compatible storage (MinIO locally, AWS S3 in pr
 
 - **API and workers** sync workspace files to `/tmp/bifrost/workspace`
 - **File changes** pushed via RabbitMQ to keep all instances in sync
-- **Horizontal scaling** enabled - workers download workspace on startup
+- **Horizontal scaling** enabled — workers download workspace on startup
 
 This architecture allows you to scale workers independently without shared filesystem requirements.
 
@@ -98,14 +116,15 @@ This architecture allows you to scale workers independently without shared files
 
 ### My workflow isn't appearing
 
-1. **Check your decorator** - Make sure you have `@workflow` above your function
-2. **Check your imports** - Use `from bifrost import workflow`
-3. **Check your filename** - Files starting with `_` are ignored (like `_helpers.py`)
-4. **Check for errors** - Look at the application logs for import errors
+1. **Did you register it?** — Writing the file is only step one. You must also register the function via the Code Editor, API, or MCP
+2. **Check your decorator** — Make sure you have `@workflow` above your function
+3. **Check your imports** — Use `from bifrost import workflow`
+4. **Check your filename** — Files starting with `_` are ignored (like `_helpers.py`)
+5. **Check for errors** — Look at the application logs for import errors
 
 ### My parameters aren't showing in forms
 
-1. **Use type hints** - Parameters are extracted from the function signature
+1. **Use type hints** — Parameters are extracted from the function signature
     ```python
     @workflow
     async def test(name: str, count: int = 1):
@@ -113,4 +132,4 @@ This architecture allows you to scale workers independently without shared files
         pass
     ```
 
-2. **Make sure types are valid** - Use `str`, `int`, `float`, `bool`, `list`, or `dict`
+2. **Make sure types are valid** — Use `str`, `int`, `float`, `bool`, `list`, or `dict`

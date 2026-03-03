@@ -5,12 +5,16 @@ description: Understanding workflows in Bifrost
 
 ## What Are Workflows?
 
-Workflows are Python functions decorators to describe functionality to the platform. They:
+Workflows are Python functions decorators to describe functionality to the platform. The Workflows page shows all available workflows organized by category.
+
+![Workflows List](../../../assets/core-concepts/workflows.png)
+
+Workflows allow you to:
 
 -   Define and accept parameters that can be exposed forms or API calls
 -   Execute business logic
 -   Return results
--   Are discoverable without manual registration
+-   Are registered explicitly via Code Editor, API, or MCP
 
 ## How They Work
 
@@ -32,19 +36,19 @@ The decorator automatically infers:
 **Workflow lifecycle**:
 
 1. Developer writes Python function with `@workflow` decorator
-1. Platform discovers it on startup and during execution
-1. Workflow appears in UI automatically
+1. Developer registers the function via Code Editor, API, or MCP
+1. Workflow appears in the UI
 1. Admins will usually create forms and tie them to workflows for execution
 1. Users execute via forms
 1. Results logged and displayed in realtime
 
 ## Key Concepts
 
-### Discovery
+### Registration
 
-Workflows auto-register - no manual configuration needed:
+Workflows require explicit registration after creating the file. Write your code, then register the function using the Code Editor, the `POST /api/workflows/register` endpoint, or the `register_workflow` MCP tool.
 
-Workflow files are stored in S3 and automatically synced to the `/workspace` directory in containers.
+Workflow files are stored in S3 and synced to the `/workspace` directory in containers.
 
 ```
 /workspace
@@ -53,7 +57,7 @@ Workflow files are stored in S3 and automatically synced to the `/workspace` dir
 └── reporting.py
 ```
 
-Platform scans these files, finds `@workflow` decorators, registers them.
+See [Workflow Registration](/core-concepts/discovery-system) for details on the registration process.
 
 ### Parameters
 

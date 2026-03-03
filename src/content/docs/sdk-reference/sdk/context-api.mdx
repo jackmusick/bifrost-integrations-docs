@@ -21,7 +21,7 @@ async def example(name: str):
 ```
 
 <Aside type="note">
-The `context` proxy is read-only and provides identity, organization, and execution metadata. It's automatically available during workflow execution.
+The `context` proxy provides identity, organization, and execution metadata. It's automatically available during workflow execution. The only mutation allowed is `set_scope()` for cross-org access.
 </Aside>
 
 ## Properties
@@ -72,6 +72,7 @@ The `context` proxy is read-only and provides identity, organization, and execut
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
 | `get_config(key, default=None)` | key: str, default: Any | Any | Async method to get config value |
+| `set_scope(org_id)` | org_id: str \| None | None | Override effective scope for all subsequent SDK calls (provider orgs only). Pass `None` to reset. |
 
 ```python
 # Using get_config method
@@ -127,12 +128,37 @@ When `context.organization` is not None:
 | `id` | str | Organization ID |
 | `name` | str | Display name |
 | `is_active` | bool | Organization is active |
+| `is_provider` | bool | Provider organization (can access other org scopes) |
 
 ```python
 if context.organization:
     org_name = context.organization.name
     is_active = context.organization.is_active
 ```
+
+## Cross-Organization Scope
+
+Provider organizations can use `set_scope()` to target managed organizations for all subsequent SDK calls. Managed orgs are locked to their own scope.
+
+```python
+from bifrost import workflow, context, integrations
+
+@workflow(name="provision_tenant")
+async def provision_tenant(target_org_id: str):
+    # Switch scope to the managed org
+    context.set_scope(target_org_id)
+
+    # All SDK calls now target the managed org
+    graph = await integrations.get("Microsoft Graph")
+    cfg = await config.get("timezone")
+
+    # Reset to original scope
+    context.set_scope(None)
+```
+
+<Aside type="caution">
+Only provider organizations can call `set_scope()` with a different org ID. Non-provider orgs will receive a `PermissionError`.
+</Aside>
 
 ## Common Patterns
 
@@ -274,9 +300,12 @@ class ExecutionContext:
     parameters: dict[str, Any]      # Extra parameters passed to workflow
     startup: dict[str, Any] | None  # Results from launch workflow
     roi: ROIContext                 # ROI tracking context
+    _scope_override: str | None     # Set via set_scope()
 
     @property
     def org_id(self) -> str | None:
+        if self._scope_override is not None:
+            return self._scope_override
         return self.organization.id if self.organization else None
 
     @property
@@ -286,6 +315,11 @@ class ExecutionContext:
     @property
     def is_global_scope(self) -> bool:
         return self.scope == "GLOBAL"
+
+    def set_scope(self, org_id: str | None) -> None:
+        """Override effective scope for all subsequent SDK calls.
+        Only provider orgs can target a different org."""
+        ...
 
     async def get_config(self, key: str, default: Any = None) -> Any:
         """Get a config value for the current scope."""
@@ -301,7 +335,7 @@ Follow these patterns for clean, maintainable workflows:
 1. **Use the Proxy**: Import `from bifrost import context` - no parameter needed
 2. **Always Check org_id**: Verify org context before org-scoped operations
 3. **Log Context**: Include context in log messages for debugging
-4. **Don't Mutate**: Context is read-only, don't try to modify it
+4. **Don't Mutate**: Context is read-only except for `set_scope()`
 5. **Use Properties**: Use `context.org_id` not `context.organization.id`
 6. **Never Log Secrets**: Don't include sensitive data in log messages
 

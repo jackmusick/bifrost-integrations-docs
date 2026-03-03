@@ -85,8 +85,12 @@ export default defineConfig({
                         { label: "Workflows", slug: "core-concepts/workflows" },
                         { label: "Forms", slug: "core-concepts/forms" },
                         {
-                            label: "Workflow Discovery",
+                            label: "Workflow Registration",
                             slug: "core-concepts/discovery-system",
+                        },
+                        {
+                            label: "Manifest Structure",
+                            slug: "core-concepts/manifest-structure",
                         },
                         {
                             label: "Permissions",
@@ -118,6 +122,10 @@ export default defineConfig({
                                 {
                                     label: "Error Handling",
                                     slug: "how-to-guides/workflows/error-handling",
+                                },
+                                {
+                                    label: "Webhook & Event Variables",
+                                    slug: "how-to-guides/workflows/webhook-variables",
                                 },
                             ],
                         },

@@ -36,6 +36,8 @@ async def get(
 - Org UUID string: Target specific organization
 - `"global"`: Access platform-level integration defaults
 
+> **Note:** Targeting a specific org via UUID requires provider org context. Managed orgs can only access their own scope. Use `context.set_scope()` to override scope for all calls at once.
+
 #### Returns
 
 `IntegrationData` object or `None` if not found.
@@ -195,7 +197,21 @@ class OAuthCredentials(BaseModel):
     access_token: str | None      # Decrypted
     refresh_token: str | None     # Decrypted
     expires_at: str | None        # ISO format
+
+    async def refresh(self) -> OAuthCredentials
 ```
+
+#### oauth.refresh()
+
+Programmatically refresh the OAuth token. Works for both `client_credentials` and `authorization_code` flows. Updates `access_token` and `expires_at` in-place and persists the new token to the database.
+
+```python
+integration = await integrations.get("Pax8")
+await integration.oauth.refresh()
+# integration.oauth.access_token is now a fresh token
+```
+
+This is useful when a provider's tokens expire before their stated `expires_in` duration, or when you need to guarantee a fresh token before a critical API call.
 
 ### IntegrationMappingResponse
 
@@ -248,6 +264,17 @@ OAuth tokens are:
 - Encrypted at rest in the database
 - Automatically decrypted when retrieved via SDK
 - Refreshed automatically by the platform when expired
+
+If a token is rejected before its stated expiry (common with some providers like Pax8), use `oauth.refresh()` to fetch a fresh token on demand:
+
+```python
+integration = await integrations.get("Pax8")
+
+response = await client.get(url, headers={"Authorization": f"Bearer {integration.oauth.access_token}"})
+if response.status_code == 401:
+    await integration.oauth.refresh()
+    response = await client.get(url, headers={"Authorization": f"Bearer {integration.oauth.access_token}"})
+```
 
 ## See Also
 

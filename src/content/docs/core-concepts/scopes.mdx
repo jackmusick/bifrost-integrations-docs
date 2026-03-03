@@ -105,6 +105,32 @@ smtp = await config.get("smtp_server")
 
 This cascade applies uniformly to workflows, forms, agents, apps, tables, integration mappings, knowledge entries, and data providers.
 
+## Cross-Organization Access (Provider Orgs)
+
+Provider organizations can access other organizations' scoped resources using `context.set_scope()`. This is useful for admin workflows that manage multiple tenants.
+
+```python
+from bifrost import workflow, context, integrations
+
+@workflow(name="sync_all_tenants")
+async def sync_all_tenants():
+    mappings = await integrations.list_mappings("Microsoft Graph")
+    for mapping in mappings:
+        # Switch to the managed org's scope
+        context.set_scope(mapping.organization_id)
+
+        # All SDK calls now target that org
+        graph = await integrations.get("Microsoft Graph")
+        # ... sync data for this org
+
+    # Reset to original scope
+    context.set_scope(None)
+```
+
+<Aside type="caution">
+Managed (non-provider) organizations are locked to their own scope and cannot use `set_scope()` to target other orgs. This prevents tenants from accessing each other's data.
+</Aside>
+
 ## TL;DR
 
 -   Put resources like configs, forms and OAUTH connections in global or a specific organization

@@ -1,0 +1,82 @@
+---
+title: Webhook & Event Variables
+description: Reference for template variables, auto-injected event metadata, and the execution context object
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+When a webhook or scheduled event triggers a workflow, the system provides template variables for input mappings and injects event metadata into the execution context automatically.
+
+## Template Variables for Input Mappings
+
+When configuring event subscriptions, use these template expressions in input mappings to extract data from incoming events:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{{ payload }}` | Full event body (parsed JSON) | `{{ payload }}` |
+| `{{ payload.field }}` | Nested field from event body | `{{ payload.ticket.id }}` |
+| `{{ headers.X-Something }}` | Request header value | `{{ headers.Content-Type }}` |
+| `{{ scheduled_time }}` | Trigger time (schedule events) | `{{ scheduled_time }}` |
+| `{{ cron_expression }}` | Cron expression (schedule events) | `{{ cron_expression }}` |
+
+These are resolved at dispatch time and passed as workflow input parameters.
+
+## The `_event` Context Parameter
+
+In addition to mapped input parameters, every event-triggered execution receives a reserved `_event` key in `context.parameters` with the full event metadata:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `str` | Unique event ID (UUID) |
+| `type` | `str` | Event type string (e.g. `webhook`, `schedule`) |
+| `body` | `any` | Complete raw request body (dict, list, or string) |
+| `headers` | `dict \| null` | HTTP request headers (null for schedule events) |
+| `received_at` | `str \| null` | ISO 8601 timestamp when the event was received |
+| `source_ip` | `str \| null` | IP address of the sender (null for schedule events) |
+
+<Aside type="tip">
+The `_event.body` always contains the complete raw payload, even if you only mapped specific fields as input parameters. This is useful when you need to inspect the full request.
+</Aside>
+
+## Accessing Event Data in Workflows
+
+```python
+from bifrost import context
+
+@workflow()
+async def handle_webhook():
+    # Mapped input parameters (from your input mapping config)
+    ticket_id = context.parameters.get("ticket_id")
+
+    # Full event metadata (auto-injected)
+    event = context.parameters.get("_event", {})
+    event_id = event.get("id")
+    event_type = event.get("type")
+    raw_body = event.get("body")
+    headers = event.get("headers", {})
+    received_at = event.get("received_at")
+    source_ip = event.get("source_ip")
+
+    # Other context properties
+    org_id = context.org_id           # Organization scope
+    caller = context.email            # Caller identity
+    time_saved = context.roi.time_saved  # ROI tracking
+
+    return {"processed": event_id}
+```
+
+## Example: Logging Webhook Details
+
+```python
+from bifrost import context, logger
+
+@workflow()
+async def audit_webhook():
+    event = context.parameters["_event"]
+
+    logger.info(f"Received {event['type']} event from {event['source_ip']}")
+    logger.info(f"Headers: {event['headers']}")
+    logger.info(f"Body: {event['body']}")
+
+    return {"event_id": event["id"], "received_at": event["received_at"]}
+```

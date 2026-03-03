@@ -13,7 +13,7 @@ There are three ways to use AI tools with Bifrost, depending on your setup. Pick
 
 ## 1. Claude Code with `/bifrost:build`
 
-The fastest path if you use Claude Code. The `/bifrost:build` skill combines local development with MCP tools automatically.
+The fastest path if you use Claude Code. The `/bifrost:build` skill combines local development with CLI and MCP tools automatically.
 
 ### Setup
 
@@ -22,7 +22,7 @@ The fastest path if you use Claude Code. The `/bifrost:build` skill combines loc
 pipx install https://your-instance.gobifrost.com/api/cli/download
 bifrost login --url https://your-instance.gobifrost.com
 
-# Add the MCP server to Claude Code
+# (Optional) Add the MCP server to Claude Code — only needed for create_form, create_app, create_agent, and knowledge search
 claude mcp add --transport http bifrost https://your-instance.gobifrost.com/mcp
 ```
 
@@ -33,24 +33,43 @@ Or run `/bifrost:setup` inside Claude Code and it walks you through everything.
 The skill gives Claude Code two modes:
 
 **SDK-first (local development):**
-1. Write workflow code locally in your git repo
-2. Test with `bifrost run <file> <function> --params '{...}'`
-3. Commit and push to GitHub
-4. Run `bifrost sync` to deploy to the platform
-5. Forms and apps are created via MCP tools (they're platform-only artifacts)
+1. Start `bifrost watch` to auto-sync file changes to the platform
+2. Write workflow code locally in your git repo
+3. Files auto-sync as you save — no manual push needed
+4. Test with `bifrost run <file> <function> --params '{...}'`
+5. Use `bifrost api` for platform operations (execute, check logs, download docs)
+6. Commit and push to GitHub when ready
 
 **MCP-only (remote development):**
-1. Create artifacts directly on the platform via MCP tools (`create_workflow`, `create_form`, etc.)
+1. Write workflow files via MCP file tools, then `register_workflow` to register them. Use `create_form`, `create_app` for other artifacts.
 2. Test with `execute_workflow`
 3. Iterate with `patch_content` for surgical edits
 
 The skill automatically checks your integrations, reads SDK documentation, validates before declaring anything ready, and asks about org scoping.
 
+### CLI commands for platform operations
+
+The `bifrost api` command provides authenticated REST access without needing MCP:
+
+```bash
+# Download SDK documentation (once per session, then grep locally)
+bifrost api GET /api/docs/sdk > /tmp/bifrost-docs/sdk.md
+
+# Execute a workflow synchronously (blocks until result)
+bifrost api POST /api/workflows/{id}/execute '{"workflow_id":"...","input_data":{...},"sync":true}'
+
+# Check execution logs
+bifrost api GET /api/executions/{id}
+
+# List platform state (for debugging sync divergence)
+bifrost api GET /api/workflows
+```
+
 ### When to use which
 
 | Artifact | Local (SDK) | Remote (MCP) |
 |----------|-------------|--------------|
-| Workflow / Tool / Data Provider | Write locally, test, sync | `create_workflow` |
+| Workflow / Tool / Data Provider | Write locally, test, sync | Write file + `register_workflow` |
 | Form | MCP only | `create_form` |
 | App | MCP only | `create_app` |
 
@@ -72,9 +91,10 @@ The login command opens your browser for authentication. Credentials are saved t
 ### Workflow
 
 1. Write Python files with `@workflow`, `@tool`, or `@data_provider` decorators
-2. Test locally: `bifrost run my_workflow.py hello_world --params '{"name": "Alice"}'`
-3. All SDK modules (`ai`, `integrations`, `config`, `knowledge`, etc.) work locally - they call the remote API
-4. Push to git and `bifrost sync` to deploy
+2. Start `bifrost watch` in your workspace to auto-sync changes to the platform
+3. Test locally: `bifrost run my_workflow.py hello_world --params '{"name": "Alice"}'`
+4. All SDK modules (`ai`, `integrations`, `config`, `knowledge`, etc.) work locally - they call the remote API
+5. Commit and push to git when ready
 
 ### What to tell your AI tool
 
@@ -117,7 +137,7 @@ Your AI tool automatically discovers all available tools:
 
 - **Discovery:** `list_workflows`, `list_integrations`, `list_forms`, `list_apps`
 - **Documentation:** `get_workflow_schema`, `get_sdk_schema`, `get_form_schema`, `get_app_schema`
-- **Creation:** `create_workflow`, `create_form`, `create_app`
+- **Creation:** `register_workflow`, `create_form`, `create_app`
 - **Editing:** `search_content`, `patch_content`, `replace_content`
 - **Execution:** `execute_workflow`, `list_executions`, `get_execution`
 - **Events:** `create_event_source`, `create_event_subscription`
@@ -139,10 +159,11 @@ You help build automations on the Bifrost platform using MCP tools.
 **Development flow:**
 1. Read docs: `get_workflow_schema`, `get_sdk_schema`
 2. Check integrations: `list_integrations`
-3. Create: `create_workflow` (auto-validates)
-4. Test: `execute_workflow`
-5. Check logs: `get_execution`
-6. Iterate: `patch_content` for edits
+3. Write workflow file via file tools (`replace_content`)
+4. Register: `register_workflow` (validates and registers)
+5. Test: `execute_workflow`
+6. Check logs: `get_execution`
+7. Iterate: `patch_content` for edits
 
 **Code standards:**
 - async/await for all functions

@@ -72,11 +72,13 @@ Test locally:
 bifrost run hello_world.py hello_world --params '{"name": "Alice"}'
 ```
 
-Deploy to the platform:
+Sync to the platform:
 
 ```bash
-bifrost sync
+bifrost watch
 ```
+
+This watches your workspace and auto-syncs every file change. Keep it running while you develop.
 
 ## Using SDK Features Locally
 

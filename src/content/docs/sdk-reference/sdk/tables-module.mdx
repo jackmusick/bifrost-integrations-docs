@@ -34,8 +34,10 @@ async def create(
 | `name` | str | Table name (lowercase, underscores allowed, must start with letter) |
 | `description` | str | Optional table description |
 | `table_schema` | dict | Optional JSON Schema for validation hints |
-| `scope` | str | `None`=context org, `"global"`=global, UUID=specific org |
+| `scope` | str | `None`=context org, `"global"`=global, UUID=specific org (provider only) |
 | `app` | str | Application UUID to scope table to an app |
+
+> **Note:** Targeting a specific org via UUID requires provider org context. Managed orgs can only access their own scope. Use `context.set_scope()` to override scope for all calls at once.
 
 #### Returns
 

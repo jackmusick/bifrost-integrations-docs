@@ -18,6 +18,12 @@ Bifrost Integrations removes those limitations by creating a light management la
     Matters](/about/why-open-source) to learn about our mission.
 </Aside>
 
+## Dashboard
+
+The Bifrost Dashboard provides a high-level overview of your platform, including workflow counts, form statistics, execution metrics, and recent failures.
+
+![Dashboard](../../../assets/core-concepts/dashboard.png)
+
 ## What You Can Do with Bifrost
 
 <CardGrid>
@@ -112,7 +118,7 @@ async def create_user(email: str, name: str):
     return {"user_id": "123"}
 ```
 
-The decorator auto-infers name, description, and parameters from your function. These workflows are automatically discovered and can be tied to forms, scheduled jobs, and webhooks.
+The decorator auto-infers name, description, and parameters from your function. After writing your code, you register the function to make it available in the UI, forms, scheduled jobs, and webhooks.
 
 ### Forms
 
@@ -139,14 +145,14 @@ async def get_departments():
     ]
 ```
 
-### Workflow Discovery
+### Workflow Registration
 
-Workflows are discovered automatically when the API starts:
+Workflows are registered explicitly after you write the code:
 
-1. Scans workspace files (stored in S3, synced locally)
-2. Imports Python files with `@workflow` and `@data_provider` decorators
-3. Registers metadata in the database
-4. Exposes via REST API
+1. Developer creates a Python file with `@workflow` or `@data_provider` decorators
+2. Developer registers the function via Code Editor, API, or MCP
+3. Platform indexes metadata (name, description, parameters) in the database
+4. Workflow is exposed via REST API and appears in the UI
 
 When you edit files in the UI editor, changes are pushed to workers via RabbitMQ, keeping all instances in sync. This enables you to organize your code by feature, customer, or whatever you find most useful.
 
