@@ -41,7 +41,7 @@ Declares all registered workflows, tools, and data providers:
 ```yaml
 workflows:
   create_user:
-    id: "a1b2c3d4-..."
+    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
     path: "create_user.py"
     function_name: "create_user"
     type: "workflow"
@@ -51,7 +51,7 @@ workflows:
     endpoint_enabled: false
     timeout_seconds: 1800
   get_departments:
-    id: "e5f6g7h8-..."
+    id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
     path: "data_providers/departments.py"
     function_name: "get_departments"
     type: "data_provider"
@@ -64,7 +64,7 @@ Declares integrations with their config schemas and OAuth providers:
 ```yaml
 integrations:
   microsoft:
-    id: "i9j0k1l2-..."
+    id: "c3d4e5f6-a7b8-9012-cdef-123456789012"
     config_schema:
       - key: "tenant_id"
         type: "string"
@@ -84,22 +84,22 @@ Declares event sources (webhooks and schedules) with their subscriptions:
 ```yaml
 events:
   daily_sync:
-    id: "m3n4o5p6-..."
+    id: "d4e5f6a7-b8c9-0123-def0-123456789013"
     source_type: "schedule"
     cron_expression: "0 6 * * *"
     timezone: "America/New_York"
     schedule_enabled: true
     subscriptions:
-      - id: "q7r8s9t0-..."
-        workflow_id: "a1b2c3d4-..."
+      - id: "e5f6a7b8-c9d0-1234-ef01-234567890124"
+        workflow_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         is_active: true
   halopsa_tickets:
-    id: "u1v2w3x4-..."
+    id: "f6a7b8c9-d0e1-2345-f012-345678901235"
     source_type: "webhook"
     adapter_name: "halopsa"
     subscriptions:
-      - id: "y5z6a7b8-..."
-        workflow_id: "e5f6g7h8-..."
+      - id: "a7b8c9d0-e1f2-3456-0123-456789012346"
+        workflow_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
         event_type: "ticket.created"
         input_mapping:
           ticket_id: "$.id"
@@ -112,10 +112,10 @@ Declares forms with their access control:
 ```yaml
 forms:
   Create User:
-    id: "c9d0e1f2-..."
-    path: "forms/c9d0e1f2.form.yaml"
+    id: "b8c9d0e1-f2a3-4567-1234-567890123457"
+    path: "forms/b8c9d0e1-f2a3-4567-1234-567890123457.form.yaml"
     roles:
-      - "g3h4i5j6-..."
+      - "c9d0e1f2-a3b4-5678-2345-678901234568"
     access_level: "role_based"
 ```
 
@@ -141,11 +141,3 @@ The platform validates manifest integrity by checking that:
 
 Validation errors surface during preflight checks and Git sync.
 
-## Legacy Format
-
-Older workspaces may contain a single `metadata.yaml` file instead of the split directory. The platform auto-detects the format:
-
-- If any split file exists in `.bifrost/` → uses the split format
-- Otherwise → falls back to `metadata.yaml`
-
-On the next write, the legacy file is removed and replaced with the split format.

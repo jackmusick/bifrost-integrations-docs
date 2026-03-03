@@ -22,9 +22,18 @@ Registration only needs to happen once per function. After that, saving changes 
 
 ## Registration Methods
 
-### Code Editor (Recommended)
+### CodeLens in the Code Editor (Recommended)
 
-The built-in Code Editor shows a **Register** button above each unregistered `@workflow` or `@data_provider` function. Click it to register.
+The built-in Code Editor uses **CodeLens** — inline annotations that appear directly above each decorated function. When you open a Python file containing `@workflow`, `@tool`, or `@data_provider` decorators, the editor automatically detects them and shows a clickable CodeLens above each one:
+
+- **Unregistered functions** show a **Register workflow** (or **Register tool** / **Register data provider**) action. Click it to open a dialog where you select the target organization (or register globally), then confirm.
+- **Registered functions** show a **Registered** badge with scope information (e.g. "Org-scoped" or "Global").
+
+After registering, the CodeLens updates immediately to reflect the new status — no page refresh needed.
+
+<Aside type="tip">
+CodeLens registration also handles **reactivation**. If you previously deleted a workflow and re-register the same function, the platform reuses the original UUID so that any references (event subscriptions, form bindings) still work.
+</Aside>
 
 ### API
 
