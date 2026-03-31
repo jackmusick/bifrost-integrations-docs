@@ -475,9 +475,9 @@ All user methods are **async** and require platform admin privileges.
 |----------|-----------|---------|-------------|
 | `create(email, name, is_superuser, org_id, is_active)` | email: str, name: str, ... | UserPublic | Create user |
 | `get(user_id)` | user_id: str | UserPublic \| None | Get user by ID |
-| `list(org_id)` | org_id: str \| None | list[UserPublic] | List users |
+| `list(org_id, include_inactive)` | org_id: str \| None, include_inactive: bool = False | list[UserPublic] | List users |
 | `update(user_id, **updates)` | user_id: str, updates: dict | UserPublic | Update user |
-| `delete(user_id)` | user_id: str | bool | Soft delete user |
+| `delete(user_id)` | user_id: str | bool | Permanently delete user |
 
 **Example**:
 
@@ -493,6 +493,9 @@ user = await users.create(
 
 # List users in organization
 org_users = await users.list(org_id="org-123")
+
+# Include inactive (disabled) users
+all_users = await users.list(org_id="org-123", include_inactive=True)
 ```
 
 ### roles
@@ -587,7 +590,7 @@ print(details.result)
 
 ### workflows
 
-Workflow metadata and execution status.
+Workflow metadata, execution status, and fire-and-forget execution.
 
 **Functions**:
 
@@ -595,6 +598,7 @@ Workflow metadata and execution status.
 |----------|-----------|---------|-------------|
 | `list()` | - | list[WorkflowMetadata] | List all workflows |
 | `get(execution_id)` | execution_id: str | WorkflowExecution | Get execution details |
+| `execute(workflow_name, params)` | workflow_name: str, params: dict | str | Execute a workflow asynchronously, returns execution ID |
 
 **Example**:
 
@@ -607,6 +611,13 @@ for wf in wf_list:
     print(f"{wf.name}: {wf.description}")
     if wf.schedule:
         print(f"  Scheduled: {wf.schedule}")
+
+# Fire-and-forget execution
+execution_id = await workflows.execute(
+    "process_report",
+    params={"report_type": "weekly"}
+)
+# Returns immediately with execution ID — does not wait for completion
 ```
 
 ## Complete Example
