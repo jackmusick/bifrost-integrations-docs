@@ -334,10 +334,10 @@ entries:
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
         - wait_for: button[title="Add Field"]
       crop:
-        x: 998
-        'y': 80
-        width: 442
-        height: 820
+        x: 580
+        'y': 64
+        width: 604
+        height: 836
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
@@ -356,7 +356,12 @@ entries:
         - click: button[title="Add Field"]
         - wait_for: '[role="dialog"]:has-text("Add Field")'
         - click: label:has-text("Visibility Expression")
-        - wait_ms: 200
+        - wait_ms: 800
+      crop:
+        x: 100
+        'y': 64
+        width: 1340
+        height: 836
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
