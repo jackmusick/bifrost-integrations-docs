@@ -103,16 +103,16 @@ entries:
     seed: forms_with_sample_org
     capture:
       callouts:
-        - x: 190
-          'y': 250
-          width: 530
-          height: 80
+        - x: 180
+          'y': 238
+          width: 560
+          height: 95
           label: '1'
           color: '#f59e0b'
-        - x: 190
-          'y': 355
-          width: 530
-          height: 95
+        - x: 180
+          'y': 343
+          width: 560
+          height: 92
           label: '2'
           color: '#f59e0b'
     diataxis:
@@ -199,9 +199,9 @@ entries:
           fixture: fixtures/executions-list.json
       callouts:
         - x: 290
-          'y': 305
-          width: 1110
-          height: 50
+          'y': 303
+          width: 855
+          height: 62
           label: '1'
           color: '#f59e0b'
     diataxis:
@@ -314,9 +314,9 @@ entries:
         - wait_for: button[title="Add Field"]
       crop:
         x: 256
-        'y': 80
-        width: 444
-        height: 820
+        'y': 160
+        width: 305
+        height: 600
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
@@ -334,10 +334,10 @@ entries:
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
         - wait_for: button[title="Add Field"]
       crop:
-        x: 580
-        'y': 64
-        width: 604
-        height: 836
+        x: 571
+        'y': 234
+        width: 835
+        height: 595
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
