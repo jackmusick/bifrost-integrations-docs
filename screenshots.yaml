@@ -589,8 +589,8 @@ entries:
       type: how-to
       heading: Open the dashboard
     captured_at:
-      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T19:06:46.986Z'
+      bifrost_sha: bc5ee171723dd56345b58656ec1560834259b6c7
+      timestamp: '2026-04-26T19:23:50.691Z'
   - id: operations-diagnostics-memory-chart
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
@@ -654,8 +654,8 @@ entries:
       type: how-to
       heading: Container table
     captured_at:
-      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T19:06:46.849Z'
+      bifrost_sha: bc5ee171723dd56345b58656ec1560834259b6c7
+      timestamp: '2026-04-26T19:23:50.573Z'
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
