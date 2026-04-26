@@ -104,15 +104,15 @@ entries:
     capture:
       callouts:
         - x: 190
-          'y': 245
+          'y': 250
           width: 530
-          height: 75
+          height: 80
           label: '1'
           color: '#f59e0b'
         - x: 190
-          'y': 345
+          'y': 355
           width: 530
-          height: 100
+          height: 95
           label: '2'
           color: '#f59e0b'
     diataxis:
@@ -199,9 +199,9 @@ entries:
           fixture: fixtures/executions-list.json
       callouts:
         - x: 290
-          'y': 290
+          'y': 305
           width: 1110
-          height: 60
+          height: 50
           label: '1'
           color: '#f59e0b'
     diataxis:
