@@ -279,6 +279,44 @@ describe("lintManifest", () => {
     ).toBe(true);
   });
 
+  it("accepts a wait_for_hidden action (used to verify dialog dismissal)", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "with-wait-hidden",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: {
+              actions: [
+                { click: 'button[aria-label="Close"]' },
+                { wait_for_hidden: '[role="dialog"]' },
+              ],
+            },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
   it("returns a clear error when manifest is missing", () => {
     const result = lintManifest({
       manifestPath: join(root, "nonexistent.yaml"),

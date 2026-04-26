@@ -272,8 +272,12 @@ entries:
         - url: '**/api/organizations'
           body: []
       actions:
-        - wait_for: 'div:has(> div > div:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
-        - click: 'div:has(> div > div:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
+        # Scope to the OAuth status Card (identified by its unique
+        # CardDescription text). Without this scope, the selector also
+        # matched the topbar user menu's DropdownMenuTrigger and tripped
+        # Playwright strict mode.
+        - wait_for: '[data-slot="card"]:has([data-slot="card-description"]:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
+        - click: '[data-slot="card"]:has([data-slot="card-description"]:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
         - wait_for: '[role="menuitem"]:has-text("Edit Configuration")'
         - click: '[role="menuitem"]:has-text("Edit Configuration")'
         - wait_for: '[role="dialog"]:has-text("Edit OAuth Connection")'
