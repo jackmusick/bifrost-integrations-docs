@@ -60,6 +60,10 @@ export default defineConfig({
                             slug: "about/why-open-source",
                         },
                         {
+                            label: "Versions & Compatibility",
+                            slug: "about/versioning",
+                        },
+                        {
                             label: "License (AGPL)",
                             slug: "about/license",
                         },
@@ -139,6 +143,14 @@ export default defineConfig({
                                 {
                                     label: "Error Handling",
                                     slug: "how-to-guides/workflows/error-handling",
+                                },
+                                {
+                                    label: "Scheduled Workflows (Cron)",
+                                    slug: "how-to-guides/workflows/scheduled-workflows",
+                                },
+                                {
+                                    label: "Scheduled Executions (One-Time)",
+                                    slug: "how-to-guides/workflows/scheduled-executions",
                                 },
                             ],
                         },
@@ -295,6 +307,24 @@ export default defineConfig({
                                 {
                                     label: "Passkeys (WebAuthn)",
                                     slug: "how-to-guides/authentication/passkeys",
+                                },
+                            ],
+                        },
+                        {
+                            label: "Operations",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Diagnostics & Process Pools",
+                                    slug: "how-to-guides/operations/diagnostics",
+                                },
+                                {
+                                    label: "Audit Log",
+                                    slug: "how-to-guides/operations/audit-log",
+                                },
+                                {
+                                    label: "Usage & ROI Reports",
+                                    slug: "how-to-guides/operations/usage-reports",
                                 },
                             ],
                         },
