@@ -1,0 +1,27 @@
+---
+import ThemeSidebar from "starlight-theme-black/overrides/Sidebar.astro";
+---
+
+<ThemeSidebar />
+
+<script is:inline>
+    (() => {
+        const KEY = "bifrost-sidebar-scroll";
+        const sel = ".sidebar"; // the scrollable element from starlight-theme-black
+
+        function save() {
+            const el = document.querySelector(sel);
+            if (el) sessionStorage.setItem(KEY, String(el.scrollTop));
+        }
+        function restore() {
+            const el = document.querySelector(sel);
+            const v = sessionStorage.getItem(KEY);
+            if (el && v != null) el.scrollTop = parseInt(v, 10) || 0;
+        }
+
+        document.addEventListener("astro:before-swap", save);
+        document.addEventListener("astro:page-load", restore);
+        // First load
+        restore();
+    })();
+</script>

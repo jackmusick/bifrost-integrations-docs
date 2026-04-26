@@ -458,7 +458,8 @@ export default defineConfig({
                 },
             ],
             components: {
-                // Override default components if needed
+                Head: "./src/components/Head.astro",
+                Sidebar: "./src/components/Sidebar.astro",
             },
             plugins: [starlightThemeBlack({})],
         }),
