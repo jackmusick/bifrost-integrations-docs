@@ -1,11 +1,11 @@
 ---
 title: Decorators Reference
-description: Complete reference for @workflow and @data_provider decorators
+description: Complete reference for @workflow, @tool, and @data_provider decorators
 ---
 
 import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
 
-Decorators are the foundation of Bifrost's discovery system. They register workflows and data providers automatically when your modules are imported.
+Decorators are the foundation of Bifrost's discovery system. They register workflows, tools, and data providers automatically when your modules are imported.
 
 ## @workflow Decorator
 
@@ -114,6 +114,46 @@ async def lookup_customer(email: str):
 <Aside type="tip">
 Features like schedules, HTTP endpoints, and timeouts are configured via the Bifrost UI or API after deploying your workflow. See [Scheduled Workflows](/how-to-guides/workflows/scheduled-workflows) and [HTTP Endpoints](/how-to-guides/workflows/http-endpoints) for details.
 </Aside>
+
+## @tool Decorator
+
+`@tool` is a first-class alias for `@workflow(is_tool=True)`. Use it when a function is intended primarily for AI agents -- it makes the intent obvious in source and accepts the same identity parameters as `@workflow` (minus `is_tool`, which is implicit).
+
+```python
+from bifrost import tool
+
+@tool
+async def lookup_customer(email: str):
+    """Look up a customer by email and return account details."""
+    return {"name": "...", "account": "..."}
+
+@tool(category="CRM", tags=["customer"])
+async def search_customers(query: str, limit: int = 10):
+    """Search customers by name or email."""
+    return []
+```
+
+### Syntax
+
+```python
+@tool(
+    name: str | None = None,
+    description: str | None = None,
+    category: str = "General",
+    tags: list[str] | None = None,
+)
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | None | Tool name (auto-derived from function name) |
+| `description` | str | None | LLM-facing description (auto-derived from docstring) |
+| `category` | str | "General" | Category for organization |
+| `tags` | list | None | Tags for filtering |
+
+`@tool` and `@workflow(is_tool=True)` produce identical metadata -- the function is stored in the workflows table with `type="tool"` and is callable by AI agents.
 
 ## Parameter Inference
 
@@ -235,8 +275,24 @@ async def get_licenses():
   </TabItem>
 </Tabs>
 
-<Aside type="tip">
-Data provider results are cached automatically. Results are reused until the cache expires, reducing API calls and improving form load times.
+### Caching
+
+Data provider results are cached in Redis to reduce API calls and speed up form loads. The cache key includes the organization, the provider name, and a hash of the input parameters, so different inputs produce different cache entries:
+
+```
+bifrost:org:{org_id}:dp:{provider_name}:{param_hash}
+```
+
+The cache TTL is **not set on the decorator** -- it lives on the workflow record and is configured via the UI/API per data provider. The default is 300 seconds (5 minutes); valid values are 0 to 86400 (24 hours). Update it via:
+
+- **UI:** Workflow detail page → Cache TTL field
+- **API:** `PATCH /api/workflows/{id}` with `cache_ttl_seconds: <int>`
+- **MCP:** the `update_workflow` tool with `cache_ttl_seconds`
+
+Setting `cache_ttl_seconds=0` disables caching for that provider. Stampede protection (Redis SETNX locks) ensures only one worker computes a given cache key at a time.
+
+<Aside type="caution">
+Passing `cache_ttl=` (or any other unknown keyword) directly to the `@data_provider` decorator is silently ignored with a warning. All execution configuration -- TTL, timeout, schedule -- is managed via the UI/API, not the decorator.
 </Aside>
 
 ## Return Values

@@ -1,0 +1,10 @@
+{
+  "start_date": "2026-03-25",
+  "end_date": "2026-04-25",
+  "total_executions": 8420,
+  "successful_executions": 8104,
+  "total_time_saved": 184200,
+  "total_value": 412840.50,
+  "time_saved_unit": "minutes",
+  "value_unit": "USD"
+}

@@ -1,0 +1,10 @@
+{
+  "needs_setup": false,
+  "password_login_enabled": true,
+  "mfa_required_for_password": false,
+  "oauth_providers": [
+    {"name": "microsoft", "display_name": "Microsoft", "icon": "microsoft"},
+    {"name": "google", "display_name": "Google", "icon": "google"},
+    {"name": "oidc", "display_name": "Northwind SSO", "icon": null}
+  ]
+}

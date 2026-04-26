@@ -1,0 +1,32 @@
+{
+  "providers": [
+    {
+      "provider": "microsoft",
+      "configured": true,
+      "client_id": "1f23a48b-abcd-4f12-9c8d-0123456789ab",
+      "client_secret_set": true,
+      "tenant_id": "common",
+      "discovery_url": null,
+      "display_name": null
+    },
+    {
+      "provider": "google",
+      "configured": true,
+      "client_id": "881234567890-abcd1234efgh5678.apps.googleusercontent.com",
+      "client_secret_set": true,
+      "tenant_id": null,
+      "discovery_url": null,
+      "display_name": null
+    },
+    {
+      "provider": "oidc",
+      "configured": true,
+      "client_id": "bifrost-prod",
+      "client_secret_set": true,
+      "tenant_id": null,
+      "discovery_url": "https://accounts.example.com/.well-known/openid-configuration",
+      "display_name": "Northwind SSO"
+    }
+  ],
+  "callback_url": "https://app.example.com/auth/oauth/callback"
+}

@@ -1,0 +1,40 @@
+{
+  "range": "1h",
+  "points": [
+    {"group": "2026-04-25T17:50:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 480000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T17:55:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 510000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:00:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 540000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 4, "idle_count": 4},
+    {"group": "2026-04-25T18:05:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 590000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 4, "idle_count": 4},
+    {"group": "2026-04-25T18:10:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 620000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:15:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 660000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 4, "idle_count": 4},
+    {"group": "2026-04-25T18:20:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 720000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 5, "idle_count": 3},
+    {"group": "2026-04-25T18:25:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 700000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 4, "idle_count": 4},
+    {"group": "2026-04-25T18:30:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 680000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:35:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 690000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:40:00.000Z", "worker_id": "worker-prod-a-7c4f", "memory_current": 710000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+
+    {"group": "2026-04-25T17:50:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 420000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 1, "idle_count": 7},
+    {"group": "2026-04-25T17:55:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 450000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:00:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 480000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:05:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 510000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:10:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 540000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:15:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 540000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:20:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 580000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:25:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 600000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:30:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 620000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:35:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 590000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:40:00.000Z", "worker_id": "worker-prod-b-91ab", "memory_current": 610000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+
+    {"group": "2026-04-25T17:50:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 380000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 1, "idle_count": 7},
+    {"group": "2026-04-25T17:55:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 400000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:00:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 420000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:05:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 460000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:10:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 490000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 3, "idle_count": 5},
+    {"group": "2026-04-25T18:15:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 460000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:20:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 440000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 2, "idle_count": 6},
+    {"group": "2026-04-25T18:25:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 420000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 1, "idle_count": 7},
+    {"group": "2026-04-25T18:30:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 410000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 1, "idle_count": 7},
+    {"group": "2026-04-25T18:35:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 410000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 1, "idle_count": 7},
+    {"group": "2026-04-25T18:40:00.000Z", "worker_id": "worker-prod-c-d214", "memory_current": 400000000, "memory_max": 2147483648, "fork_count": 8, "busy_count": 1, "idle_count": 7}
+  ]
+}

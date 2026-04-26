@@ -1,0 +1,190 @@
+---
+title: CLI Cheatsheet
+description: Reference index of every bifrost CLI command — auth, sync, entity mutations, imports, and direct execution.
+---
+
+The `bifrost` CLI is the canonical surface for authenticating, syncing local files, mutating platform entities, and invoking workflows. Run `bifrost help` for the live command list or `bifrost <command> --help` for any command's full flag set. The tables below cover every command in the current CLI surface.
+
+Refs (organization, role, integration, workflow, etc.) accept either a UUID or a name. Workflow refs additionally accept the `path::func` locator. Ambiguous names fail loudly with the candidate list.
+
+## Authentication
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost login [--url <api-url>]` | Authenticate via device authorization (browser flow). | `bifrost login --url https://app.gobifrost.com` |
+| `bifrost login --no-browser` | Same flow but print the URL instead of opening it. | `bifrost login -n` |
+| `bifrost logout` | Remove the stored credential file. | `bifrost logout` |
+
+Tokens land in `~/.bifrost/credentials.json` and refresh automatically. `BIFROST_DEV_URL` sets the default `--url`.
+
+## Sync and files
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost sync [path]` | Bidirectional TUI: review and choose push/pull/delete/skip per file. | `bifrost sync` |
+| `bifrost push [path]` | Alias for `sync` defaulting to push direction. | `bifrost push apps/my-app` |
+| `bifrost pull [path]` | Alias for `sync` defaulting to pull direction. | `bifrost pull` |
+| `bifrost watch [path]` | Watch the workspace and auto-push on save. Requires a `.bifrost/` workspace. | `bifrost watch` |
+| `... --mirror` | Mirror mode: also delete platform files that are missing locally. | `bifrost push apps/my-app --mirror` |
+| `... --validate` | Run app validation after push. | `bifrost push apps/my-app --validate` |
+| `... --force` | Skip confirmation prompts and use default actions. | `bifrost sync --force` |
+
+Watch only syncs code (`apps/`, `workflows/*.py`); it does not push `.bifrost/` manifest content. Use `bifrost export`/`import` to move manifest state across environments.
+
+## Workflows
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost workflows list` | List accessible workflows. | `bifrost workflows list` |
+| `bifrost workflows get <ref>` | Show a workflow by UUID, name, or `path::func`. | `bifrost workflows get billing.run` |
+| `bifrost workflows register --path <file> --function-name <name> [--org <ref>]` | Index a `@workflow`/`@tool`/`@data_provider` function so the platform can execute it. | `bifrost workflows register --path workflows/billing.py --function-name run` |
+| `bifrost workflows update <ref> [--name ...] [--description ...] ...` | Patch editable workflow fields. | `bifrost workflows update billing.run --description "Run billing"` |
+| `bifrost workflows delete <ref> [--force]` | Delete the workflow's source function. `--force` bypasses dependent-form/agent guard. | `bifrost workflows delete billing.run` |
+| `bifrost workflows grant-role <ref> <role>` | Grant a role access to a workflow. | `bifrost workflows grant-role billing.run analyst` |
+| `bifrost workflows revoke-role <ref> <role>` | Revoke a role's access to a workflow. | `bifrost workflows revoke-role billing.run analyst` |
+| `bifrost workflows list-orphaned` | List workflows whose backing file or function is missing. | `bifrost workflows list-orphaned` |
+| `bifrost workflows replace <ref> --path <file> --function-name <name> [--allow-type-change]` | Repoint an orphaned workflow at a new file/function. | `bifrost workflows replace billing.run --path workflows/billing-v2.py --function-name run` |
+
+## Forms
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost forms list` | List forms. | `bifrost forms list` |
+| `bifrost forms get <ref>` | Show a form by UUID or name. | `bifrost forms get onboarding` |
+| `bifrost forms create --name ... --workflow <ref> [--form-schema @file.yaml] ...` | Create a form. `--form-schema` accepts JSON or `@path`. | `bifrost forms create --name onboarding --workflow onboarding.run --form-schema @form.yaml` |
+| `bifrost forms update <ref> [--name ...] [--form-schema ...] ...` | Patch a form. | `bifrost forms update onboarding --description "New hire intake"` |
+| `bifrost forms delete <ref>` | Soft-delete a form (sets inactive). | `bifrost forms delete onboarding` |
+
+## Agents
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost agents list` | List AI agents. | `bifrost agents list` |
+| `bifrost agents get <ref>` | Show an agent by UUID or name. | `bifrost agents get triage` |
+| `bifrost agents create --name ... --system-prompt ... [--tools @tools.yaml] ...` | Create an agent. | `bifrost agents create --name triage --system-prompt "You are..."` |
+| `bifrost agents update <ref> [--system-prompt ...] [--tools ...] ...` | Patch an agent's prompt, tools, or settings. | `bifrost agents update triage --temperature 0.2` |
+| `bifrost agents delete <ref>` | Delete an agent. | `bifrost agents delete triage` |
+
+## Apps
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost apps list` | List applications. | `bifrost apps list` |
+| `bifrost apps get <ref>` | Show an app by slug, UUID, or name. | `bifrost apps get billing-dashboard` |
+| `bifrost apps create --name ... --repo-path apps/my-app [--deps @package.json] ...` | Create an app, optionally seeding npm deps. | `bifrost apps create --name billing --repo-path apps/billing --deps @package.json` |
+| `bifrost apps update <ref> [--name ...] [--access-level ...] ...` | Patch app metadata directly (no draft step). | `bifrost apps update billing --access-level authenticated` |
+| `bifrost apps set-deps <ref> --deps <json or @file>` | Replace the app's npm dependencies. | `bifrost apps set-deps billing --deps @package.json` |
+| `bifrost apps replace <ref> --repo-path <path> [--force]` | Repoint the app's source directory. | `bifrost apps replace billing --repo-path apps/billing-v2` |
+| `bifrost apps delete <ref>` | Delete an app. | `bifrost apps delete billing` |
+
+## Configs
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost configs list` | List configuration entries. | `bifrost configs list` |
+| `bifrost configs get <ref>` | Show one entry by UUID or key. | `bifrost configs get external_api_key` |
+| `bifrost configs set <key> --value <val> [--organization <ref>] [--type secret\|string\|...]` | Idempotent upsert by `(key, organization)`. | `bifrost configs set api_key --value secret123 --type secret` |
+| `bifrost configs create --key ... --value ... [--type ...] [--organization ...]` | Create a new config row. | `bifrost configs create --key region --value us-east-1` |
+| `bifrost configs update <ref> [--value ...] [--type ...] [--description ...]` | Update existing config. Omitted `--value` preserves the stored value. | `bifrost configs update region --value us-west-2` |
+| `bifrost configs delete <ref> [--confirm]` | Delete a config. `--confirm` required for `secret` type. | `bifrost configs delete api_key --confirm` |
+
+## Integrations
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost integrations list` | List integrations. | `bifrost integrations list` |
+| `bifrost integrations get <ref>` | Show an integration with mappings + OAuth config. | `bifrost integrations get halopsa` |
+| `bifrost integrations create --name ... [--config-schema @schema.yaml] ...` | Create an integration. | `bifrost integrations create --name halopsa --config-schema @halopsa.yaml` |
+| `bifrost integrations update <ref> [--config-schema ...] [--force-remove-keys]` | Update; refuses key removal without `--force-remove-keys` (cascades). | `bifrost integrations update halopsa --config-schema @halopsa-v2.yaml` |
+| `bifrost integrations add-mapping <integration-ref> --organization <ref> --entity-id <id> [--oauth-token-id ...]` | Bind an integration to an org with the external entity_id. | `bifrost integrations add-mapping halopsa --organization acme --entity-id 12345` |
+| `bifrost integrations update-mapping <integration-ref> --organization <ref> [--entity-id ...] [--oauth-token-id ...]` | Update an existing mapping. | `bifrost integrations update-mapping halopsa --organization acme --entity-id 67890` |
+
+## Events
+
+Event sources and subscriptions. There is no top-level `events delete` — use `bifrost api DELETE /api/events/...` for removal.
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost events list-sources` | List event sources. | `bifrost events list-sources` |
+| `bifrost events get-source <ref>` | Show an event source by UUID or name. | `bifrost events get-source ticket-created` |
+| `bifrost events create-source --name ... --source-type ... [--hmac-secret ...]` | Create an event source. | `bifrost events create-source --name ticket-created --source-type webhook` |
+| `bifrost events update-source <ref> [--name ...] [--hmac-secret ...]` | Update an event source. | `bifrost events update-source ticket-created --hmac-secret @secret.txt` |
+| `bifrost events list-subscriptions <source-ref>` | List subscriptions on a source. | `bifrost events list-subscriptions ticket-created` |
+| `bifrost events get-subscription <source-ref> <subscription-id>` | Show one subscription. | `bifrost events get-subscription ticket-created <uuid>` |
+| `bifrost events subscribe <source-ref> (--workflow <ref> \| --agent <ref>) [--filter ...]` | Subscribe a workflow or agent to a source. | `bifrost events subscribe ticket-created --workflow process-ticket` |
+| `bifrost events update-subscription <source-ref> <subscription-id> [--filter ...]` | Update filter/delivery fields. Target type/workflow/agent are immutable — recreate to change. | `bifrost events update-subscription ticket-created <uuid> --filter '{"priority":"high"}'` |
+
+## Tables
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost tables list` | List tables. | `bifrost tables list` |
+| `bifrost tables get <ref>` | Show a table by UUID or name. | `bifrost tables get clients` |
+| `bifrost tables create --name ... [--description ...]` | Create a table. | `bifrost tables create --name clients` |
+| `bifrost tables update <ref> [--name ...] [--description ...]` | Update a table. Renaming warns; grep workflows/apps first. | `bifrost tables update clients --description "Active clients"` |
+| `bifrost tables delete <ref>` | Delete the table and all its documents (irreversible). | `bifrost tables delete clients` |
+
+## Organizations and roles
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost orgs list` | List organizations. | `bifrost orgs list` |
+| `bifrost orgs get <ref>` | Show an organization. | `bifrost orgs get acme` |
+| `bifrost orgs create --name ...` | Create an organization. | `bifrost orgs create --name acme` |
+| `bifrost orgs update <ref> [--name ...]` | Update organization fields. | `bifrost orgs update acme --name acme-corp` |
+| `bifrost orgs delete <ref>` | Soft-delete an organization. | `bifrost orgs delete acme` |
+| `bifrost roles list` | List roles. | `bifrost roles list` |
+| `bifrost roles get <ref>` | Show a role. | `bifrost roles get analyst` |
+| `bifrost roles create --name ... [--description ...]` | Create a role. | `bifrost roles create --name analyst` |
+| `bifrost roles update <ref> [--name ...] [--description ...]` | Update a role. | `bifrost roles update analyst --description "Read-only access"` |
+| `bifrost roles delete <ref>` | Delete a role. | `bifrost roles delete analyst` |
+
+## Imports and exports
+
+`.bifrost/` is export-only — these commands are how you move state between environments.
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost export <out-dir>` | Full-fidelity workspace dump (manifest + `workflows/` + `apps/`). | `bifrost export ./snapshot` |
+| `bifrost export <out-dir> --portable` | Same dump with env-specific fields scrubbed; writes `bundle.meta.yaml`. | `bifrost export ./bundle --portable` |
+| `bifrost export <out-dir> --workspace <path>` | Use a non-cwd workspace as the source. | `bifrost export ./bundle --workspace ~/code/bifrost` |
+| `bifrost import <bundle-dir>` | Apply a bundle with the interactive review TUI. | `bifrost import ./bundle` |
+| `bifrost import <bundle-dir> --org <uuid>` | Required when applying a portable bundle (`--role-mode name` is the default). | `bifrost import ./bundle --org 1234-...` |
+| `bifrost import <bundle-dir> --role-mode name\|uuid` | How to interpret role refs in the bundle. | `bifrost import ./bundle --org 1234-... --role-mode name` |
+| `bifrost import <bundle-dir> --dry-run` | Print the diff and exit. | `bifrost import ./bundle --dry-run` |
+| `bifrost import <bundle-dir> --force` | Skip the review TUI; apply everything. | `bifrost import ./bundle --force` |
+| `bifrost import <bundle-dir> --delete-removed` | Delete entities present in the target but absent from the bundle. | `bifrost import ./bundle --delete-removed` |
+
+## Direct execution and raw API
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost run <file> -w <name> [-p '<json>']` | Run a `@workflow`-decorated function locally; prints JSON. | `bifrost run workflow.py -w greet -p '{"name":"World"}'` |
+| `bifrost run <file> --interactive` | Open a browser-based parameter form against the platform. | `bifrost run workflow.py --interactive` |
+| `bifrost run <file> -w <name> --org <uuid>` | Run scoped to a specific organization. | `bifrost run workflow.py -w greet --org 1234-...` |
+| `bifrost run <file> -w <name> --verbose` | Surface decorator warnings and SDK logs. | `bifrost run workflow.py -w greet -v` |
+| `bifrost api <METHOD> <endpoint> [json or @file]` | Authenticated request to any API endpoint. | `bifrost api GET /api/workflows` |
+| `bifrost api POST <endpoint> @body.json` | Send a JSON body from a file. | `bifrost api POST /api/files/push @payload.json` |
+
+## Git source control
+
+Operations against the platform-managed git working tree (`/tmp/git`).
+
+| Command | Description |
+|---------|-------------|
+| `bifrost git fetch` | Regenerate manifest from DB, fetch remote, show status. |
+| `bifrost git status` | Show changed files and ahead/behind counts. |
+| `bifrost git commit -m "<msg>"` | Regenerate manifest, stage, preflight, commit. |
+| `bifrost git push` | Pull remote, push local, import entities (deploy). |
+| `bifrost git diff <path>` | Show file diff. |
+| `bifrost git resolve <path>=keep_local\|keep_remote [...]` | Resolve merge conflicts. |
+| `bifrost git discard <path> [...]` | Discard working-tree changes. |
+
+## Diagnostics and utilities
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `bifrost --version`, `bifrost -V` | Print the installed CLI version. | `bifrost --version` |
+| `bifrost help`, `bifrost --help` | Top-level help. | `bifrost help` |
+| `bifrost <command> --help` | Per-command help (full flag set). | `bifrost forms create --help` |
+| `bifrost migrate-imports [path] [--dry-run] [--yes]` | Rewrite legacy `from bifrost import ...` lines for components/lucide/router. | `bifrost migrate-imports apps/my-app --dry-run` |

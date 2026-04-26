@@ -69,16 +69,56 @@ async def hello_world(name: str):
 Test locally:
 
 ```bash
-bifrost run hello_world.py hello_world --params '{"name": "Alice"}'
+bifrost run hello_world.py -w hello_world -p '{"name": "Alice"}'
 ```
 
 Sync to the platform:
 
 ```bash
+bifrost sync
+```
+
+This opens an interactive TUI where you can review entity changes (workflows, forms, agents, etc.) and file differences between local and remote. For each item, you can choose to push, pull, delete, or skip with smart defaults based on timestamps.
+
+`bifrost push` and `bifrost pull` are available as convenience aliases that default to their respective directions.
+
+### Registering workflows
+
+Pushing a `.py` file uploads it but does not make a `@workflow`, `@tool`, or `@data_provider` discoverable in the platform DB. Register the function explicitly so it can be referenced by forms, agents, and event subscriptions:
+
+```bash
+bifrost workflows register --path workflows/billing.py --function-name run
+```
+
+Pass `--org <ref>` to scope the workflow to a specific organization. To list orphaned entries (file moved or deleted), run `bifrost workflows list-orphaned`; to repoint one, use `bifrost workflows replace`.
+
+### Watch mode
+
+For continuous development, use watch mode:
+
+```bash
 bifrost watch
 ```
 
-This watches your workspace and auto-syncs every file change. Keep it running while you develop.
+This watches the workspace and auto-pushes every saved file. Keep it running while you develop. The watch TUI shows structured log columns (time, action, path, user) with color coding.
+
+<Aside type="tip" title="--mirror">
+By default, `bifrost watch` (and `push`/`sync`) only push files you've changed locally. Adding `--mirror` makes the platform side match your local directory exactly — files present on the platform but missing locally are deleted. Use it when you've renamed or removed files and want the platform to reflect that, but understand it's destructive on the remote.
+
+```bash
+bifrost watch apps/my-app --mirror
+```
+</Aside>
+
+### Calling arbitrary API endpoints
+
+For anything the typed CLI commands don't yet wrap, `bifrost api` sends an authenticated request to any endpoint:
+
+```bash
+bifrost api GET /api/workflows
+bifrost api POST /api/applications/my-app/validate
+bifrost api POST /api/files/push @payload.json   # @file = read JSON body from file
+```
 
 ## Using SDK Features Locally
 
@@ -146,6 +186,9 @@ For contributors developing the platform itself, use Docker Compose:
 ## Next Steps
 
 <CardGrid>
+  <Card title="CLI Cheatsheet" icon="terminal">
+    [Every `bifrost` command in one page](/sdk-reference/cli/)
+  </Card>
   <Card title="Writing Workflows" icon="rocket">
     [Learn workflow development](/how-to-guides/workflows/writing-workflows/)
   </Card>

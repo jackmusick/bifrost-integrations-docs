@@ -97,7 +97,7 @@ Documents can be global or organization-specific:
 
 ```python
 # Global scope (all orgs can search)
-await knowledge.store(content, namespace="global-policies", scope="global")
+await knowledge.store(content, namespace="global-policies", scope=None)
 
 # Org-specific (default - only that org sees it)
 await knowledge.store(content, namespace="org-policies", org_id="org-123")

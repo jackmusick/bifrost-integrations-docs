@@ -1,0 +1,98 @@
+---
+title: Organizations Module
+description: SDK reference for organization CRUD operations
+---
+
+The `organizations` module provides CRUD over organizations. All mutations require platform-admin privileges. `get()` works for any caller within scope.
+
+## Import
+
+```python
+from bifrost import organizations
+```
+
+## Method Index
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `organizations.create()` | `Organization` | Create a new organization (admin only) |
+| `organizations.get()` | `Organization` | Look up by ID |
+| `organizations.list()` | `list[Organization]` | List all organizations (admin only) |
+| `organizations.update()` | `Organization` | Patch fields (admin only) |
+| `organizations.delete()` | `bool` | Soft-delete (sets `is_active=False`) |
+
+## organizations.create()
+
+```python
+async def create(
+    name: str,
+    domain: str | None = None,
+    is_active: bool = True,
+) -> Organization
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | str | Organization name |
+| `domain` | str \| None | Optional domain (used for SSO/auto-provisioning) |
+| `is_active` | bool | Whether the org is active |
+
+```python
+org = await organizations.create("Acme Corp", domain="acme.com")
+```
+
+## organizations.get()
+
+```python
+async def get(org_id: str) -> Organization
+```
+
+Raises `ValueError` if the organization is not found.
+
+```python
+org = await organizations.get("org-123")
+print(org.name, org.domain)
+```
+
+## organizations.list()
+
+```python
+async def list() -> list[Organization]
+```
+
+Returns every organization. Platform-admin only.
+
+```python
+for org in await organizations.list():
+    print(f"{org.name} ({org.domain})")
+```
+
+## organizations.update()
+
+```python
+async def update(org_id: str, **updates: Any) -> Organization
+```
+
+Accepts `name`, `domain`, and `is_active` as keyword arguments. Other keys are ignored. Raises `ValueError` if the org is not found.
+
+```python
+await organizations.update("org-123", name="Acme Corporation", is_active=True)
+```
+
+## organizations.delete()
+
+```python
+async def delete(org_id: str) -> bool
+```
+
+Soft-deletes the organization (sets `is_active` to `False`). Raises `ValueError` if not found.
+
+```python
+await organizations.delete("org-123")
+```
+
+## Types
+
+### Organization
+
+Defined in `bifrost.models`. Fields include `id`, `name`, `domain`, `is_active`, and timestamps. Provider/managed-org relationships are exposed where applicable; see `bifrost.models` for the canonical definition.

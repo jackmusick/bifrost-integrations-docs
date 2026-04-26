@@ -1,116 +1,118 @@
 ---
 title: Agents and Chat
-description: Conversational AI with tool-calling workflows
+description: Build conversational and autonomous AI agents that call workflows as tools
 ---
 
-import { Aside, Steps } from '@astrojs/starlight/components';
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Create AI agents that can use your workflows as tools and hold conversations.
+Agents combine a system prompt, a set of workflows exposed as tools, optional knowledge sources, and a budget. They can run interactively (Chat) or autonomously (event-driven, scheduled, or SDK-invoked).
 
-## Overview
+## What you can build
 
-Agents combine:
-- A system prompt defining personality/behavior
-- Access to workflows as callable tools
-- Optional knowledge sources for RAG
-- Conversation history management
+<CardGrid>
+  <LinkCard
+    title="Manage your agent fleet"
+    href="/how-to-guides/agents/fleet-overview/"
+    description="Use the /agents dashboard to create, pause, search, and review every agent at a glance."
+  />
+  <LinkCard
+    title="Review agent runs"
+    href="/how-to-guides/agents/reviewing-runs/"
+    description="Walk flagged runs in the flipbook UI, set thumbs-up/down verdicts, and add review notes."
+  />
+  <LinkCard
+    title="Tune an agent's prompt"
+    href="/how-to-guides/agents/tuning-agents/"
+    description="Use the tune workbench to generate prompt proposals from flagged runs and dry-run them before applying."
+  />
+  <LinkCard
+    title="Filter run history"
+    href="/how-to-guides/agents/run-history-and-filters/"
+    description="Search, filter by verdict and metadata, drill into child runs, and rerun or cancel agent runs."
+  />
+</CardGrid>
 
-## Creating an Agent
+## Creating an agent
 
 <Steps>
 
-1. Navigate to **Agents** in the sidebar
+1. Go to **Agents** in the sidebar and click **New agent**.
 
-2. Click **Create Agent**
+2. Fill in name, description, and system prompt. The system prompt is the agent's instructions and personality.
 
-3. Configure:
-   - **Name**: Display name for the agent
-   - **System Prompt**: Instructions for the AI
-   - **Access Level**: Public, Authenticated, or Role-based
+3. Set the **Access Level** (Public, Authenticated, or Role-based) and assign roles if applicable.
 
-4. Assign tools (workflows) the agent can call
+4. Pick **Tools** (workflows tagged `is_tool=True` and any system tools).
 
-5. Optionally add knowledge sources
+5. Optionally add **Knowledge Sources** for RAG, and **Delegated Agents** for multi-agent workflows.
+
+6. Save. The agent is immediately available for chat and autonomous runs.
 
 </Steps>
 
-## Agent Access Levels
+## Access levels
 
-| Level | Description |
+| Level | Who can chat / run |
 |-------|-------------|
-| **Public** | Anyone can chat (no auth required) |
-| **Authenticated** | Logged-in users only |
-| **Role-based** | Users with assigned roles only |
+| **Public** | Anyone, no auth |
+| **Authenticated** | Any logged-in user |
+| **Role-based** | Users with at least one assigned role |
 
-## Adding Tools
+## Exposing workflows as tools
 
-Mark workflows as tools to make them callable by agents:
+Mark a workflow as a tool by setting `is_tool=True` (or using the `@tool` alias):
 
 ```python
 from bifrost import workflow
 
 @workflow(
     is_tool=True,
-    tool_description="Look up a customer by email address"
+    tool_description="Look up a customer by email address",
 )
 async def lookup_customer(email: str):
-    # ... lookup logic
+    # ...
     return {"name": "John Doe", "account": "12345"}
 ```
 
-The `tool_description` helps the agent understand when to use the tool.
+The `tool_description` is what the LLM reads to decide when to call the tool. Be specific.
 
-## Knowledge Sources
+## Knowledge sources
 
-Attach knowledge namespaces for RAG:
-
-1. In agent settings, add **Knowledge Sources**
-2. Select namespaces (e.g., "faq", "docs")
-3. Agent automatically searches these when answering
+Attach a knowledge namespace to give the agent retrieval-augmented answers. The agent searches the namespace automatically when it needs background context. See [Knowledge Bases](/how-to-guides/ai/knowledge-bases) for namespace setup.
 
 ## Chat API
 
 Start conversations programmatically:
 
-### Create Conversation
-
 ```python
 import requests
 
+# Create a conversation (optionally pinned to an agent)
 response = requests.post(
     f"{api_url}/api/chat/conversations",
-    json={"agent_id": "agent-123"},  # Optional
-    headers={"Authorization": f"Bearer {token}"}
+    json={"agent_id": "agent-123"},
+    headers={"Authorization": f"Bearer {token}"},
 )
 conversation_id = response.json()["id"]
-```
 
-### Send Message
-
-```python
-response = requests.post(
+# Send a message
+requests.post(
     f"{api_url}/api/chat/conversations/{conversation_id}/messages",
     json={"content": "Hello, I need help with my account."},
-    headers={"Authorization": f"Bearer {token}"}
+    headers={"Authorization": f"Bearer {token}"},
 )
 ```
 
-### WebSocket Streaming
-
-For real-time streaming responses:
+For real-time tokens, connect a WebSocket:
 
 ```javascript
 const ws = new WebSocket(
     `wss://your-instance.com/api/chat/conversations/${conversationId}/stream`
 );
-
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    if (data.type === "delta") {
-        console.log(data.content);
-    }
+    if (data.type === "delta") console.log(data.content);
 };
-
 ws.send(JSON.stringify({ content: "How do I reset my password?" }));
 ```
 
@@ -126,136 +128,129 @@ User: @tech-agent Can you check my server status?
 AI: (switches to tech-agent)
 ```
 
-## Agent Delegation
+### Agentless chat
 
-Agents can delegate to other agents:
+Posting to `/api/chat/conversations` without an `agent_id` uses AI-based routing to pick an appropriate agent or fall back to a system default.
 
-1. In agent settings, add **Delegations**
-2. Select agents this one can hand off to
-3. The AI decides when to delegate based on context
+## Autonomous agent runs
 
-<Aside type="tip">
-Delegation is useful for specialized agents - a general triage agent can delegate to billing, tech support, or sales agents.
-</Aside>
+Agent runs execute without a chat session. The agent receives input, runs a tool-calling loop, and returns structured output.
 
-## Agentless Chat
+### Lifecycle
 
-Chat without a specific agent uses default routing:
+1. A run is created with input data and (optionally) an output schema.
+2. The agent loads its prompt, tools, and knowledge.
+3. The LLM picks a tool, the tool runs, the result feeds back into the LLM.
+4. The loop continues until the agent answers or hits a budget limit.
+
+### Budgets
+
+| Field | Default | Max | Purpose |
+|-------|---------|-----|---------|
+| `max_iterations` | 50 | 200 | Cap on LLM call cycles |
+| `max_token_budget` | 100,000 | 1,000,000 | Cap on total tokens |
+| `max_run_timeout` | unset | — | Optional hard time limit |
+
+If either iterations or token budget is hit, the run finishes with status `budget_exceeded`.
+
+### Triggering a run from a workflow
+
+```python
+from bifrost import workflow, agents
+
+@workflow
+async def triage_ticket(ticket_id: str):
+    return await agents.run(
+        "ticket-triage-agent",
+        input={"ticket_id": ticket_id},
+        output_schema={
+            "type": "object",
+            "properties": {
+                "priority": {"type": "string"},
+                "category": {"type": "string"},
+            },
+        },
+    )
+```
+
+### Triggering from an event subscription
+
+<Steps>
+
+1. Go to **Events** and open your event source.
+
+2. Click **Add Subscription** and set **Target Type** to **Agent**.
+
+3. Pick the agent. The event payload becomes the agent's input.
+
+</Steps>
+
+### Triggering from the API
 
 ```python
 response = requests.post(
-    f"{api_url}/api/chat/conversations",
-    json={},  # No agent_id
-    headers={"Authorization": f"Bearer {token}"}
+    f"{api_url}/api/agent-runs/execute",
+    json={
+        "agent_name": "ticket-triage-agent",
+        "input": {"ticket_id": "T-123"},
+        "output_schema": {"type": "object", "properties": {"priority": {"type": "string"}}},
+        "timeout": 300,
+    },
+    headers={"Authorization": f"Bearer {token}"},
 )
 ```
 
-The system uses AI-based routing to select an appropriate agent or responds with a default system prompt.
+## Delegation
 
-## Example: Support Agent
+Agents can delegate to other agents. When you add a delegated agent, the parent automatically receives a `delegate_to_<agent_name>` tool. The LLM decides when to call it.
 
-```python
-from bifrost import workflow
+| Limit | Value |
+|-------|-------|
+| Max depth | 5 |
+| Per-delegation timeout | 600s |
 
-@workflow(
-    is_tool=True,
-    tool_description="Look up a support ticket by ID"
-)
-async def get_ticket(ticket_id: str):
-    # Fetch ticket from your system
-    return {"id": ticket_id, "status": "open", "subject": "..."}
+Delegation creates child `AgentRun` rows linked via `parent_run_id`. Child runs are filtered out of the top-level run list and rolled up under the parent in the run detail view.
 
-@workflow(
-    is_tool=True,
-    tool_description="Update the status of a support ticket"
-)
-async def update_ticket(ticket_id: str, status: str, note: str = ""):
-    # Update ticket
-    return {"success": True}
-```
+## Cancellation and rerun
 
-Create an agent with these tools and a prompt like:
-> "You are a helpful support agent. Use the tools to look up and update tickets. Always confirm before making changes."
+- **Cancel**: stops a running agent. Status transitions `running` → `cancelling` → `cancelled`. Cancellation is checked before each iteration, during tool execution, and via a background watcher.
+- **Rerun**: re-executes a finished run with the same input. Creates a new run with `trigger_type="rerun"`.
+
+Both are exposed in the run detail UI and via `POST /api/agent-runs/{run_id}/cancel` / `POST /api/agent-runs/{run_id}/rerun`.
+
+## Run observability
+
+Every autonomous run records:
+
+- **Steps** — every LLM call and tool execution, including delegation steps with expandable child detail.
+- **AI usage** — input/output tokens and cost grouped by model.
+- **Status** — `queued` → `running` → `completed` | `failed` | `budget_exceeded` | `cancelled`.
+- **Trigger** — `manual`, `webhook`, `schedule`, `workflow`, `rerun`, or `delegation`.
+
+View runs from the agent detail page's Runs tab, the global **History → Agents** page, or via `GET /api/agent-runs`.
+
+<Aside type="note">
+The summarizer that generates each run's `asked` / `did` strings is itself an LLM call. Its cost rolls up into `total_cost_7d` (the **Spend (7d)** card on the fleet dashboard). A backfill of N runs moves that card by roughly `N × avg summarizer cost`.
+</Aside>
 
 ## The Coding Agent
 
-The Coding Agent is a special system agent for creating and modifying Bifrost workflows. It provides AI-assisted development capabilities directly within the platform.
+The Coding Agent is a built-in platform agent for creating and editing Bifrost workflows. It runs in your workspace context and uses precision editing tools rather than full-file replacements.
 
-### Characteristics
+| Tool | Purpose |
+|------|---------|
+| `list_content` | List files by entity (`app_file`, `workflow`, `module`) |
+| `search_content` | Regex search with context lines |
+| `read_content_lines` | Read a specific line range |
+| `patch_content` | Surgical string replacement |
+| `replace_content` | Full content replacement / create new file |
+| `delete_content` | Delete a file |
 
-- **System agent**: Auto-created on platform startup, cannot be deleted
-- **Claude-powered**: Uses Claude with MCP tools for code editing
-- **Workspace access**: Has full access to workspace files and system tools
-- **Development focus**: Optimized for workflow creation and modification
-- **Precision editing**: Uses search → read → patch workflow for surgical code changes
+Combined with `execute_workflow`, `validate_workflow`, `list_executions`, etc., these power a search → read → patch loop suited to LLM editing.
 
-### Precision Editing Tools
+## Next steps
 
-The Coding Agent uses precision editing tools that mirror professional code editor patterns:
-
-| Tool | Description |
-|------|-------------|
-| `list_content` | List files by entity type (app_file, workflow, module) |
-| `search_content` | Regex search across code with context lines |
-| `read_content_lines` | Read specific line range from a file |
-| `get_content` | Get entire file content |
-| `patch_content` | Surgical string replacement (old → new) |
-| `replace_content` | Full content replacement or create new file |
-| `delete_content` | Delete a file (deactivates workflows, marks modules deleted) |
-
-### Other System Tools
-
-| Tool | Description |
-|------|-------------|
-| `execute_workflow` | Execute a workflow by name or ID |
-| `list_workflows` | List all registered workflows |
-| `validate_workflow` | Validate workflow Python syntax |
-| `get_workflow` | Get workflow metadata |
-| `get_workflow_schema` | Documentation about decorators |
-| `list_executions` | List recent executions |
-| `get_execution` | Get execution details and logs |
-| `list_integrations` | List integrations and their status |
-| `list_forms` | List all forms |
-| `get_form` | Get form details |
-| `get_form_schema` | Form structure documentation |
-| `validate_form_schema` | Validate form JSON |
-| `search_knowledge` | Search the knowledge base |
-| `create_form` | Create a new form |
-| `update_form` | Update an existing form |
-
-## Making Workflows Available as Tools
-
-Workflows can be exposed as tools for agents to call:
-
-```python
-from bifrost import workflow
-
-@workflow(
-    is_tool=True,
-    tool_description="Fetch customer data by email"
-)
-async def get_customer(email: str):
-    """Look up customer information."""
-    # ... implementation
-    return {"name": "John Doe", "account": "12345"}
-```
-
-When `is_tool=True`:
-1. The workflow appears in the platform's tool list
-2. Assign it to agents via the UI or API
-3. The agent can then call the workflow as a tool during conversations
-
-## Tool Assignment
-
-Tools are assigned to agents in two ways:
-
-- **System tools**: Assigned via the `system_tools` array on the agent configuration
-- **Workflow tools**: Assigned via the agent-tools relationship in the UI or API
-
-The Coding Agent receives all system tools by default. Custom agents only receive the tools explicitly assigned to them.
-
-## Next Steps
-
-- [Using AI in Workflows](/how-to-guides/ai/using-ai-in-workflows) - Direct AI completions
-- [Knowledge Bases](/how-to-guides/ai/knowledge-bases) - RAG setup
-- [MCP Server](/how-to-guides/integrations/mcp-server) - External AI tool access
+- [Using AI in workflows](/how-to-guides/ai/using-ai-in-workflows) — direct LLM completions
+- [Knowledge bases](/how-to-guides/ai/knowledge-bases) — RAG setup
+- [MCP Server setup](/how-to-guides/mcp/server-setup) — expose Bifrost to Claude / Copilot / Cursor
+- [Publishing agents as MCP](/how-to-guides/mcp/agents-as-mcp) — turn an agent's tool surface into an external MCP endpoint

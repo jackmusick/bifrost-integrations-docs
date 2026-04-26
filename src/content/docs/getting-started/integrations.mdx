@@ -62,9 +62,9 @@ An integration with Microsoft Graph that reads user information using OAuth.
 
 <Steps>
 
-1. Navigate to **Settings** → **Integrations**
+1. Click **Integrations** in the sidebar
 
-1. Click **Create Integration**
+1. Click the **+** button
 
 1. Fill in details:
 
@@ -108,7 +108,7 @@ An integration with Microsoft Graph that reads user information using OAuth.
 
 1. You'll be redirected back to Bifrost
 
-1. Connection status changes to **Active**
+1. Connection status changes to **Configured**
 
     ![alt text](../../../assets/integrations/image-7.png)
 
@@ -183,7 +183,7 @@ You can also specify the organization:
 integration = await integrations.get("Microsoft_Graph", org_id="org-123")
 
 # Access platform-level integration defaults (no org mapping)
-integration = await integrations.get("Microsoft_Graph", scope="global")
+integration = await integrations.get("Microsoft_Graph", scope=None)
 ```
 
 ## Next Steps

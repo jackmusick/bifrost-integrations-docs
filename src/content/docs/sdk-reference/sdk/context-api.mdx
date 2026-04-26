@@ -38,10 +38,10 @@ The `context` proxy provides identity, organization, and execution metadata. It'
 
 | Property | Type | Description | Example |
 |----------|------|-------------|---------|
-| `org_id` | str \| None | Organization ID | `"org-456"` |
+| `org_id` | str \| None | Organization ID (`None` for global scope) | `"org-456"` or `None` |
 | `org_name` | str \| None | Organization name | `"Acme Corp"` |
-| `organization` | Organization \| None | Full organization object | See Organization type |
-| `scope` | str | Scope identifier | `"org-456"` or `"GLOBAL"` |
+| `organization` | Organization \| None | Full organization object (`None` for global scope) | See Organization type |
+| `scope` | str | Raw scope identifier (use `org_id` instead) | `"org-456"` or `"GLOBAL"` |
 
 ### Execution Information
 
@@ -71,13 +71,11 @@ The `context` proxy provides identity, organization, and execution metadata. It'
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
-| `get_config(key, default=None)` | key: str, default: Any | Any | Async method to get config value |
-| `set_scope(org_id)` | org_id: str \| None | None | Override effective scope for all subsequent SDK calls (provider orgs only). Pass `None` to reset. |
+| `set_scope(org_id)` | org_id: str \| None | None | Override effective scope for all subsequent SDK calls. Pass an org UUID to target that org (provider orgs only). Pass `None` to reset to original scope. |
 
-```python
-# Using get_config method
-api_url = await context.get_config("api_url", default="https://api.example.com")
-```
+:::note
+To read configuration values, use `bifrost.config.get()` instead of `context.get_config()` (which has been removed).
+:::
 
 ## Computed Properties
 
@@ -319,10 +317,6 @@ class ExecutionContext:
     def set_scope(self, org_id: str | None) -> None:
         """Override effective scope for all subsequent SDK calls.
         Only provider orgs can target a different org."""
-        ...
-
-    async def get_config(self, key: str, default: Any = None) -> Any:
-        """Get a config value for the current scope."""
         ...
 ```
 

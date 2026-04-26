@@ -1,0 +1,187 @@
+---
+title: Files Module
+description: SDK reference for reading, writing, and managing workflow files
+---
+
+The `files` module reads and writes files from workflows. It supports two storage modes:
+
+- **`cloud`** (default) -- S3 storage, scoped per organization
+- **`local`** -- Local filesystem under the CLI working directory and `/tmp/bifrost/`
+
+And three storage locations:
+
+| Location | Cloud (S3 prefix) | Local path |
+|----------|-------------------|------------|
+| `workspace` | bucket root | current working directory |
+| `temp` | `_tmp/` | `/tmp/bifrost/temp` |
+| `uploads` | `uploads/` | `/tmp/bifrost/uploads` |
+
+`uploads` holds files submitted via form file fields. Paths are sandboxed -- reads/writes outside the configured locations raise `ValueError`.
+
+## Import
+
+```python
+from bifrost import files
+```
+
+## Method Index
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `files.read()` | `str` | Read a text file |
+| `files.read_bytes()` | `bytes` | Read a binary file |
+| `files.write()` | `None` | Write text |
+| `files.write_bytes()` | `None` | Write binary data |
+| `files.list()` | `list[str]` | List files in a directory |
+| `files.delete()` | `None` | Delete a file |
+| `files.exists()` | `bool` | Check if a file exists |
+| `files.get_signed_url()` | `dict` | Generate a presigned S3 URL for direct upload/download |
+
+All methods accept `location` and `mode` keyword arguments (defaults: `"workspace"`, `"cloud"`).
+
+## files.read()
+
+```python
+async def read(
+    path: str,
+    location: Literal["workspace", "temp", "uploads"] = "workspace",
+    mode: Literal["local", "cloud"] = "cloud",
+) -> str
+```
+
+Returns the file contents as a string. Raises `FileNotFoundError` if missing, `ValueError` if `path` escapes the location root.
+
+```python
+content = await files.read("data/customers.csv")
+uploaded = await files.read("form_id/uuid/upload.txt", location="uploads")
+```
+
+## files.read_bytes()
+
+```python
+async def read_bytes(
+    path: str,
+    location: Location = "workspace",
+    mode: Mode = "cloud",
+) -> bytes
+```
+
+Same as `read()` but returns raw bytes. Use for binary formats (PDFs, images).
+
+```python
+pdf = await files.read_bytes("reports/q4.pdf")
+```
+
+## files.write()
+
+```python
+async def write(
+    path: str,
+    content: str,
+    location: Location = "workspace",
+    mode: Mode = "cloud",
+) -> None
+```
+
+Write text content. Creates parent directories as needed.
+
+```python
+await files.write("output/report.txt", "Report data\n")
+```
+
+## files.write_bytes()
+
+```python
+async def write_bytes(
+    path: str,
+    content: bytes,
+    location: Location = "workspace",
+    mode: Mode = "cloud",
+) -> None
+```
+
+Write binary data.
+
+```python
+await files.write_bytes("uploads/logo.png", image_bytes)
+```
+
+## files.list()
+
+```python
+async def list(
+    directory: str = "",
+    location: Location = "workspace",
+    mode: Mode = "cloud",
+) -> list[str]
+```
+
+List file and directory names directly under `directory` (defaults to the location root).
+
+```python
+items = await files.list("uploads")
+for name in items:
+    print(name)
+```
+
+## files.delete()
+
+```python
+async def delete(
+    path: str,
+    location: Location = "workspace",
+    mode: Mode = "cloud",
+) -> None
+```
+
+Delete a single file. Raises `FileNotFoundError` if it doesn't exist.
+
+```python
+await files.delete("temp/old_export.csv", location="temp")
+```
+
+## files.exists()
+
+```python
+async def exists(
+    path: str,
+    location: Location = "workspace",
+    mode: Mode = "cloud",
+) -> bool
+```
+
+```python
+if await files.exists("data/customers.csv"):
+    customers = await files.read("data/customers.csv")
+```
+
+## files.get_signed_url()
+
+Generate a presigned S3 URL so a client (browser, external service) can upload or download a file directly without proxying through Bifrost. Always cloud-mode and always scoped to the current org.
+
+```python
+async def get_signed_url(
+    path: str,
+    method: Literal["PUT", "GET"] = "PUT",
+    content_type: str = "application/octet-stream",
+) -> dict
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `path` | str | File path within the org's S3 namespace |
+| `method` | `"PUT"` \| `"GET"` | `PUT` for uploads, `GET` for downloads |
+| `content_type` | str | MIME type (used for `PUT` only) |
+
+Returns:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `url` | str | Presigned URL |
+| `path` | str | Full scoped S3 path |
+| `expires_in` | int | Lifetime in seconds |
+
+```python
+upload = await files.get_signed_url("incoming/photo.jpg", method="PUT", content_type="image/jpeg")
+# Hand `upload["url"]` to the browser; it can PUT directly to S3.
+```

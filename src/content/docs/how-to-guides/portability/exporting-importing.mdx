@@ -1,0 +1,118 @@
+---
+title: Exporting and Importing
+description: Move forms, agents, workflows, and apps between Bifrost environments using portable bundles.
+---
+
+import { LinkCard, Aside, Steps } from "@astrojs/starlight/components";
+
+`bifrost export --portable` packages a workspace into a directory of YAML and source files that can be applied to a different environment with `bifrost import`. Use it to promote work from dev to staging, share a configuration with the community, or back up a known-good state.
+
+## Why portable bundles exist
+
+A direct database copy carries org IDs, role UUIDs, OAuth tokens, and timestamps that are meaningless or actively wrong in another environment. Portable mode strips those fields, rewrites role UUIDs to role *names*, and nulls secret values so the bundle is safe to commit, share, or replay against a target env that uses different IDs.
+
+UUIDs of the entities themselves (workflow IDs, form IDs, etc.) are **preserved** so re-importing a bundle into the same environment is idempotent.
+
+## Export a portable bundle
+
+<Steps>
+
+1. From a workspace where you've already authenticated (`bifrost login`), run:
+
+    ```bash
+    bifrost export --portable ./my-bundle
+    ```
+
+2. The bundle directory now contains `.bifrost/*.yaml`, copies of `workflows/` and `apps/`, and a `bundle.meta.yaml` documenting the scrub rules applied.
+
+3. Read `bundle.meta.yaml` to confirm the scrub fired as expected:
+
+    ```yaml
+    portable: true
+    scrubbed:
+      - stripped 12 organization_id field(s)
+      - stripped 8 OAuth secret field(s) (client_secret / ...)
+      - rewrote 4 role_ids -> role_names on forms
+    ```
+
+</Steps>
+
+What gets stripped: `organization_id` everywhere, `user_id` / `created_by` / `updated_by`, all timestamps, OAuth tokens (`client_secret`, `oauth_token_id`, `access_token`, `refresh_token`), and the `value` field of `secret`-type configs. Role UUIDs are rewritten to role names. See [Manifest Format](/how-to-guides/portability/manifest-format/) for the full field-by-field table.
+
+What survives: entity UUIDs, form fields, agent prompts, workflow code, integration config schemas, app source.
+
+## Import into a target environment
+
+<Steps>
+
+1. Authenticate against the **target** environment, then run:
+
+    ```bash
+    bifrost import ./my-bundle --org <target-org-uuid> --role-mode name
+    ```
+
+2. The CLI uploads workflow and app source files, then POSTs the manifest to `/api/files/manifest/import`. Pass `--dry-run` first if you want a preview without writing.
+
+3. On a TTY, the CLI runs a dry-run, opens an interactive cherry-pick TUI, and applies only the entities you select. Pass `--force` to skip the TUI and apply every change.
+
+4. Re-run the OAuth flow for any integration with mappings — tokens never round-trip.
+
+</Steps>
+
+### Flags worth knowing
+
+| Flag | What it does |
+|------|--------------|
+| `--org <uuid>` | Rebinds every `organization_id` to this target org. Required when the bundle was exported with `--portable`. |
+| `--role-mode name` | Resolves `role_names` against the target environment's role list (default for portable bundles). |
+| `--role-mode uuid` | Treats role values as UUIDs — use only when re-importing into the source environment. |
+| `--dry-run` | Prints the diff (adds / updates / deletes / warnings) and exits without writing. |
+| `--force` | Applies every change without the interactive review TUI. |
+| `--delete-removed` | Deletes entities present in the target but missing from the bundle. Off by default. |
+
+When `--org` is set, the CLI drops `organizations.yaml` and `roles.yaml` from the upload — those carry source-env seed data that doesn't translate.
+
+## Round-trip example: promote a form from dev to prod
+
+<Steps>
+
+1. In **dev**, export a bundle:
+
+    ```bash
+    bifrost --env dev export --portable ./expense-approval
+    ```
+
+2. Inspect the diff against **prod** without writing:
+
+    ```bash
+    bifrost --env prod import ./expense-approval \
+      --org 11111111-2222-3333-4444-555555555555 \
+      --role-mode name \
+      --dry-run
+    ```
+
+3. Apply for real with the interactive TUI:
+
+    ```bash
+    bifrost --env prod import ./expense-approval \
+      --org 11111111-2222-3333-4444-555555555555 \
+      --role-mode name
+    ```
+
+4. In the **prod** UI, re-run the OAuth flow for any integration the form depends on, and re-enter any `secret`-type config values that were nulled by the scrub.
+
+</Steps>
+
+## Caveats
+
+- **OAuth tokens do not transfer.** After import, `IntegrationMapping` rows have no `oauth_token_id` until a user re-runs the OAuth flow per org.
+- **Secret-type configs are nulled.** Re-enter values in **Settings → Configuration** after import.
+- **Unresolved roles surface as warnings.** If a `role_name` from the bundle doesn't exist in the target env, the importer creates an `unresolved_role_ids` entry instead of guessing — fix by adding the role and re-running import.
+- **`target_organization_id` is mandatory for portable bundles.** The server rejects an import that has no `--org` flag and a stripped `organization_id` in the manifest.
+- **Interactive cherry-pick is on by default.** When stdin and stdout are TTYs and you didn't pass `--dry-run` or `--force`, the importer runs a dry-run first, opens the sync TUI, and only applies the entities you tick. This is the safest mode for prod imports.
+
+<LinkCard
+  title="Manifest Format"
+  href="/how-to-guides/portability/manifest-format/"
+  description="Field-by-field reference for .bifrost/*.yaml — what's portable and what's environment-specific."
+/>

@@ -1,0 +1,67 @@
+[
+  {
+    "id": "aaaa1111-1111-1111-1111-111111111111",
+    "name": "Ticket Triage Agent",
+    "description": "Reads inbound ticket descriptions and classifies priority, category, and routing target.",
+    "channels": ["chat"],
+    "is_active": true,
+    "access_level": "authenticated",
+    "organization_id": null,
+    "owner_user_id": "00000000-0000-0000-0000-000000000001",
+    "created_at": "2026-02-15T10:00:00.000000+00:00",
+    "llm_model": "claude-sonnet-4-5",
+    "dependency_count": 6
+  },
+  {
+    "id": "aaaa2222-2222-2222-2222-222222222222",
+    "name": "M365 License Inspector",
+    "description": "Audits Microsoft 365 license assignments per user and flags unused seats.",
+    "channels": ["chat", "teams"],
+    "is_active": true,
+    "access_level": "role_based",
+    "organization_id": null,
+    "owner_user_id": "00000000-0000-0000-0000-000000000001",
+    "created_at": "2026-03-01T09:00:00.000000+00:00",
+    "llm_model": "claude-sonnet-4-5",
+    "dependency_count": 4
+  },
+  {
+    "id": "aaaa3333-3333-3333-3333-333333333333",
+    "name": "Onboarding Coordinator",
+    "description": "Orchestrates new-employee provisioning. Delegates to identity, hardware, and workspace agents.",
+    "channels": ["chat", "voice"],
+    "is_active": true,
+    "access_level": "role_based",
+    "organization_id": null,
+    "owner_user_id": "00000000-0000-0000-0000-000000000001",
+    "created_at": "2026-03-10T08:30:00.000000+00:00",
+    "llm_model": "claude-opus-4-7",
+    "dependency_count": 8
+  },
+  {
+    "id": "aaaa4444-4444-4444-4444-444444444444",
+    "name": "Backup Compliance Auditor",
+    "description": "Walks the daily backup report, flags failures, and creates remediation tickets.",
+    "channels": ["chat"],
+    "is_active": true,
+    "access_level": "authenticated",
+    "organization_id": null,
+    "owner_user_id": "00000000-0000-0000-0000-000000000001",
+    "created_at": "2026-03-22T12:00:00.000000+00:00",
+    "llm_model": "claude-sonnet-4-5",
+    "dependency_count": 3
+  },
+  {
+    "id": "aaaa5555-5555-5555-5555-555555555555",
+    "name": "Knowledge Search Agent",
+    "description": "Answers FAQ-style questions from the internal docs namespace.",
+    "channels": ["chat"],
+    "is_active": false,
+    "access_level": "authenticated",
+    "organization_id": null,
+    "owner_user_id": "00000000-0000-0000-0000-000000000001",
+    "created_at": "2026-02-01T11:00:00.000000+00:00",
+    "llm_model": "claude-haiku-4-5",
+    "dependency_count": 2
+  }
+]

@@ -1,0 +1,18 @@
+---
+title: Chat
+description: Conversational interface for talking to agents and running workflows from natural language.
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+Chat is Bifrost's conversational entry point for interacting with agents. Users send messages, agents pick the right tools (workflows you've exposed) and produce a response, and the entire turn is captured as a run you can audit and tune later.
+
+Chat sessions are scoped to a user and an agent, with full conversation history preserved across turns. The same agent that powers an autonomous run can be driven interactively through Chat.
+
+## Where to learn more
+
+<LinkCard
+  title="Agents and Chat"
+  href="/how-to-guides/ai/agents-and-chat/"
+  description="Build agents that respond in Chat and call your workflows as tools."
+/>

@@ -7,6 +7,14 @@ import { Aside } from '@astrojs/starlight/components';
 
 Integrations are the bridge between Bifrost and external APIs. They combine OAuth credentials, configuration, and organization-specific settings into a unified system.
 
+<Aside type="tip" title="Integrations vs Configs — when to use which">
+**Integrations are the preferred way to manage external connections — even for non-OAuth services.** The integration entity gives you a clear "here are my external connections" surface and supports per-org overrides via `IntegrationMapping`.
+
+**Configs are for arbitrary org-scoped or global key-value pairs that don't represent a connection** — feature flags, default labels, retry counts, anything that isn't an outgoing connection identity.
+
+**Per-org override pattern:** link an integration to a Bifrost organization-list data provider in your form (a workflow you author with `@data_provider` that returns `[{ "label": org.name, "value": org.id }]` from `bifrost.organizations.list()`). The form's selected org becomes the workflow's org context, and `integrations.get()` then returns that org's mapping and entity_id automatically. This is the canonical way to scope an integration call to an arbitrary org from a form.
+</Aside>
+
 ## What Are Integrations?
 
 An integration represents a connection to an external service like Microsoft Graph, HaloPSA, or any REST API. Each integration can have:
@@ -69,6 +77,26 @@ For multi-tenant APIs, integrations track external entity IDs per organization:
 |-------|-------------|
 | `entity_id` | The external ID (tenant_id, company_id) |
 | `entity_name` | Display name for the entity |
+
+### Why `entity_id` matters
+
+`entity_id` is the **routing key** for org-scoped OAuth and API calls. Each `IntegrationMapping` is a `(org_id, integration_id, entity_id)` triple, and the `entity_id` becomes the connection identity downstream API calls use to address the right tenant or customer record:
+
+- **Microsoft Graph** → `entity_id` is the Entra ID `tenant_id`
+- **HaloPSA** → `entity_id` is the HaloPSA `company_id`
+- **ConnectWise / Autotask** → `entity_id` is the customer/company key
+
+A single integration can serve many Bifrost organizations because each one carries its own `entity_id` in its mapping. Without that mapping, every org would share one set of credentials and target one external tenant — defeating the per-customer scoping that MSPs need.
+
+```
+Bifrost Org
+    │
+    ▼
+IntegrationMapping(entity_id, oauth_token)
+    │
+    ▼
+External API call (scoped to entity_id)
+```
 
 This enables one integration to serve multiple tenants:
 

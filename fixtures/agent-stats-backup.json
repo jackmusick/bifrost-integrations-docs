@@ -1,0 +1,11 @@
+{
+  "agent_id": "aaaa4444-4444-4444-4444-444444444444",
+  "runs_7d": 558,
+  "success_rate": 0.93,
+  "avg_duration_ms": 8240,
+  "total_cost_7d": "2.59",
+  "last_run_at": "2026-04-25T17:55:11.000000+00:00",
+  "runs_by_day": [80, 84, 79, 82, 76, 79, 78],
+  "needs_review": 0,
+  "unreviewed": 11
+}

@@ -11,6 +11,8 @@ Configure single sign-on (SSO) to allow users to log in with their existing iden
 
 SSO is configured in **Settings > SSO** within the Bifrost UI. All configuration is stored in the database - no environment variables required.
 
+![Settings SSO Landing](../../../../assets/sso/microsoft-card-empty.png)
+
 Supported providers:
 - **Microsoft Entra ID** - Azure Active Directory
 - **Google Workspace** - Google accounts
@@ -60,6 +62,8 @@ Supported providers:
      - Your specific tenant ID (single tenant only)
      - `organizations` (any work/school account)
      - `common` (work/school + personal Microsoft accounts)
+
+   ![Microsoft Entra ID configuration card](../../../../assets/sso/microsoft-card-empty.png)
 
 </Steps>
 
@@ -111,6 +115,8 @@ No admin consent is required for these scopes.
    - **Client ID**: From Google Cloud Console
    - **Client Secret**: From Google Cloud Console
 
+   ![Add Google SSO Dialog](../../../../assets/sso/add-google-dialog.png)
+
 </Steps>
 
 <Aside type="caution">
@@ -148,11 +154,17 @@ Use any OpenID Connect-compliant identity provider (Okta, Auth0, Keycloak, etc.)
    - **Client Secret**: From your IdP
    - **Display Name** (optional): Custom text for the login button (e.g., "Sign in with Okta")
 
+   ![Add OIDC SSO Dialog](../../../../assets/sso/add-oidc-dialog.png)
+
 </Steps>
 
 ## Multiple Providers
 
-You can enable multiple SSO providers simultaneously. Users will see all enabled options on the login page.
+You can enable multiple SSO providers simultaneously. Once all three are configured, the SSO settings page shows their status, and the login page surfaces a button per provider.
+
+![SSO Configured State](../../../../assets/sso/configured-state.png)
+
+![Login Page with SSO Buttons](../../../../assets/sso/login-buttons.png)
 
 ## Troubleshooting
 

@@ -1,0 +1,243 @@
+---
+title: Webhooks Module
+description: SDK reference for building custom webhook adapters
+---
+
+The `webhooks` module provides base classes and a decorator for building custom webhook adapters in your workspace. Adapters handle subscription management, validation, and event normalization for services that need bespoke logic beyond the platform's generic webhook receiver.
+
+## Import
+
+```python
+from bifrost.webhooks import (
+    WebhookAdapter, adapter,
+    WebhookRequest, SubscribeResult, RenewResult,
+    ValidationResponse, Deliver, Rejected,
+)
+```
+
+Adapters are auto-discovered from `workspace/adapters/*.py`.
+
+## Method Index
+
+| Class / Function | Purpose |
+|------------------|---------|
+| `@adapter(name, integration)` | Decorator that registers a `WebhookAdapter` subclass |
+| `WebhookAdapter.subscribe()` | Create a subscription with an external service |
+| `WebhookAdapter.unsubscribe()` | Delete a subscription (best effort, no-op default) |
+| `WebhookAdapter.renew()` | Renew before expiration (returns `None` by default) |
+| `WebhookAdapter.handle_request()` | Validate and normalize an incoming webhook request |
+| `WebhookAdapter.verify_hmac_sha256()` | Helper: HMAC-SHA256 signature verification |
+| `WebhookAdapter.generate_secret()` | Helper: random hex secret |
+| `WebhookAdapter.expiration_datetime()` | Helper: ISO8601 expiration string |
+| `WebhookAdapter.parse_datetime()` | Helper: parse ISO8601 datetime |
+
+## @adapter
+
+Decorator that registers a `WebhookAdapter` subclass for discovery.
+
+```python
+@adapter(name: str | None = None, integration: str | None = None)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | str \| None | Unique adapter name. Defaults to the class name converted to snake_case (with `_adapter` suffix stripped). |
+| `integration` | str \| None | Required integration name (e.g. `"Microsoft"`). The platform passes the resolved integration into `subscribe`/`renew`/`unsubscribe`. |
+
+```python
+from bifrost.webhooks import WebhookAdapter, adapter
+
+@adapter(name="my_service", integration="MyService")
+class MyServiceAdapter(WebhookAdapter):
+    display_name = "My Service"
+    description = "Webhooks from MyService API"
+```
+
+## WebhookAdapter
+
+Abstract base class for adapters. Subclass and implement `subscribe` and `handle_request`; override the others as needed.
+
+### Class attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | str | Set by `@adapter` decorator |
+| `display_name` | str | Human-readable name for the UI |
+| `description` | str | One-line description |
+| `requires_integration` | str \| None | Integration name to bind to (mirrors `@adapter(integration=)`) |
+| `config_schema` | dict | JSON Schema for adapter config |
+| `renewal_interval` | timedelta \| None | How often to call `renew()` (None = no renewal) |
+
+### subscribe()
+
+Create a subscription with the external service. Called when a new event source is created.
+
+```python
+async def subscribe(
+    self,
+    callback_url: str,
+    config: dict[str, Any],
+    integration: Any | None,
+) -> SubscribeResult
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `callback_url` | str | Full URL the external service should POST to |
+| `config` | dict | Adapter configuration the user provided |
+| `integration` | Any \| None | OAuth integration instance (when `requires_integration` is set) |
+
+Returns a `SubscribeResult` with `external_id`, `state`, and `expires_at`.
+
+### unsubscribe()
+
+Delete the subscription on the external service. Default: no-op. Best effort -- does not raise on failure.
+
+```python
+async def unsubscribe(
+    self,
+    external_id: str | None,
+    state: dict[str, Any],
+    integration: Any | None,
+) -> None
+```
+
+### renew()
+
+Renew the subscription before expiration. Called periodically when `renewal_interval` is set. Return `None` to signal that renewal failed and the subscription should be recreated.
+
+```python
+async def renew(
+    self,
+    external_id: str | None,
+    state: dict[str, Any],
+    integration: Any | None,
+) -> RenewResult | None
+```
+
+### handle_request()
+
+Validate and parse an incoming webhook request. Must return one of `ValidationResponse`, `Deliver`, or `Rejected`.
+
+```python
+async def handle_request(
+    self,
+    request: WebhookRequest,
+    config: dict[str, Any],
+    state: dict[str, Any],
+) -> HandleResult
+```
+
+| Return type | When to use |
+|-------------|-------------|
+| `ValidationResponse` | The service is doing a handshake/challenge (e.g. Microsoft Graph validation) |
+| `Deliver` | The request is a real event -- platform will store it and fan out to subscriptions |
+| `Rejected` | Signature mismatch, replay, or otherwise invalid; platform returns the given status code |
+
+### Helper methods
+
+```python
+@staticmethod
+def generate_secret(length: int = 32) -> str
+```
+
+Random hex secret of `length` characters.
+
+```python
+@staticmethod
+def verify_hmac_sha256(
+    payload: bytes,
+    secret: str,
+    signature: str,
+    prefix: str = "sha256=",
+) -> bool
+```
+
+Constant-time HMAC-SHA256 verification. Common pattern for GitHub, Stripe, etc.
+
+```python
+@staticmethod
+def expiration_datetime(days: int = 0, hours: int = 0, minutes: int = 0) -> str
+```
+
+ISO8601 string for "now + delta", useful for subscription expirations.
+
+```python
+@staticmethod
+def parse_datetime(dt_string: str) -> datetime | None
+```
+
+Parse an ISO8601 string. Returns `None` on failure.
+
+## Types
+
+### WebhookRequest
+
+Incoming HTTP request data passed to `handle_request`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `method` | str | HTTP method |
+| `headers` | dict[str, str] | Lowercase header keys |
+| `query_params` | dict[str, str] | Query string parameters |
+| `body` | bytes | Raw request body |
+| `source_ip` | str \| None | Client IP |
+| `json_body` (property) | dict \| None | Parsed JSON body, or `None` if invalid |
+| `text_body` (property) | str | UTF-8 decoded body |
+
+### SubscribeResult
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `external_id` | str \| None | Subscription ID returned by the external service |
+| `state` | dict \| None | Adapter-managed state to persist (secrets, tokens) |
+| `expires_at` | datetime \| None | When this subscription expires (drives `renew()`) |
+
+### RenewResult
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `expires_at` | datetime \| None | New expiration |
+| `state` | dict \| None | Updated state (merged with existing) |
+
+### ValidationResponse / Deliver / Rejected
+
+```python
+ValidationResponse(status_code: int, body: str, content_type: str = "text/plain", headers: dict | None = None)
+Deliver(data: dict, event_type: str | None = None, raw_headers: dict | None = None)
+Rejected(message: str, status_code: int = 400)
+```
+
+## Example
+
+```python
+from bifrost.webhooks import (
+    WebhookAdapter, adapter, Deliver, Rejected, ValidationResponse,
+)
+
+@adapter(name="github")
+class GitHubAdapter(WebhookAdapter):
+    display_name = "GitHub Webhooks"
+    description = "Receive events from GitHub repositories"
+    config_schema = {
+        "type": "object",
+        "properties": {"secret": {"type": "string"}},
+        "required": ["secret"],
+    }
+
+    async def subscribe(self, callback_url, config, integration):
+        # GitHub webhooks are configured manually in the repo settings.
+        # We just store the secret in state for verification.
+        return SubscribeResult(state={"secret": config["secret"]})
+
+    async def handle_request(self, request, config, state):
+        signature = request.headers.get("x-hub-signature-256", "")
+        if not self.verify_hmac_sha256(request.body, state["secret"], signature):
+            return Rejected("Invalid signature", status_code=401)
+
+        payload = request.json_body or {}
+        return Deliver(
+            data=payload,
+            event_type=request.headers.get("x-github-event"),
+        )
+```

@@ -3,7 +3,7 @@ title: AI-Assisted Development
 description: Use AI coding tools to build Bifrost workflows, forms, and apps
 ---
 
-There are three ways to use AI tools with Bifrost, depending on your setup. Pick whichever fits your workflow - they all talk to the same platform.
+There are three ways to use AI tools with Bifrost. Pick whichever fits — they all talk to the same platform.
 
 | Approach | Best for | Requirements |
 |----------|----------|--------------|
@@ -13,7 +13,7 @@ There are three ways to use AI tools with Bifrost, depending on your setup. Pick
 
 ## 1. Claude Code with `/bifrost:build`
 
-The fastest path if you use Claude Code. The `/bifrost:build` skill combines local development with CLI and MCP tools automatically.
+The fastest path if you use Claude Code. The `/bifrost:build` skill combines local development with the CLI and MCP automatically.
 
 ### Setup
 
@@ -22,7 +22,7 @@ The fastest path if you use Claude Code. The `/bifrost:build` skill combines loc
 pipx install https://your-instance.gobifrost.com/api/cli/download
 bifrost login --url https://your-instance.gobifrost.com
 
-# (Optional) Add the MCP server to Claude Code — only needed for create_form, create_app, create_agent, and knowledge search
+# (Optional) Add the MCP server to Claude Code for chat-augmented exploration of platform state
 claude mcp add --transport http bifrost https://your-instance.gobifrost.com/mcp
 ```
 
@@ -33,47 +33,50 @@ Or run `/bifrost:setup` inside Claude Code and it walks you through everything.
 The skill gives Claude Code two modes:
 
 **SDK-first (local development):**
-1. Start `bifrost watch` to auto-sync file changes to the platform
+1. Start `bifrost watch` to auto-push file changes
 2. Write workflow code locally in your git repo
-3. Files auto-sync as you save — no manual push needed
-4. Test with `bifrost run <file> <function> --params '{...}'`
-5. Use `bifrost api` for platform operations (execute, check logs, download docs)
+3. Files auto-push as you save — no manual sync needed
+4. Test with `bifrost run <file> -w <function> -p '{...}'`
+5. Use the entity CLI commands (`bifrost forms create`, `bifrost agents update`, `bifrost configs set`, ...) or `bifrost api` for raw API calls
 6. Commit and push to GitHub when ready
 
 **MCP-only (remote development):**
-1. Write workflow files via MCP file tools, then `register_workflow` to register them. Use `create_form`, `create_app` for other artifacts.
+1. Write workflow files via MCP file tools, then `register_workflow`
 2. Test with `execute_workflow`
 3. Iterate with `patch_content` for surgical edits
 
-The skill automatically checks your integrations, reads SDK documentation, validates before declaring anything ready, and asks about org scoping.
+The skill checks integrations, reads SDK documentation, validates before declaring ready, and asks about org scoping.
 
 ### CLI commands for platform operations
 
-The `bifrost api` command provides authenticated REST access without needing MCP:
+`bifrost <entity>` covers entity mutations (orgs, roles, workflows, forms, agents, apps, configs, integrations, events, tables). `bifrost api` is the escape hatch for any endpoint not yet wrapped by a typed command:
 
 ```bash
 # Download SDK documentation (once per session, then grep locally)
 bifrost api GET /api/docs/sdk > /tmp/bifrost-docs/sdk.md
 
-# Execute a workflow synchronously (blocks until result)
+# Execute a workflow synchronously
 bifrost api POST /api/workflows/{id}/execute '{"workflow_id":"...","input_data":{...},"sync":true}'
 
-# Check execution logs
+# Check an execution
 bifrost api GET /api/executions/{id}
 
-# List platform state (for debugging sync divergence)
+# List platform state (debug sync divergence)
+bifrost workflows list
 bifrost api GET /api/workflows
 ```
 
+For the full CLI command index, see the [CLI cheatsheet](/sdk-reference/cli/).
+
 ### When to use which
 
-| Artifact | Local (SDK) | Remote (MCP) |
-|----------|-------------|--------------|
-| Workflow / Tool / Data Provider | Write locally, test, sync | Write file + `register_workflow` |
-| Form | MCP only | `create_form` |
-| App | MCP only | `create_app` |
+| Surface | Use it for |
+|---------|-----------|
+| **CLI** (`bifrost <entity> ...`, `bifrost run`, `bifrost watch`) | All entity mutations and file sync. First choice for repeatable, scriptable work. |
+| **MCP** (`list_workflows`, `register_workflow`, `execute_workflow`, ...) | Chat-augmented exploration of platform state, quick lookups, content-editing tools (`patch_content`, `replace_content`). |
+| **`bifrost api`** | Endpoints with no dedicated CLI command yet (e.g. arbitrary admin endpoints, debug routes, analytics queries). |
 
-Even in SDK-first mode, forms and apps require MCP because they're platform-managed artifacts, not files.
+Forms, apps, and agents are first-class CLI citizens (`bifrost forms create`, `bifrost apps create`, `bifrost agents create`) — they no longer require MCP. Use whichever surface fits the task.
 
 ## 2. Local SDK Development
 
@@ -91,10 +94,11 @@ The login command opens your browser for authentication. Credentials are saved t
 ### Workflow
 
 1. Write Python files with `@workflow`, `@tool`, or `@data_provider` decorators
-2. Start `bifrost watch` in your workspace to auto-sync changes to the platform
-3. Test locally: `bifrost run my_workflow.py hello_world --params '{"name": "Alice"}'`
-4. All SDK modules (`ai`, `integrations`, `config`, `knowledge`, etc.) work locally - they call the remote API
-5. Commit and push to git when ready
+2. Start `bifrost watch` in your workspace to auto-push changes
+3. Register newly-decorated functions with `bifrost workflows register --path <file> --function-name <name>`
+4. Test locally: `bifrost run my_workflow.py -w hello_world -p '{"name": "Alice"}'`
+5. All SDK modules (`ai`, `integrations`, `config`, `knowledge`, etc.) work locally — they call the remote API
+6. Commit and push to git when ready
 
 ### What to tell your AI tool
 
@@ -108,6 +112,7 @@ I'm building workflows for Bifrost, a Python automation platform.
 - Use `from bifrost import context` to access context.org_id, context.user_id, context.email
 - Use `logging.getLogger(__name__)` for execution logs
 - Return dicts or Pydantic models
+- Entity mutations (orgs, roles, forms, agents, apps, configs, integrations, events, tables) all have first-class CLI commands: `bifrost <entity> <verb>`. See https://docs.gobifrost.com/sdk-reference/cli/ for the full surface.
 ```
 
 ## 3. MCP for External AI Tools
@@ -171,17 +176,17 @@ You help build automations on the Bifrost platform using MCP tools.
 - `logging.getLogger(__name__)` for logs
 - Return dicts or Pydantic models
 
-**Forms** are created via `create_form`, not as files. Create the workflow first, verify with `list_workflows`, then create the form linked to the workflow ID.
+**Forms** are created via `create_form`. Create the workflow first, verify with `list_workflows`, then create the form linked to the workflow ID.
 
 **Apps** are built granularly: `create_app` > edit files with `replace_content` > preview > `publish_app` only when the user asks.
 ````
 
 ## Choosing an Approach
 
-**Use Claude Code + `/bifrost:build`** if you want the best experience - it handles mode switching, validation, and testing automatically.
+**Use Claude Code + `/bifrost:build`** for the best experience — it handles mode switching, validation, and testing automatically.
 
 **Use Local SDK** if you prefer a different AI tool or want full control over your git workflow.
 
-**Use MCP** if you don't want a local dev environment, or for quick one-off edits and form/app creation.
+**Use MCP** if you don't want a local dev environment, or for quick one-off edits and chat-augmented exploration.
 
-All three approaches can be combined. A common pattern is developing workflows locally with the SDK, then using MCP tools to create forms and apps that reference those workflows.
+All three approaches can be combined. A common pattern is developing workflows locally with the SDK, mutating entities (forms, agents, configs) via CLI, and using MCP for exploration.

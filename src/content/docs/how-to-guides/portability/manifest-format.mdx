@@ -1,0 +1,150 @@
+---
+title: Manifest Format
+description: Reference for the .bifrost/ YAML files that back portable bundles.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+The `.bifrost/` directory is the canonical YAML representation of every platform entity in a workspace. It is **export-only**: produced by `bifrost export` (or `bifrost export --portable`) and consumed by `bifrost import`. The runtime sync loop (`bifrost watch`, `bifrost sync`) does not push or pull `.bifrost/` content — entity mutations go through the CLI or MCP.
+
+<Aside type="caution">
+Do not edit `.bifrost/*.yaml` files directly inside a live workspace. They are
+overwritten on the next `bifrost export`. Treat exported bundles as immutable
+artifacts; if you need to change content, change the entity in its source
+environment and re-export.
+</Aside>
+
+## Directory layout
+
+```
+.bifrost/
+├── organizations.yaml
+├── roles.yaml
+├── workflows.yaml
+├── integrations.yaml
+├── configs.yaml
+├── tables.yaml
+├── knowledge.yaml
+├── events.yaml
+├── forms.yaml
+├── agents.yaml
+└── apps.yaml
+```
+
+A bundle also contains:
+
+- `bundle.meta.yaml` — source environment, CLI version, scrub rules applied
+- `workflows/` — verbatim copies of every `@workflow`-decorated `.py` file
+- `apps/` — verbatim copies of app source directories (TSX, TS, CSS)
+
+## Portable vs environment-specific fields
+
+The same manifest serves two audiences. A **non-portable export** (`bifrost export <dir>`) keeps every field. A **portable export** (`bifrost export --portable <dir>`) strips fields that don't survive a cross-environment hop. The split is enforced in `api/bifrost/portable.py`.
+
+| Field class | Examples | Kept in portable bundle? |
+|-------------|----------|--------------------------|
+| Identity (UUIDs of entities) | `id` on workflow / form / agent | Yes — preserved for idempotent round-trip |
+| Portable content | Form fields, agent prompts, workflow code | Yes |
+| Org references | `organization_id` anywhere in the tree | Stripped |
+| Role bindings | `roles: [<uuid>, ...]` on forms / agents / apps | Rewritten to `role_names: [<name>, ...]` |
+| Attribution | `user_id`, `created_by`, `updated_by` | Stripped |
+| Timestamps | `created_at`, `updated_at`, `last_*` | Stripped |
+| OAuth secrets | `client_secret`, `oauth_token_id`, `access_token`, `refresh_token` | Stripped |
+| Secret config values | `value` on configs where `config_type == "secret"` | Nulled (key + description retained) |
+| Event-source runtime state | `external_id`, `expires_at`, `state` on event sources | Stripped |
+
+## Per-entity reference
+
+### `workflows.yaml`
+
+Declares every registered workflow, tool, and data provider.
+
+| Field | Portable | Notes |
+|-------|----------|-------|
+| `id` | Yes | Stable across environments |
+| `path`, `function_name` | Yes | Resolved by relative file path inside the bundle |
+| `type` | Yes | `workflow`, `tool`, or `data_provider` |
+| `category`, `tags`, `endpoint_enabled`, `timeout_seconds` | Yes | |
+| `access_level`, `roles` | Env-specific | `roles` rewritten to `role_names` in portable mode |
+| `organization_id` | Env-specific | Stripped in portable mode |
+
+### `integrations.yaml`
+
+Declares integration types with their config schema and OAuth provider config.
+
+| Field | Portable | Notes |
+|-------|----------|-------|
+| `id`, `name` | Yes | |
+| `config_schema` | Yes | Schema definitions (key, type, required, description) |
+| `oauth_provider` | Partial | Provider name + scopes kept; `client_secret` stripped |
+| `mappings` | Env-specific | `oauth_token_id` and `organization_id` stripped |
+
+OAuth tokens never round-trip. After importing, re-run the OAuth flow per-org to populate `oauth_token_id`.
+
+### `configs.yaml`
+
+Standalone config values not tied to an integration schema.
+
+| Field | Portable | Notes |
+|-------|----------|-------|
+| `id`, `key`, `description`, `config_type` | Yes | |
+| `value` | Conditional | Plaintext values kept; `secret` values nulled in portable mode |
+| `organization_id` | Env-specific | Stripped in portable mode |
+
+### `forms.yaml`
+
+Form content lives **inline** under each form's UUID. There are no per-UUID `.form.yaml` files.
+
+| Field | Portable | Notes |
+|-------|----------|-------|
+| `id`, `name`, `description` | Yes | |
+| `fields`, `workflow_id`, `launch_workflow_id`, `default_launch_params` | Yes | Portable form content |
+| `access_level`, `roles` | Env-specific | `roles` rewritten to `role_names` in portable mode |
+| `organization_id`, `created_by`, timestamps | Env-specific | Stripped in portable mode |
+
+### `agents.yaml`
+
+Agent content (system prompts, tool bindings, delegations, knowledge namespaces, budgets) lives inline under each agent's UUID. Same pattern as forms — no per-UUID `.agent.yaml` files.
+
+| Field | Portable | Notes |
+|-------|----------|-------|
+| `id`, `description`, `system_prompt`, `channels` | Yes | |
+| `tools`, `delegated_agents`, `knowledge_namespaces` | Yes | References resolved by name |
+| `max_iterations`, `max_token_budget`, `max_run_timeout` | Yes | |
+| `access_level`, `roles` | Env-specific | `roles` rewritten to `role_names` in portable mode |
+
+### `apps.yaml`
+
+| Field | Portable | Notes |
+|-------|----------|-------|
+| `id`, `name`, `description`, `dependencies` | Yes | npm dependencies stored on the DB row |
+| `path` | Yes | Source directory (TSX/TS/CSS only — no metadata files) |
+| `access_level`, `roles` | Env-specific | `roles` rewritten to `role_names` in portable mode |
+
+### `events.yaml`
+
+Event sources (webhooks and schedules) with their subscriptions.
+
+| Field | Portable | Notes |
+|-------|----------|-------|
+| `id`, `source_type` | Yes | `webhook`, `schedule`, or `internal` |
+| `cron_expression`, `timezone`, `schedule_enabled` (schedule) | Yes | |
+| `adapter_name` (webhook) | Yes | |
+| `subscriptions` | Yes | `workflow_id` / `agent_id` references |
+| `external_id`, `expires_at`, `state` | Env-specific | Adapter-managed, stripped in portable mode |
+
+### `organizations.yaml` and `roles.yaml`
+
+Top-level seed data describing the source environment's orgs and roles. **`bifrost import` drops these files entirely when `--org` or `--role-mode name` is used** — they only round-trip when re-applying a bundle to the same environment that exported it.
+
+## Cross-reference validation
+
+The manifest importer validates that:
+
+- All `organization_id` references point to declared organizations
+- All role references resolve (by ID in raw mode, by name in portable mode)
+- Integration-schema-bound configs reference a declared integration
+- Event subscription `workflow_id` / `agent_id` references resolve
+- Table `application_id` references point to declared apps
+
+Validation errors surface as warnings in `bifrost import --dry-run` output before any write happens.

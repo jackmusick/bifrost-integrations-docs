@@ -8,6 +8,8 @@
         "build": "astro build",
         "preview": "astro preview",
         "clean:images": "./scripts/find-unused-images.sh --delete",
+        "lint:manifest": "node scripts/manifest/lint.mjs",
+        "test": "vitest run",
         "astro": "astro"
     },
     "dependencies": {
@@ -15,7 +17,13 @@
         "@fontsource/geist-mono": "^5.2.7",
         "@fontsource/geist-sans": "^5.2.5",
         "astro": "^5.6.1",
+        "medium-zoom": "^1.1.0",
         "sharp": "^0.34.2",
         "starlight-theme-black": "^0.6.0"
+    },
+    "devDependencies": {
+        "js-yaml": "^4.1.0",
+        "vitest": "^2.1.8",
+        "zod": "^3.24.1"
     }
 }

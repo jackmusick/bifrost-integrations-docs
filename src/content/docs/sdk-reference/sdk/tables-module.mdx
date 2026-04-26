@@ -34,7 +34,7 @@ async def create(
 | `name` | str | Table name (lowercase, underscores allowed, must start with letter) |
 | `description` | str | Optional table description |
 | `table_schema` | dict | Optional JSON Schema for validation hints |
-| `scope` | str | `None`=context org, `"global"`=global, UUID=specific org (provider only) |
+| `scope` | str \| None | Omit for context org (cascade), `None` for global, UUID for specific org (provider only) |
 | `app` | str | Application UUID to scope table to an app |
 
 > **Note:** Targeting a specific org via UUID requires provider org context. Managed orgs can only access their own scope. Use `context.set_scope()` to override scope for all calls at once.
@@ -52,8 +52,8 @@ customers = await tables.create("customers", description="Customer records")
 # Create app-scoped table
 app_data = await tables.create("app_settings", app="app-uuid-here")
 
-# Create global table
-shared = await tables.create("shared_lookups", scope="global")
+# Create global table (scope=None targets global directly)
+shared = await tables.create("shared_lookups", scope=None)
 ```
 
 ### tables.list()
@@ -71,7 +71,7 @@ async def list(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `scope` | str | `None`=context org (includes global), `"global"`=global only, UUID=specific org |
+| `scope` | str \| None | Omit for context org (includes global via cascade), `None` for global only, UUID for specific org |
 | `app` | str | Filter by application UUID |
 
 #### Example
@@ -430,11 +430,11 @@ results = await tables.query("app_data", app="app-uuid")
 
 ### Global Scope
 
-Tables with `scope="global"` are platform-wide:
+Tables with `scope=None` are platform-wide:
 
 ```python
 # Global table (no org_id)
-table = await tables.create("shared_lookups", scope="global")
+table = await tables.create("shared_lookups", scope=None)
 ```
 
 ## See Also

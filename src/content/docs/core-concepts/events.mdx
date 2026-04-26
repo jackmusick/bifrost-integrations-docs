@@ -1,0 +1,18 @@
+---
+title: Events
+description: Event sources, subscriptions, and webhooks that trigger workflows from external systems.
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+Events let external systems trigger Bifrost workflows. You define an event source (a typed payload shape, optionally guarded with HMAC), and then attach subscriptions that route incoming events to specific workflows or agents.
+
+Each subscription is org-scoped and can transform the inbound payload into workflow context. Webhooks are the most common transport, but the same model also covers scheduled and platform-emitted events.
+
+## Where to learn more
+
+<LinkCard
+  title="Webhook and Event Variables"
+  href="/how-to-guides/events/webhook-variables/"
+  description="Reference inbound event data from a workflow and map payload fields into context."
+/>

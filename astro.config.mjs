@@ -5,10 +5,17 @@ import starlightThemeBlack from "starlight-theme-black";
 
 // https://astro.build/config
 export default defineConfig({
+    redirects: {
+        "/core-concepts/app-builder": "/core-concepts/apps/",
+        "/core-concepts/manifest-structure":
+            "/how-to-guides/portability/manifest-format/",
+        "/how-to-guides/workflows/webhook-variables":
+            "/how-to-guides/events/webhook-variables/",
+    },
     vite: {
         server: {
             host: true,
-            allowedHosts: [".ngrok-free.app", ".ngrok.io"],
+            allowedHosts: [".ngrok-free.app", ".ngrok.io", "development"],
             watch: {
                 usePolling: true,
                 interval: 1000, // Check every 100ms
@@ -25,6 +32,14 @@ export default defineConfig({
             },
             favicon: "/src/assets/logo-square.svg",
             customCss: ["./src/styles/custom.css"],
+            head: [
+                {
+                    tag: "script",
+                    attrs: { type: "module" },
+                    content:
+                        "import mediumZoom from 'https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/+esm'; const sel = '.sl-markdown-content img'; const z = mediumZoom(sel, { background: 'rgba(0,0,0,0.92)' }); document.addEventListener('astro:page-load', () => { z.detach(); z.attach(sel); });",
+                },
+            ],
             social: [
                 {
                     icon: "github",
@@ -43,6 +58,10 @@ export default defineConfig({
                         {
                             label: "Why Open Source?",
                             slug: "about/why-open-source",
+                        },
+                        {
+                            label: "Versions & Compatibility",
+                            slug: "about/versioning",
                         },
                         {
                             label: "License (AGPL)",
@@ -83,24 +102,26 @@ export default defineConfig({
                             slug: "core-concepts/platform-overview",
                         },
                         { label: "Workflows", slug: "core-concepts/workflows" },
-                        { label: "Forms", slug: "core-concepts/forms" },
                         {
                             label: "Workflow Registration",
                             slug: "core-concepts/discovery-system",
                         },
+                        { label: "Forms", slug: "core-concepts/forms" },
+                        { label: "Apps", slug: "core-concepts/apps" },
+                        { label: "Tables", slug: "core-concepts/tables" },
+                        { label: "Knowledge", slug: "core-concepts/knowledge" },
+                        { label: "Agents", slug: "core-concepts/agents" },
+                        { label: "Chat", slug: "core-concepts/chat" },
                         {
-                            label: "Manifest Structure",
-                            slug: "core-concepts/manifest-structure",
+                            label: "Integrations",
+                            slug: "core-concepts/integrations",
                         },
+                        { label: "Events", slug: "core-concepts/events" },
                         {
                             label: "Permissions",
                             slug: "core-concepts/permissions",
                         },
                         { label: "Scopes", slug: "core-concepts/scopes" },
-                        {
-                            label: "App Builder (Experimental)",
-                            slug: "core-concepts/app-builder",
-                        },
                     ],
                 },
                 {
@@ -124,8 +145,34 @@ export default defineConfig({
                                     slug: "how-to-guides/workflows/error-handling",
                                 },
                                 {
+                                    label: "Scheduled Workflows (Cron)",
+                                    slug: "how-to-guides/workflows/scheduled-workflows",
+                                },
+                                {
+                                    label: "Scheduled Executions (One-Time)",
+                                    slug: "how-to-guides/workflows/scheduled-executions",
+                                },
+                            ],
+                        },
+                        {
+                            label: "Events & Webhooks",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Create an Event Source",
+                                    slug: "how-to-guides/events/event-sources",
+                                },
+                                {
+                                    label: "Subscribe a Workflow or Agent",
+                                    slug: "how-to-guides/events/subscriptions",
+                                },
+                                {
+                                    label: "Verify Webhook HMAC",
+                                    slug: "how-to-guides/events/webhook-hmac",
+                                },
+                                {
                                     label: "Webhook & Event Variables",
-                                    slug: "how-to-guides/workflows/webhook-variables",
+                                    slug: "how-to-guides/events/webhook-variables",
                                 },
                             ],
                         },
@@ -156,11 +203,55 @@ export default defineConfig({
                             ],
                         },
                         {
+                            label: "Agents",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Fleet Overview",
+                                    slug: "how-to-guides/agents/fleet-overview",
+                                },
+                                {
+                                    label: "Reviewing Runs",
+                                    slug: "how-to-guides/agents/reviewing-runs",
+                                },
+                                {
+                                    label: "Tuning Agents",
+                                    slug: "how-to-guides/agents/tuning-agents",
+                                },
+                                {
+                                    label: "Run History & Filters",
+                                    slug: "how-to-guides/agents/run-history-and-filters",
+                                },
+                            ],
+                        },
+                        {
+                            label: "AI",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Agents and Chat",
+                                    slug: "how-to-guides/ai/agents-and-chat",
+                                },
+                                {
+                                    label: "Using AI in Workflows",
+                                    slug: "how-to-guides/ai/using-ai-in-workflows",
+                                },
+                                {
+                                    label: "Knowledge Bases",
+                                    slug: "how-to-guides/ai/knowledge-bases",
+                                },
+                                {
+                                    label: "LLM Configuration",
+                                    slug: "how-to-guides/ai/llm-configuration",
+                                },
+                            ],
+                        },
+                        {
                             label: "Integrations",
                             collapsed: true,
                             items: [
                                 {
-                                    label: "Store API Keys Securely",
+                                    label: "Storing Sensitive Config Values",
                                     slug: "how-to-guides/integrations/secrets-management",
                                 },
                                 {
@@ -170,6 +261,24 @@ export default defineConfig({
                                 {
                                     label: "Custom REST APIs",
                                     slug: "how-to-guides/integrations/creating-integrations",
+                                },
+                            ],
+                        },
+                        {
+                            label: "MCP",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Server Setup",
+                                    slug: "how-to-guides/mcp/server-setup",
+                                },
+                                {
+                                    label: "Connecting Clients",
+                                    slug: "how-to-guides/mcp/connecting-clients",
+                                },
+                                {
+                                    label: "Agents as MCP",
+                                    slug: "how-to-guides/mcp/agents-as-mcp",
                                 },
                             ],
                         },
@@ -202,6 +311,38 @@ export default defineConfig({
                             ],
                         },
                         {
+                            label: "Operations",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Diagnostics & Process Pools",
+                                    slug: "how-to-guides/operations/diagnostics",
+                                },
+                                {
+                                    label: "Audit Log",
+                                    slug: "how-to-guides/operations/audit-log",
+                                },
+                                {
+                                    label: "Usage & ROI Reports",
+                                    slug: "how-to-guides/operations/usage-reports",
+                                },
+                            ],
+                        },
+                        {
+                            label: "Portability",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Exporting and Importing",
+                                    slug: "how-to-guides/portability/exporting-importing",
+                                },
+                                {
+                                    label: "Manifest Format",
+                                    slug: "how-to-guides/portability/manifest-format",
+                                },
+                            ],
+                        },
+                        {
                             label: "User Interface",
                             collapsed: true,
                             items: [
@@ -222,8 +363,20 @@ export default defineConfig({
                             collapsed: true,
                             items: [
                                 {
+                                    label: "Agents Module",
+                                    slug: "sdk-reference/sdk/agents-module",
+                                },
+                                {
+                                    label: "AI Module",
+                                    slug: "sdk-reference/sdk/ai-module",
+                                },
+                                {
                                     label: "Bifrost Module",
                                     slug: "sdk-reference/sdk/bifrost-module",
+                                },
+                                {
+                                    label: "Config Module",
+                                    slug: "sdk-reference/sdk/config-module",
                                 },
                                 {
                                     label: "Context API",
@@ -234,12 +387,20 @@ export default defineConfig({
                                     slug: "sdk-reference/sdk/decorators",
                                 },
                                 {
-                                    label: "Config Module",
-                                    slug: "sdk-reference/sdk/config-module",
+                                    label: "Email Module",
+                                    slug: "sdk-reference/sdk/email-module",
                                 },
                                 {
-                                    label: "Tables Module",
-                                    slug: "sdk-reference/sdk/tables-module",
+                                    label: "Executions Module",
+                                    slug: "sdk-reference/sdk/executions-module",
+                                },
+                                {
+                                    label: "External SDK",
+                                    slug: "sdk-reference/sdk/external-sdk",
+                                },
+                                {
+                                    label: "Files Module",
+                                    slug: "sdk-reference/sdk/files-module",
                                 },
                                 {
                                     label: "Integrations Module",
@@ -250,17 +411,29 @@ export default defineConfig({
                                     slug: "sdk-reference/sdk/knowledge-module",
                                 },
                                 {
-                                    label: "AI Module",
-                                    slug: "sdk-reference/sdk/ai-module",
+                                    label: "Organizations Module",
+                                    slug: "sdk-reference/sdk/organizations-module",
                                 },
                                 {
-                                    label: "External SDK",
-                                    slug: "sdk-reference/sdk/external-sdk",
+                                    label: "Roles Module",
+                                    slug: "sdk-reference/sdk/roles-module",
+                                },
+                                {
+                                    label: "Tables Module",
+                                    slug: "sdk-reference/sdk/tables-module",
+                                },
+                                {
+                                    label: "Users Module",
+                                    slug: "sdk-reference/sdk/users-module",
+                                },
+                                {
+                                    label: "Webhooks Module",
+                                    slug: "sdk-reference/sdk/webhooks-module",
                                 },
                             ],
                         },
                         {
-                            label: "App Builder (Experimental)",
+                            label: "Apps",
                             collapsed: true,
                             items: [
                                 {
@@ -285,7 +458,8 @@ export default defineConfig({
                 },
             ],
             components: {
-                // Override default components if needed
+                Head: "./src/components/Head.astro",
+                Sidebar: "./src/components/Sidebar.astro",
             },
             plugins: [starlightThemeBlack({})],
         }),

@@ -1,0 +1,18 @@
+{
+  "entries": [
+    {"period": "2026-03-26", "execution_count": 280, "success_count": 270, "time_saved": 5840, "value": 13200.00},
+    {"period": "2026-03-29", "execution_count": 312, "success_count": 308, "time_saved": 6210, "value": 14400.00},
+    {"period": "2026-04-01", "execution_count": 304, "success_count": 295, "time_saved": 6080, "value": 14000.00},
+    {"period": "2026-04-04", "execution_count": 340, "success_count": 332, "time_saved": 6680, "value": 15600.00},
+    {"period": "2026-04-07", "execution_count": 365, "success_count": 358, "time_saved": 7240, "value": 16800.00},
+    {"period": "2026-04-10", "execution_count": 388, "success_count": 380, "time_saved": 7720, "value": 17820.00},
+    {"period": "2026-04-13", "execution_count": 410, "success_count": 401, "time_saved": 8200, "value": 18900.00},
+    {"period": "2026-04-16", "execution_count": 442, "success_count": 432, "time_saved": 8840, "value": 20400.00},
+    {"period": "2026-04-19", "execution_count": 480, "success_count": 470, "time_saved": 9620, "value": 22120.00},
+    {"period": "2026-04-22", "execution_count": 510, "success_count": 498, "time_saved": 10240, "value": 23800.00},
+    {"period": "2026-04-25", "execution_count": 540, "success_count": 525, "time_saved": 10840, "value": 25140.00}
+  ],
+  "granularity": "day",
+  "time_saved_unit": "minutes",
+  "value_unit": "USD"
+}

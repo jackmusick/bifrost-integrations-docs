@@ -1,0 +1,115 @@
+---
+title: Users Module
+description: SDK reference for user CRUD operations
+---
+
+The `users` module provides CRUD over user accounts. Mutations require platform-admin privileges; non-admins can `list()` and `get()` users within their own organization.
+
+## Import
+
+```python
+from bifrost import users
+```
+
+## Method Index
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `users.list()` | `list[UserPublic]` | List users (optionally filter by org or include inactive) |
+| `users.get()` | `UserPublic \| None` | Look up a user by ID or email |
+| `users.create()` | `UserPublic` | Create a new user (admin only) |
+| `users.update()` | `UserPublic` | Patch user fields (admin only) |
+| `users.delete()` | `bool` | Permanently delete a user (admin only) |
+
+## users.list()
+
+```python
+async def list(
+    org_id: str | None = None,
+    include_inactive: bool = False,
+) -> list[UserPublic]
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `org_id` | str \| None | Filter by organization (admin only) |
+| `include_inactive` | bool | Include disabled users |
+
+```python
+team = await users.list(org_id="org-123")
+all_users = await users.list(include_inactive=True)
+```
+
+## users.get()
+
+```python
+async def get(user_id: str) -> UserPublic | None
+```
+
+Returns `None` (not an exception) when the user doesn't exist. Accepts either a UUID or an email.
+
+```python
+user = await users.get("alice@example.com")
+if user:
+    print(user.name)
+```
+
+## users.create()
+
+```python
+async def create(
+    email: str,
+    name: str,
+    is_superuser: bool = False,
+    org_id: str | None = None,
+    is_active: bool = True,
+) -> UserPublic
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `email` | str | Email address (must be unique) |
+| `name` | str | Display name |
+| `is_superuser` | bool | Make this user a platform admin |
+| `org_id` | str \| None | Organization ID (required for non-superusers) |
+| `is_active` | bool | Whether the account is enabled |
+
+Raises `PermissionError` if the caller is not a platform admin, `ValueError` on validation failure (e.g. missing `org_id` for a non-superuser).
+
+```python
+new_user = await users.create(
+    email="alice@acme.com",
+    name="Alice Smith",
+    org_id="org-123",
+)
+```
+
+## users.update()
+
+```python
+async def update(user_id: str, **updates: Any) -> UserPublic
+```
+
+Accepts any patchable field as a keyword argument (`email`, `name`, `is_active`, `is_superuser`, ...). Raises `ValueError` if the user is not found.
+
+```python
+await users.update("user-123", name="Alice Smith-Jones", is_active=True)
+```
+
+## users.delete()
+
+```python
+async def delete(user_id: str) -> bool
+```
+
+Permanently deletes the user. Raises `ValueError` if the user doesn't exist or if the caller tries to delete their own account.
+
+```python
+await users.delete("user-123")
+```
+
+## Types
+
+### UserPublic
+
+The public-safe shape of a user record. Defined in `bifrost.models`. Common fields include `id`, `email`, `name`, `organization_id`, `is_superuser`, `is_active`, `roles`, and timestamps. See the `bifrost.models` module for the canonical definition.

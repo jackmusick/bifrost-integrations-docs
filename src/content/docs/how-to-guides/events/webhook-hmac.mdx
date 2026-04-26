@@ -1,0 +1,39 @@
+---
+title: Verify Webhook Authenticity with HMAC
+description: Configure HMAC signature verification on a webhook event source
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Webhook event sources support HMAC-SHA256 signature verification. When a webhook secret is configured, Bifrost rejects any inbound request whose signature header doesn't match a digest of the request body.
+
+## Configure HMAC Verification
+
+<Steps>
+
+1. Open the webhook event source and scroll to the **Authentication** section.
+
+   ![HMAC Settings](../../../../assets/events/hmac-settings.png)
+
+2. Set the shared **Webhook Secret**, the **Signature Header** name (e.g. `X-Hub-Signature-256`), and a **Signature Prefix** if your provider uses one (e.g. `sha256=`).
+
+3. Save. Subsequent inbound requests must carry a valid HMAC signature in the configured header, or they are rejected with `401`.
+
+</Steps>
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Webhook Secret** | Shared secret used as the HMAC key | `whsec_abc123...` |
+| **Signature Header** | Header carrying the signature | `X-Hub-Signature-256` |
+| **Signature Prefix** | Stripped before comparison | `sha256=` |
+| **Event Type Header** | Header carrying the event type (optional) | `X-Event-Type` |
+| **Event Type Field** | Body field carrying the event type (optional) | `event` |
+
+<Aside type="tip">
+Each field has a UI tooltip (ⓘ) explaining its purpose. The webhook secret is stored masked and never displayed after saving.
+</Aside>
+
+## Next Steps
+
+- [Create Subscriptions](/how-to-guides/events/subscriptions/) — route verified events to workflows or agents.
+- [Webhook & Event Variables](/how-to-guides/events/webhook-variables/) — payload field reference.

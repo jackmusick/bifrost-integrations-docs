@@ -1,0 +1,65 @@
+---
+title: Email Module
+description: SDK reference for sending emails via the platform's configured email workflow
+---
+
+The `email` module sends transactional email through the platform's configured email workflow. The platform admin must configure an email workflow under **Settings -> Email** before this works.
+
+## Import
+
+```python
+from bifrost import email
+```
+
+## Method Index
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `email.send()` | `dict` | Send a plain-text or HTML email |
+
+## email.send()
+
+Send an email through the configured email workflow. Resolves the current execution scope automatically.
+
+```python
+async def send(
+    recipient: str,
+    subject: str,
+    body: str,
+    html_body: str | None = None,
+) -> dict
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `recipient` | str | Recipient email address |
+| `subject` | str | Subject line |
+| `body` | str | Plain-text body |
+| `html_body` | str \| None | Optional HTML body |
+
+Returns a dict with:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `success` | bool | Whether the email was queued/sent successfully |
+| `execution_id` | str \| None | Execution ID of the underlying email workflow |
+| `error` | str \| None | Error message when `success` is `False` |
+
+### Example
+
+```python
+from bifrost import email, workflow
+
+@workflow
+async def notify_invoice_ready(recipient: str, invoice_url: str):
+    """Send the customer an invoice-ready notification."""
+    result = await email.send(
+        recipient=recipient,
+        subject="Your invoice is ready",
+        body=f"Download your invoice here: {invoice_url}",
+        html_body=f'<p>Download your <a href="{invoice_url}">invoice</a>.</p>',
+    )
+    if not result["success"]:
+        raise RuntimeError(f"Email failed: {result['error']}")
+    return {"sent": True, "execution_id": result["execution_id"]}
+```

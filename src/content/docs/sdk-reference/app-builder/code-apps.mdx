@@ -64,7 +64,7 @@ Everything comes from a single `"bifrost"` import -- React hooks, UI components,
 import {
   useState, useEffect, useMemo, useCallback, useRef, useContext,
   Button, Card, CardHeader, CardTitle, CardContent,
-  useWorkflowQuery, useUser, useNavigate,
+  useWorkflowQuery, useUser, RequireRole, useNavigate,
   Settings, ChevronRight,
   cn, toast, format
 } from "bifrost";
@@ -126,12 +126,60 @@ const result = await execute({ name: "New Item" });
 
 | Hook | Description |
 |------|-------------|
-| `useUser()` | Current authenticated user `{ id, email, name }` |
+| `useUser()` | Current authenticated user (see below) |
 | `useAppState(key, initialValue)` | Persistent cross-page state |
 | `useParams()` | URL path parameters |
 | `useSearchParams()` | Query string parameters |
 | `useNavigate()` | Programmatic navigation: `navigate("/path")` |
 | `useLocation()` | Current location object |
+
+### useUser()
+
+Returns the current authenticated user. Use the user's roles to gate UI by role.
+
+```ts
+type User = {
+  id: string;
+  email: string;
+  name: string;
+  roles: string[];                          // All roles assigned to the user
+  hasRole: (role: string) => boolean;       // Convenience role check
+  organizationId: string;                   // "" for platform users
+};
+```
+
+```tsx
+import { useUser, Button } from "bifrost";
+
+export default function Header() {
+  const user = useUser();
+
+  return (
+    <div>
+      <span>Welcome, {user.name}</span>
+      {user.hasRole("Admin") && <Button>Admin Settings</Button>}
+    </div>
+  );
+}
+```
+
+### RequireRole
+
+Declarative wrapper that conditionally renders children based on the user's roles. Falls back to `null` (or a custom `fallback`) when the user lacks the role.
+
+```tsx
+import { RequireRole, Button } from "bifrost";
+
+<RequireRole role="Admin">
+  <Button variant="destructive">Delete All</Button>
+</RequireRole>
+
+<RequireRole role="Admin" fallback={<p>Admins only.</p>}>
+  <AdminPanel />
+</RequireRole>
+```
+
+`RequireRole` is built on top of `useUser().hasRole(role)` -- use it when you want a clean declarative gate around a subtree, and use `useUser()` directly when you need the role check inline with other logic.
 
 ### React Hooks
 

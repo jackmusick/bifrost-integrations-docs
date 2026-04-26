@@ -1,0 +1,36 @@
+---
+title: Create an Event Source
+description: Add a webhook endpoint or scheduled trigger that workflows can subscribe to
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+An **event source** is a typed entry point for inbound triggers. Webhooks, schedules, and platform-emitted events all flow through one. Subscriptions attached to the source decide which workflows or agents run.
+
+## Add an Event Source
+
+<Steps>
+
+1. Go to **Event Sources** in the sidebar and click **Add Event Source**.
+
+   ![Event Sources List](../../../../assets/events/sources-list.png)
+
+2. Pick a transport (Webhook or Schedule), name the source, and save. Webhook sources are assigned a unique URL you can copy from the detail page.
+
+   ![Add Event Source Dialog](../../../../assets/events/add-source-dialog.png)
+
+3. Open the source to view its inbound URL, recent deliveries, and HMAC settings. Each field has an info tooltip (ⓘ) that explains what it does.
+
+   ![Event Source Detail](../../../../assets/events/source-detail.png)
+
+</Steps>
+
+<Aside type="tip">
+For webhook sources, copy the URL from the detail page and register it with the upstream system before sending a test event. Bifrost stores every delivery so you can replay or inspect them later.
+</Aside>
+
+## Next Steps
+
+- [Create Subscriptions](/how-to-guides/events/subscriptions/) — route incoming events to workflows or agents.
+- [Webhook HMAC Authentication](/how-to-guides/events/webhook-hmac/) — verify request authenticity.
+- [Webhook & Event Variables](/how-to-guides/events/webhook-variables/) — reference payload fields in workflow context.
