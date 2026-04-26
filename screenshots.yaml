@@ -244,16 +244,31 @@ entries:
     captured_at: null
   - id: integrations-image-8
     image: src/assets/integrations/image-8.png
-    route: /integrations
+    # NOTE: Prose shows the OAuth connection edit dialog (Client ID, Client
+    # Secret, Auth URL, Scope) for Microsoft_Graph. That dialog lives on the
+    # integration detail page, not the integrations list — the row Edit
+    # button on /integrations opens CreateIntegrationDialog, which has no
+    # OAuth fields. So this entry navigates to the detail page and opens
+    # "Edit Configuration" from the OAuth card's overflow menu.
+    route: /integrations/aaaa1111-1111-1111-1111-111111111111
     capture:
       mocks:
         - url: '**/api/integrations'
           fixture: fixtures/integrations-list-with-graph.json
         - url: '**/api/integrations?**'
           fixture: fixtures/integrations-list-with-graph.json
+        - url: '**/api/integrations/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/integration-detail-graph.json
+        - url: '**/api/oauth/connections/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/oauth-connection-graph.json
+        - url: '**/api/organizations'
+          body: []
       actions:
-        - click: tr:has-text("Microsoft_Graph") button[title="Edit"]
-        - wait_for: '[role="dialog"]'
+        - wait_for: 'div:has(> div > div:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
+        - click: 'div:has(> div > div:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
+        - wait_for: '[role="menuitem"]:has-text("Edit Configuration")'
+        - click: '[role="menuitem"]:has-text("Edit Configuration")'
+        - wait_for: '[role="dialog"]:has-text("Edit OAuth Connection")'
         - wait_ms: 300
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
@@ -290,6 +305,12 @@ entries:
     route: /forms/new
     seed: forms_with_sample_org
     capture:
+      # /forms/new opens a "New Form" modal on top of the form builder. The
+      # left palette column the prose describes is hidden behind it; dismiss
+      # the modal first (same pattern as creating-forms-image-5).
+      actions:
+        - click: '[role="dialog"] button:has-text("Cancel")'
+        - wait_for: button[title="Add Field"]
       crop:
         x: 256
         'y': 80
@@ -307,6 +328,11 @@ entries:
     route: /forms/new
     seed: forms_with_sample_org
     capture:
+      # See creating-forms-image-3: dismiss the New Form modal so the right
+      # canvas column is visible behind the crop.
+      actions:
+        - click: '[role="dialog"] button:has-text("Cancel")'
+        - wait_for: button[title="Add Field"]
       crop:
         x: 998
         'y': 80

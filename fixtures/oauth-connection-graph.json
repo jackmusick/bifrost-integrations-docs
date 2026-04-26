@@ -1,0 +1,21 @@
+{
+  "connection_name": "aaaa1111-1111-1111-1111-111111111111",
+  "name": "Microsoft_Graph",
+  "provider": "Microsoft_Graph",
+  "description": "Microsoft Graph API connection",
+  "oauth_flow_type": "authorization_code",
+  "client_id": "00000000-0000-0000-0000-000000000000",
+  "authorization_url": "https://login.microsoftonline.com/{entity_id}/oauth2/v2.0/authorize",
+  "token_url": "https://login.microsoftonline.com/{entity_id}/oauth2/v2.0/token",
+  "scopes": "offline_access Directory.Read.All",
+  "audience": null,
+  "status": "completed",
+  "status_message": null,
+  "integration_id": "aaaa1111-1111-1111-1111-111111111111",
+  "expires_at": "2026-12-31T23:59:59.000000Z",
+  "last_refresh_at": "2026-04-22T08:30:00.000000Z",
+  "last_test_at": "2026-04-22T08:30:00.000000Z",
+  "created_at": "2026-02-08T11:00:00.000000Z",
+  "created_by": "platform_admin",
+  "updated_at": "2026-04-22T08:30:00.000000Z"
+}
