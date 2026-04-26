@@ -103,6 +103,35 @@ events:
         event_type: "ticket.created"
         input_mapping:
           ticket_id: "$.id"
+      - id: "b8c9d0e1-f2a3-4567-1234-567890123458"
+        target_type: "agent"
+        agent_id: "c9d0e1f2-a3b4-5678-2345-678901234569"
+        event_type: "ticket.created"
+```
+
+### agents.yaml
+
+Declares agents with their tools, delegations, and budget settings:
+
+```yaml
+agents:
+  triage-agent:
+    id: "d0e1f2a3-b4c5-6789-3456-789012345670"
+    description: "Routes incoming tickets to specialized agents"
+    access_level: "authenticated"
+    channels:
+      - "chat"
+    max_iterations: 50
+    max_token_budget: 100000
+    max_run_timeout: 300
+    tools:
+      - "lookup_customer"
+      - "get_ticket"
+    delegated_agents:
+      - "billing-agent"
+      - "tech-support-agent"
+    knowledge_namespaces:
+      - "faq"
 ```
 
 ### forms.yaml
@@ -137,6 +166,7 @@ The platform validates manifest integrity by checking that:
 - All role references point to declared roles
 - Integration config references point to declared integrations
 - Event subscription `workflow_id` references point to declared workflows
+- Event subscription `agent_id` references point to declared agents
 - Table `application_id` references point to declared apps
 
 Validation errors surface during preflight checks and Git sync.

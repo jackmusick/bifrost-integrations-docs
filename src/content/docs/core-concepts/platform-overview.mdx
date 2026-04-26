@@ -60,6 +60,13 @@ The Bifrost Dashboard provides a high-level overview of your platform, including
     isolation between tenants
 </Card>
 
+  <Card title="AI Agents" icon="rocket">
+    - Conversational agents with tool-calling workflows
+    - Autonomous agent runs triggered by events or schedules
+    - Budget controls for iteration and token limits
+    - Full observability with step-by-step run tracking
+  </Card>
+
   <Card title="AI-Assisted Development" icon="star">
     - Built for modern AI coding workflows
     - Use Claude Code, GitHub Copilot, and other AI tools
@@ -144,6 +151,14 @@ async def get_departments():
         {"label": "Sales", "value": "sales"}
     ]
 ```
+
+### Agents
+
+AI agents that use workflows as tools:
+
+- **Chat mode**: Interactive conversations via web, Teams, or Slack
+- **Autonomous mode**: Headless execution triggered by events, schedules, or SDK calls
+- Budget controls (`max_iterations`, `max_token_budget`) bound resource usage
 
 ### Workflow Registration
 

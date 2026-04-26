@@ -1,0 +1,139 @@
+---
+title: Agents Module
+description: SDK reference for autonomous agent invocation
+---
+
+The `agents` module lets you invoke agents programmatically from workflows.
+
+## Import
+
+```python
+from bifrost import agents
+```
+
+## Methods
+
+### agents.run()
+
+Execute an agent autonomously and wait for the result.
+
+```python
+async def run(
+    agent_name: str,
+    input: dict | None = None,
+    *,
+    output_schema: dict | None = None,
+    timeout: int = 1800,
+) -> dict | str
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `agent_name` | str | Name of the agent to run |
+| `input` | dict | Structured input data for the agent |
+| `output_schema` | dict | JSON Schema for the expected output (agent will conform its response) |
+| `timeout` | int | Maximum seconds to wait (default 1800 = 30 min) |
+
+#### Returns
+
+- If `output_schema` is provided: `dict` matching the schema
+- Otherwise: `str` (the agent's final text response)
+
+#### Raises
+
+- `RuntimeError` — if the agent run fails
+- `ValueError` — if the agent is not found
+
+#### Examples
+
+```python
+from bifrost import workflow, agents
+
+@workflow
+async def classify_ticket(description: str):
+    """Use an AI agent to classify a support ticket."""
+    result = await agents.run(
+        "ticket-classifier",
+        input={"description": description},
+        output_schema={
+            "type": "object",
+            "properties": {
+                "priority": {"type": "string", "enum": ["low", "normal", "high", "urgent"]},
+                "category": {"type": "string"},
+                "summary": {"type": "string"}
+            }
+        },
+        timeout=120,
+    )
+    return result  # {"priority": "high", "category": "billing", "summary": "..."}
+
+
+@workflow
+async def generate_report():
+    """Use an agent to generate a natural language report."""
+    report = await agents.run(
+        "report-writer",
+        input={"report_type": "weekly", "department": "engineering"},
+    )
+    return {"report": report}  # report is a string
+```
+
+## How It Works
+
+1. The SDK sends a request to create an agent run
+2. The run is queued and picked up by a worker
+3. The agent loads its system prompt, tools, and knowledge sources
+4. An LLM tool-calling loop executes: LLM → tool → LLM → ...
+5. The loop ends when the agent produces a final answer or hits budget limits
+6. The result is returned to the calling workflow
+
+## Budget Limits
+
+Agent runs are bounded by two limits set on the agent configuration:
+
+| Limit | Description | Default | Max |
+|-------|-------------|---------|-----|
+| `max_iterations` | Max LLM call cycles per run | 50 | 200 |
+| `max_token_budget` | Max total tokens per run | 100,000 | 1,000,000 |
+
+If either limit is reached, the run completes with status `budget_exceeded`.
+
+An optional per-agent `max_run_timeout` can also be configured in the UI to set a hard time limit on runs.
+
+## Delegation
+
+When an agent has **Delegated Agents** configured, it automatically receives `delegate_to_<agent_name>` tools. During execution, the agent can delegate tasks to child agents:
+
+```python
+# Parent agent automatically gets delegation tools like:
+# delegate_to_child_agent(task: str) -> str
+# These are called by the LLM, not by your workflow code
+```
+
+Delegation is bounded by:
+- **Max depth**: 5 levels of nested delegation
+- **Timeout**: 600 seconds per delegation call
+- **Child tracking**: Each delegation creates a child `AgentRun` linked via `parent_run_id`
+
+## Cancellation and Rerun
+
+Agent runs support cancellation and rerun via the API:
+
+```python
+import requests
+
+# Cancel a running agent
+requests.post(f"{api_url}/api/agent-runs/{run_id}/cancel", headers=headers)
+
+# Rerun a completed/failed/cancelled run
+response = requests.post(f"{api_url}/api/agent-runs/{run_id}/rerun", headers=headers)
+new_run = response.json()
+```
+
+## See Also
+
+- [Agents and Chat](/how-to-guides/ai/agents-and-chat) — Agent configuration and chat
+- [AI Tools](/how-to-guides/workflows/ai-tools) — Making workflows callable as agent tools
+- [AI Module](/sdk-reference/sdk/ai-module) — Direct LLM completions

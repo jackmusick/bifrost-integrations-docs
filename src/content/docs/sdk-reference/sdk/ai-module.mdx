@@ -26,7 +26,6 @@ async def complete(
     response_format: type[T] | None = None,
     knowledge: list[str] | None = None,
     max_tokens: int | None = None,
-    temperature: float | None = None,
     org_id: str | None = None,
     model: str | None = None,
 ) -> AIResponse | T
@@ -42,7 +41,6 @@ async def complete(
 | `response_format` | type | Pydantic model for structured output |
 | `knowledge` | list[str] | Knowledge namespaces for RAG |
 | `max_tokens` | int | Override default max tokens |
-| `temperature` | float | Override default temperature (0.0-2.0) |
 | `org_id` | str | Organization context (auto-set in workflows) |
 | `model` | str | Override default model |
 
@@ -104,7 +102,6 @@ async def stream(
     system: str | None = None,
     knowledge: list[str] | None = None,
     max_tokens: int | None = None,
-    temperature: float | None = None,
     org_id: str | None = None,
     model: str | None = None,
 ) -> AsyncGenerator[AIStreamChunk, None]
@@ -121,7 +118,6 @@ Same as `ai.complete()` except no `response_format`.
 | `system` | str | System prompt (prepended to messages) |
 | `knowledge` | list[str] | Knowledge namespaces for RAG |
 | `max_tokens` | int | Override default max tokens |
-| `temperature` | float | Override default temperature (0.0-2.0) |
 | `org_id` | str | Organization context (auto-set in workflows) |
 | `model` | str | Override default model |
 

@@ -34,9 +34,9 @@ async def get(
 | `scope` | str \| None | Organization scope (see below) |
 
 **Scope parameter:**
-- `None` (default): Use execution context's organization
-- Org UUID string: Target specific organization
-- `"global"`: Access platform-level config
+- *(omitted)* (default): Use execution context's org, with automatic global fallback via cascade
+- Org UUID string: Target specific organization (provider orgs only)
+- `None` explicitly: Target global scope directly
 
 > **Note:** Targeting a specific org via UUID requires provider org context. Managed orgs can only access their own scope. Use `context.set_scope()` to override scope for all calls at once.
 
@@ -49,7 +49,7 @@ The configuration value, or `default` if not found. Secrets are automatically de
 ```python
 api_key = await config.get("external_api_key")
 timeout = await config.get("request_timeout", default=30)
-global_setting = await config.get("platform_key", scope="global")
+org_setting = await config.get("other_org_key", scope="org-uuid-here")  # provider orgs only
 ```
 
 ### config.set()
@@ -77,7 +77,7 @@ async def set(
 **Scope parameter:**
 - `None` (default): Use execution context's organization
 - Org UUID string: Target specific organization
-- `"global"`: Store at platform-level
+- `None` explicitly: Store at global/platform-level
 
 #### Example
 
@@ -88,8 +88,8 @@ await config.set("max_retries", 3)
 # Secret value (encrypted at rest)
 await config.set("api_secret", "sk-xxx", is_secret=True)
 
-# Global platform setting
-await config.set("platform_feature", True, scope="global")
+# Global platform setting (scope=None targets global directly)
+await config.set("platform_feature", True, scope=None)
 ```
 
 ### config.list()
@@ -109,7 +109,7 @@ async def list(scope: str | None = None) -> ConfigData
 **Scope parameter:**
 - `None` (default): Use execution context's organization
 - Org UUID string: Target specific organization
-- `"global"`: List platform-level config
+- `None` explicitly: List global/platform-level config only
 
 #### Returns
 
@@ -153,7 +153,7 @@ async def delete(key: str, scope: str | None = None) -> bool
 **Scope parameter:**
 - `None` (default): Use execution context's organization
 - Org UUID string: Target specific organization
-- `"global"`: Delete platform-level config
+- `None` explicitly: Delete global/platform-level config
 
 #### Example
 
@@ -190,7 +190,7 @@ Values stored with `is_secret=True`:
 All config operations are scoped to an organization:
 - In workflows, scope is automatically set from execution context
 - For CLI/local development, specify scope explicitly or use default from credentials
-- Use `scope="global"` for platform-wide settings
+- Pass `scope=None` to target global scope directly, or just omit `scope` and let cascade handle it
 
 ## See Also
 

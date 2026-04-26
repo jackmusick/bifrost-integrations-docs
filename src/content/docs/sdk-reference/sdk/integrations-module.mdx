@@ -32,9 +32,9 @@ async def get(
 | `scope` | str \| None | Organization scope (see below) |
 
 **Scope parameter:**
-- `None` (default): Use execution context's organization
-- Org UUID string: Target specific organization
-- `"global"`: Access platform-level integration defaults
+- *(omitted)* (default): Use execution context's org, with automatic global fallback via cascade
+- Org UUID string: Target specific organization (provider orgs only)
+- `None` explicitly: Target global scope directly (integration defaults only)
 
 > **Note:** Targeting a specific org via UUID requires provider org context. Managed orgs can only access their own scope. Use `context.set_scope()` to override scope for all calls at once.
 

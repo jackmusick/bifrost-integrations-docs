@@ -128,14 +128,35 @@ AI: (switches to tech-agent)
 
 ## Agent Delegation
 
-Agents can delegate to other agents:
+Agents can delegate tasks to other agents, enabling multi-agent workflows where specialized agents handle specific domains.
 
-1. In agent settings, add **Delegations**
-2. Select agents this one can hand off to
-3. The AI decides when to delegate based on context
+### Setting Up Delegation
+
+<Steps>
+
+1. In agent settings, add agents to **Delegated Agents**
+2. The parent agent automatically gets a `delegate_to_<agent_name>` tool
+3. During execution, the AI decides when to delegate based on context
+
+</Steps>
+
+### How Delegation Works
+
+When an agent delegates:
+1. A `delegate_to_<agent_name>` tool call is made with a `task` parameter
+2. A **child agent run** is created and executed
+3. The child run result is returned to the parent agent
+4. Parent and child runs are linked via `parent_run_id` / `child_run_ids`
+
+### Delegation Limits
+
+| Limit | Value | Description |
+|-------|-------|-------------|
+| **Max depth** | 5 | Maximum delegation chain depth to prevent infinite loops |
+| **Timeout** | 600s | Per-delegation timeout (10 minutes) |
 
 <Aside type="tip">
-Delegation is useful for specialized agents - a general triage agent can delegate to billing, tech support, or sales agents.
+Delegation is useful for specialized agents — a general triage agent can delegate to billing, tech support, or sales agents. Child runs are automatically filtered from the top-level agent runs list.
 </Aside>
 
 ## Agentless Chat
@@ -177,13 +198,102 @@ async def update_ticket(ticket_id: str, status: str, note: str = ""):
 Create an agent with these tools and a prompt like:
 > "You are a helpful support agent. Use the tools to look up and update tickets. Always confirm before making changes."
 
+## Autonomous Agent Runs
+
+Agents can run autonomously without a chat session — triggered by events, schedules, or SDK calls. The agent receives structured input, executes a tool-calling loop, and returns structured output.
+
+### How It Works
+
+1. An agent run is created with input data
+2. The agent's system prompt and tools are loaded
+3. The LLM processes the input and decides which tools to call
+4. Tool results feed back into the LLM for the next iteration
+5. The loop continues until the agent produces a final answer or hits budget limits
+
+### Budget Controls
+
+| Field | Description | Default | Max |
+|-------|-------------|---------|-----|
+| `max_iterations` | Maximum LLM call cycles | 50 | 200 |
+| `max_token_budget` | Maximum total tokens consumed | 100,000 | 1,000,000 |
+| `max_run_timeout` | Maximum seconds per run (optional) | None | — |
+
+Set these on the agent configuration to control cost and runtime. If either `max_iterations` or `max_token_budget` is reached, the run completes with status `budget_exceeded`.
+
+### Triggering Agent Runs
+
+**From a workflow (SDK):**
+
+```python
+from bifrost import workflow, agents
+
+@workflow
+async def triage_ticket(ticket_id: str):
+    result = await agents.run(
+        "ticket-triage-agent",
+        input={"ticket_id": ticket_id},
+        output_schema={
+            "type": "object",
+            "properties": {
+                "priority": {"type": "string"},
+                "category": {"type": "string"}
+            }
+        },
+    )
+    return result
+```
+
+**From an event subscription:**
+
+Create a subscription with `target_type: "agent"` to route events directly to an agent:
+
+1. Go to **Events** > select your event source
+2. Click **Add Subscription**
+3. Set **Target Type** to **Agent**
+4. Select the agent
+5. The event payload becomes the agent's input
+
+**From the API:**
+
+```python
+response = requests.post(
+    f"{api_url}/api/agent-runs/execute",
+    json={
+        "agent_name": "ticket-triage-agent",
+        "input": {"ticket_id": "T-123"},
+        "output_schema": {"type": "object", "properties": {"priority": {"type": "string"}}},
+        "timeout": 300
+    },
+    headers={"Authorization": f"Bearer {token}"}
+)
+result = response.json()  # {"output": {...}, "status": "completed", ...}
+```
+
+### Cancellation and Rerun
+
+Agent runs can be cancelled or rerun from the UI or API:
+
+- **Cancel**: Stops a running agent gracefully. The run transitions through `cancelling` → `cancelled`. Cancellation is checked at three layers: before each iteration, during tool execution, and via a background cancel watcher.
+- **Rerun**: Re-executes a completed, failed, or cancelled run with the same input. Creates a new run with trigger `rerun`.
+
+### Run Observability
+
+Every autonomous run is tracked with full observability:
+
+- **Steps**: Each LLM call and tool execution recorded (including delegation steps with expandable child run details)
+- **Token usage**: Input/output tokens per step and totals
+- **Cost tracking**: AI cost breakdown grouped by model in usage reports
+- **Status progression**: `queued` → `running` → `completed` | `failed` | `budget_exceeded` | `cancelled`
+- **Run details**: Iterations, tokens, duration, model, trigger source, and caller
+
+View runs in the **History** page under the **Agents** tab, or query via the API.
+
 ## The Coding Agent
 
-The Coding Agent is a special system agent for creating and modifying Bifrost workflows. It provides AI-assisted development capabilities directly within the platform.
+The Coding Agent is a platform agent for creating and modifying Bifrost workflows. It provides AI-assisted development capabilities directly within the platform.
 
 ### Characteristics
 
-- **System agent**: Auto-created on platform startup, cannot be deleted
 - **Claude-powered**: Uses Claude with MCP tools for code editing
 - **Workspace access**: Has full access to workspace files and system tools
 - **Development focus**: Optimized for workflow creation and modification
@@ -249,10 +359,10 @@ When `is_tool=True`:
 
 Tools are assigned to agents in two ways:
 
-- **System tools**: Assigned via the `system_tools` array on the agent configuration
+- **System tools**: Platform-provided tools (file operations, workflow execution, search, etc.)
 - **Workflow tools**: Assigned via the agent-tools relationship in the UI or API
 
-The Coding Agent receives all system tools by default. Custom agents only receive the tools explicitly assigned to them.
+Agents only receive the tools explicitly assigned to them.
 
 ## Next Steps
 

@@ -183,7 +183,7 @@ You can also specify the organization:
 integration = await integrations.get("Microsoft_Graph", org_id="org-123")
 
 # Access platform-level integration defaults (no org mapping)
-integration = await integrations.get("Microsoft_Graph", scope="global")
+integration = await integrations.get("Microsoft_Graph", scope=None)
 ```
 
 ## Next Steps

@@ -7,6 +7,35 @@ import { Aside } from '@astrojs/starlight/components';
 
 When a webhook or scheduled event triggers a workflow, the system provides template variables for input mappings and injects event metadata into the execution context automatically.
 
+## Webhook HMAC Authentication
+
+Webhook event sources support HMAC signature verification to ensure incoming requests are authentic. Configure these fields in the event source settings:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Webhook Secret** | Shared secret for HMAC signature verification | `whsec_abc123...` |
+| **Signature Header** | HTTP header containing the HMAC signature | `X-Hub-Signature-256` |
+| **Signature Prefix** | Prefix before the signature value | `sha256=` |
+| **Event Type Header** | Header containing the event type (optional) | `X-Event-Type` |
+| **Event Type Field** | JSON body field containing the event type (optional) | `event` or `type` |
+
+When a webhook secret is configured, Bifrost computes an HMAC-SHA256 digest of the request body and compares it against the signature in the specified header. Requests with invalid signatures are rejected.
+
+<Aside type="tip">
+Each configuration field has an info tooltip (ⓘ) in the UI explaining its purpose. Password-type fields like the webhook secret are masked by default.
+</Aside>
+
+## Agent-Targeted Subscriptions
+
+Event subscriptions can target agents in addition to workflows. When an event is received, it can trigger an autonomous agent run:
+
+1. Go to your event source and click **Add Subscription**
+2. Set **Type** to **Agent**
+3. Select the target agent
+4. The event payload becomes the agent's input (available as `_event` in the agent's context)
+
+This enables event-driven agent workflows — for example, a webhook from a ticketing system can trigger a triage agent that classifies and routes tickets automatically.
+
 ## Template Variables for Input Mappings
 
 When configuring event subscriptions, use these template expressions in input mappings to extract data from incoming events:
