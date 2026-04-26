@@ -489,8 +489,8 @@ entries:
         - url: '**/api/roles'
           body: []
       actions:
-        - wait_for: button[title="Edit organization scope"]
-        - click: button[title="Edit organization scope"]
+        - wait_for: '[data-slot="card"]:has([data-slot="card-title"]:text-is("hello_world")) button[title="Edit organization scope"]'
+        - click: '[data-slot="card"]:has([data-slot="card-title"]:text-is("hello_world")) button[title="Edit organization scope"]'
         - wait_for: '[role="dialog"]:has-text("Edit Workflow Settings")'
         - click: '[role="tab"]:has-text("Access")'
         - wait_for: '[role="tabpanel"]:has-text("Access")'
@@ -595,11 +595,15 @@ entries:
           fixture: fixtures/workers-queue.json
         - url: '**/api/platform/queue?**'
           fixture: fixtures/workers-queue.json
+      actions:
+        - wait_for: 'text=Total Memory Usage'
+        - scroll_into_view: 'text=Total Memory Usage'
+        - wait_ms: 200
       crop:
         x: 256
-        'y': 200
+        'y': 340
         width: 1184
-        height: 320
+        height: 380
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
@@ -622,11 +626,15 @@ entries:
           fixture: fixtures/workers-queue.json
         - url: '**/api/platform/queue?**'
           fixture: fixtures/workers-queue.json
+      actions:
+        - wait_for: 'th:has-text("Container")'
+        - scroll_into_view: 'th:has-text("Container")'
+        - wait_ms: 200
       crop:
         x: 256
-        'y': 480
+        'y': 100
         width: 1184
-        height: 420
+        height: 600
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
@@ -703,11 +711,15 @@ entries:
           fixture: fixtures/usage-report.json
         - url: '**/api/organizations'
           body: []
+      actions:
+        - wait_for: 'text=Usage by Workflow'
+        - scroll_into_view: 'text=Usage by Workflow'
+        - wait_ms: 300
       crop:
         x: 256
-        'y': 500
+        'y': 100
         width: 1184
-        height: 400
+        height: 500
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
@@ -801,6 +813,14 @@ entries:
     image: src/assets/about/ui-version-display.png
     route: /
     seed: org_with_one_workflow
+    # NOTE: APP_VERSION is read from import.meta.env.VITE_BIFROST_VERSION which
+    # Vite resolves at build time. The test client container is built with the
+    # default "unknown" value, so the captured screenshot will show "unknown"
+    # in the version footer. addInitScript cannot patch a build-time-substituted
+    # constant, and rebuilding the test client image with a spoofed version is
+    # too risky for this round. Accepting "unknown" as a known cosmetic blemish
+    # until we either (a) wire VITE_BIFROST_VERSION into docker-compose.test.yml
+    # or (b) refactor APP_VERSION to read from a runtime endpoint.
     capture:
       actions:
         - wait_for: button[aria-haspopup="menu"]
@@ -979,8 +999,8 @@ entries:
     captured_at:
       bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
       timestamp: '2026-04-26T17:52:23.724Z'
-  - id: sso-add-microsoft-dialog
-    image: src/assets/sso/add-microsoft-dialog.png
+  - id: sso-microsoft-card-empty
+    image: src/assets/sso/microsoft-card-empty.png
     route: /settings/sso
     capture:
       mocks:
