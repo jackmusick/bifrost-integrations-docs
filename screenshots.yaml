@@ -587,7 +587,7 @@ entries:
       heading: Open the dashboard
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:27:25.717Z'
+      timestamp: '2026-04-26T18:47:24.748Z'
   - id: operations-diagnostics-memory-chart
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
@@ -618,7 +618,7 @@ entries:
       heading: Memory chart
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:27:25.628Z'
+      timestamp: '2026-04-26T18:47:24.679Z'
   - id: operations-diagnostics-container-table
     image: src/assets/operations/diagnostics-container-table.png
     route: /diagnostics
@@ -652,7 +652,7 @@ entries:
       heading: Container table
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:19:39.668Z'
+      timestamp: '2026-04-26T18:47:24.636Z'
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
@@ -690,7 +690,7 @@ entries:
       heading: Filtering
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:19:39.498Z'
+      timestamp: '2026-04-26T18:47:24.506Z'
   - id: operations-usage-reports-overview
     image: src/assets/operations/usage-reports-overview.png
     route: /reports/usage
@@ -738,7 +738,7 @@ entries:
       heading: By-workflow / By-conversation / By-agent tables
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:19:39.973Z'
+      timestamp: '2026-04-26T18:47:24.873Z'
   - id: operations-roi-reports-overview
     image: src/assets/operations/roi-reports-overview.png
     route: /reports/roi
