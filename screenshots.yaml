@@ -120,8 +120,8 @@ entries:
       type: tutorial
       heading: Create the Form
     captured_at:
-      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
-      timestamp: '2026-04-26T04:25:07.806Z'
+      bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
+      timestamp: '2026-04-26T04:37:36.172Z'
   - id: creating-forms-image-2
     image: src/assets/creating-forms/image-2.png
     route: /forms
@@ -209,8 +209,8 @@ entries:
       type: tutorial
       heading: Expected Result
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.445Z'
+      bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
+      timestamp: '2026-04-26T04:37:36.605Z'
   - id: integrations-image-3
     image: src/assets/integrations/image-3.png
     route: /integrations
@@ -343,8 +343,8 @@ entries:
       type: how-to
       heading: Form Builder
     captured_at:
-      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
-      timestamp: '2026-04-26T04:25:08.561Z'
+      bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
+      timestamp: '2026-04-26T04:37:36.894Z'
   - id: creating-forms-image-5
     image: src/assets/creating-forms/image-5.png
     route: /forms/new
@@ -367,8 +367,8 @@ entries:
       type: how-to
       heading: Visibility Expressions
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.874Z'
+      bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
+      timestamp: '2026-04-26T04:37:36.956Z'
   - id: screenshots-visibility-expression
     image: src/assets/screenshots/visibility-expression.png
     route: /forms/new
@@ -447,8 +447,8 @@ entries:
       type: how-to
       heading: Add HTML Content Field
     captured_at:
-      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
-      timestamp: '2026-04-26T04:25:08.885Z'
+      bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
+      timestamp: '2026-04-26T04:37:37.305Z'
   - id: context-references-inspector
     image: src/assets/context-references/inspector.png
     route: /forms/new
