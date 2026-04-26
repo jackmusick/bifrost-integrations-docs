@@ -36,7 +36,7 @@ entries:
     route: /apps
     seed: org_with_one_app
     diataxis:
-      page: src/content/docs/core-concepts/app-builder.mdx
+      page: src/content/docs/core-concepts/apps.mdx
       type: explanation
       heading: What is App Builder?
     captured_at:

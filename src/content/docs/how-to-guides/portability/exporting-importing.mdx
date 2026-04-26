@@ -1,0 +1,18 @@
+---
+title: Exporting and Importing
+description: Share platform state across environments using bifrost export --portable and bifrost import.
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+Bifrost workspaces can be packaged as portable bundles and applied to a different environment. This is the supported way to move forms, agents, workflows, and apps between dev, staging, and production, or to share a configuration with the community.
+
+The `bifrost export --portable` command writes a scrubbed bundle (no org IDs, no role IDs, no per-environment secrets) to a directory of your choice. `bifrost import` then applies that bundle to a target environment, rewriting org and role references to match the destination.
+
+## Where to learn more
+
+<LinkCard
+  title="Manifest Format"
+  href="/how-to-guides/portability/manifest-format/"
+  description="Understand the .bifrost/ manifest layout that backs exports and imports."
+/>

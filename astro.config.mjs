@@ -5,6 +5,11 @@ import starlightThemeBlack from "starlight-theme-black";
 
 // https://astro.build/config
 export default defineConfig({
+    redirects: {
+        "/core-concepts/app-builder": "/core-concepts/apps/",
+        "/core-concepts/manifest-structure":
+            "/how-to-guides/portability/manifest-format/",
+    },
     vite: {
         server: {
             host: true,
@@ -91,24 +96,26 @@ export default defineConfig({
                             slug: "core-concepts/platform-overview",
                         },
                         { label: "Workflows", slug: "core-concepts/workflows" },
-                        { label: "Forms", slug: "core-concepts/forms" },
                         {
                             label: "Workflow Registration",
                             slug: "core-concepts/discovery-system",
                         },
+                        { label: "Forms", slug: "core-concepts/forms" },
+                        { label: "Apps", slug: "core-concepts/apps" },
+                        { label: "Tables", slug: "core-concepts/tables" },
+                        { label: "Knowledge", slug: "core-concepts/knowledge" },
+                        { label: "Agents", slug: "core-concepts/agents" },
+                        { label: "Chat", slug: "core-concepts/chat" },
                         {
-                            label: "Manifest Structure",
-                            slug: "core-concepts/manifest-structure",
+                            label: "Integrations",
+                            slug: "core-concepts/integrations",
                         },
+                        { label: "Events", slug: "core-concepts/events" },
                         {
                             label: "Permissions",
                             slug: "core-concepts/permissions",
                         },
                         { label: "Scopes", slug: "core-concepts/scopes" },
-                        {
-                            label: "App Builder (Experimental)",
-                            slug: "core-concepts/app-builder",
-                        },
                     ],
                 },
                 {
@@ -210,6 +217,20 @@ export default defineConfig({
                             ],
                         },
                         {
+                            label: "Portability",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Exporting and Importing",
+                                    slug: "how-to-guides/portability/exporting-importing",
+                                },
+                                {
+                                    label: "Manifest Format",
+                                    slug: "how-to-guides/portability/manifest-format",
+                                },
+                            ],
+                        },
+                        {
                             label: "User Interface",
                             collapsed: true,
                             items: [
@@ -230,8 +251,20 @@ export default defineConfig({
                             collapsed: true,
                             items: [
                                 {
+                                    label: "Agents Module",
+                                    slug: "sdk-reference/sdk/agents-module",
+                                },
+                                {
+                                    label: "AI Module",
+                                    slug: "sdk-reference/sdk/ai-module",
+                                },
+                                {
                                     label: "Bifrost Module",
                                     slug: "sdk-reference/sdk/bifrost-module",
+                                },
+                                {
+                                    label: "Config Module",
+                                    slug: "sdk-reference/sdk/config-module",
                                 },
                                 {
                                     label: "Context API",
@@ -242,12 +275,8 @@ export default defineConfig({
                                     slug: "sdk-reference/sdk/decorators",
                                 },
                                 {
-                                    label: "Config Module",
-                                    slug: "sdk-reference/sdk/config-module",
-                                },
-                                {
-                                    label: "Tables Module",
-                                    slug: "sdk-reference/sdk/tables-module",
+                                    label: "External SDK",
+                                    slug: "sdk-reference/sdk/external-sdk",
                                 },
                                 {
                                     label: "Integrations Module",
@@ -258,17 +287,13 @@ export default defineConfig({
                                     slug: "sdk-reference/sdk/knowledge-module",
                                 },
                                 {
-                                    label: "AI Module",
-                                    slug: "sdk-reference/sdk/ai-module",
-                                },
-                                {
-                                    label: "External SDK",
-                                    slug: "sdk-reference/sdk/external-sdk",
+                                    label: "Tables Module",
+                                    slug: "sdk-reference/sdk/tables-module",
                                 },
                             ],
                         },
                         {
-                            label: "App Builder (Experimental)",
+                            label: "Apps",
                             collapsed: true,
                             items: [
                                 {
