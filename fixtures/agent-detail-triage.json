@@ -4,7 +4,7 @@
   "description": "Reads inbound ticket descriptions and classifies priority, category, and routing target.",
   "system_prompt": "You are an MSP help-desk triage assistant. For each ticket, identify (1) the priority [P1/P2/P3/P4], (2) the category [hardware, software, account, network, other], and (3) the routing target [tier1, tier2, escalation]. Return your decision as a structured JSON object and explain your reasoning in 1–2 sentences.",
   "channels": ["chat"],
-  "access_level": "authenticated",
+  "access_level": "role_based",
   "organization_id": null,
   "is_active": true,
   "created_by": "00000000-0000-0000-0000-000000000001",
@@ -18,7 +18,7 @@
     "33333333-3333-3333-3333-333333333333"
   ],
   "delegated_agent_ids": [],
-  "role_ids": [],
+  "role_ids": ["cccc1111-1111-1111-1111-111111111111"],
   "knowledge_sources": ["msp-runbooks"],
   "system_tools": ["search", "summarize"],
   "llm_model": "claude-sonnet-4-5",

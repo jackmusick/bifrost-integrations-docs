@@ -380,7 +380,8 @@ entries:
         - click: button[title="Add Field"]
         - wait_for: '[role="dialog"]:has-text("Add Field")'
         - click: label:has-text("Visibility Expression")
-        - wait_ms: 200
+        - wait_for: '.monaco-editor textarea'
+        - wait_ms: 100
       crop:
         x: 100
         'y': 64
@@ -465,13 +466,19 @@ entries:
     seed: forms_with_sample_org
     capture:
       actions:
-        - wait_for: 'text="Access"'
-        - scroll_into_view: 'text="Access"'
+        - wait_for: '[role="dialog"] label:has-text("Assigned Roles")'
+        - scroll_into_view: '[role="dialog"] label:has-text("Assigned Roles")'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Forms
     captured_at: null
+  # NOTE: needs investigation — what flag controls Edit organization scope button.
+  # Source review (Workflows.tsx:496) shows the button only gates on
+  # isPlatformAdmin (no per-workflow row flag). Capture pipeline runs as
+  # platform_admin so the button should render; strict-mode against multiple
+  # rows in workflows-list-with-hello-world.json is the likely failure mode.
   - id: permissions-workflow-picker
     image: src/assets/permissions/workflow-picker.png
     route: /workflows
@@ -644,7 +651,7 @@ entries:
         - url: '**/api/audit?**'
           fixture: fixtures/audit-log-overview.json
       actions:
-        - wait_for: 'button[role="combobox"]'
+        - wait_for: 'button[role="combobox"]:has-text("All actions")'
         - click: 'button[role="combobox"]:has-text("All actions")'
         - wait_for: '[role="option"]:has-text("Authentication")'
         - click: '[role="option"]:has-text("Authentication")'
@@ -893,6 +900,11 @@ entries:
           body: {"detail": "no flag conversation"}
         - url: '**/api/organizations'
           body: []
+      actions:
+        - wait_for: 'button:has-text("Timeline")'
+        - click: 'button:has-text("Timeline")'
+        - wait_for: 'button[data-state="open"]:has-text("Timeline")'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/how-to-guides/agents/run-history-and-filters.mdx
       type: how-to
@@ -948,8 +960,8 @@ entries:
         - url: '**/api/settings/oauth'
           fixture: fixtures/oauth-configs-empty.json
       actions:
-        - wait_for: '[data-slot="card-title"]:has-text("Google")'
-        - scroll_into_view: '[data-slot="card-title"]:has-text("Google")'
+        - wait_for: '[data-slot="card"]:has([data-slot="card-title"]:has-text("Google"))'
+        - scroll_into_view: '[data-slot="card"]:has([data-slot="card-title"]:has-text("Google"))'
         - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/authentication/sso.mdx
@@ -996,7 +1008,7 @@ entries:
         - url: '**/auth/status'
           fixture: fixtures/auth-status-with-sso.json
       actions:
-        - wait_for: 'button:has-text("Microsoft"), button:has-text("Google"), button:has-text("Northwind SSO")'
+        - wait_for: 'button:has-text("Microsoft")'
         - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/authentication/sso.mdx
