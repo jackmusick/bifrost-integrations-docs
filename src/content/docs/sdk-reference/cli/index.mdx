@@ -1,0 +1,83 @@
+---
+title: CLI Reference
+description: Command-line interface for the Bifrost SDK — auth, sync, git, and entity mutations.
+---
+
+The `bifrost` CLI is the primary tool for authenticating against a Bifrost instance, syncing local source with the platform, and mutating entities (orgs, roles, workflows, forms, agents, apps, integrations, configs, tables, events).
+
+Run `bifrost help` to see the live command list, or `bifrost <command> --help` for a specific command.
+
+![bifrost CLI help output](../../../assets/cli/help.png)
+
+## Top-level commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `login` | Authenticate via device authorization flow. | `bifrost login --url https://app.gobifrost.com` |
+| `logout` | Clear stored credentials. | `bifrost logout` |
+| `sync` | Bidirectional sync between local files and the platform. | `bifrost sync apps/my-app --mirror` |
+| `push` | Alias for `sync`; pushes local files to the platform. | `bifrost push apps/my-app` |
+| `pull` | Alias for `sync`; pulls platform files locally. | `bifrost pull` |
+| `watch` | Watch the workspace and auto-push on change. | `bifrost watch apps/my-app` |
+| `run` | Run a workflow directly (silent JSON) or via browser. | `bifrost run workflow.py -w greet` |
+| `export` | Export a workspace bundle (optionally portable/scrubbed). | `bifrost export --portable ./bundle` |
+| `import` | Apply a bundle to the current environment. | `bifrost import ./bundle --org <uuid>` |
+| `api` | Send an authenticated API request. | `bifrost api GET /api/workflows` |
+| `migrate-imports` | Rewrite legacy `bifrost` imports into user/lucide/router imports. | `bifrost migrate-imports apps/my-app --dry-run` |
+| `--version`, `-V` | Print the installed CLI version. | `bifrost --version` |
+
+## `bifrost git`
+
+Source-control operations against the Bifrost-managed git working tree (`/tmp/git`).
+
+| Subcommand | Description |
+|------------|-------------|
+| `fetch` | Fetch from the configured remote. |
+| `status` | Show working tree status. |
+| `commit -m "<msg>"` | Commit staged changes with a message. |
+| `push` | Push commits to the remote. |
+| `resolve <path>=<keep_local\|keep_remote>` | Resolve a merge conflict. |
+| `diff` | Show changes between working tree and HEAD. |
+| `discard` | Discard local changes. |
+
+## Entity mutation groups
+
+Each group exposes `list`, `get`, `create`, `update`, and `delete` against a platform entity. Run `bifrost <group> --help` for the full subcommand list and DTO-driven flags.
+
+| Group | Manages | Notable subcommands |
+|-------|---------|---------------------|
+| `orgs` | Organizations | `list`, `get`, `create`, `update`, `delete` |
+| `roles` | Roles | `list`, `get`, `create`, `update`, `delete` |
+| `workflows` | Workflow lifecycle and role assignments | `register`, `grant-role`, `revoke-role`, `list-orphaned`, `replace` |
+| `forms` | Forms | `list`, `get`, `create`, `update`, `delete` |
+| `agents` | AI agents | `list`, `get`, `create`, `update`, `delete` |
+| `apps` | Applications | `create`, `set-deps`, `replace`, `delete` |
+| `integrations` | Integrations, config schemas, mappings | `create`, `add-mapping`, `update-mapping` |
+| `configs` | Config values | `list`, `get`, `set`, `create`, `delete` |
+| `tables` | Tables | `list`, `create`, `update`, `delete` |
+| `events` | Event sources and subscriptions | `list-sources`, `create-source`, `subscribe`, `update-subscription` |
+
+## `bifrost run`
+
+Execute a workflow without a full deploy. Two modes:
+
+| Flag | Behavior |
+|------|----------|
+| `-w <name>` | Run the named workflow from the file. |
+| `-p '<json>'` | Pass parameters as a JSON object. |
+| `--interactive` | Open a browser-based parameter form. |
+
+```bash
+bifrost run workflow.py -w greet -p '{"name": "World"}' | jq .
+bifrost run workflow.py --interactive
+```
+
+## Authentication
+
+`bifrost login` opens a browser to complete device authorization. Tokens are stored under `~/.bifrost/credentials`. To target a non-default instance, pass `--url`:
+
+```bash
+bifrost login --url https://app.gobifrost.com
+```
+
+`bifrost logout` removes the stored token. The `BIFROST_DEV_URL` environment variable sets the default API URL for `login` and all subsequent commands.

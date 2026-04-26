@@ -398,3 +398,48 @@ entries:
     captured_at:
       bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
       timestamp: '2026-04-26T02:32:28.000Z'
+  - id: cli-help
+    image: src/assets/cli/help.png
+    route: /
+    external: true
+    diataxis:
+      page: src/content/docs/sdk-reference/cli/index.mdx
+      type: reference
+      heading: CLI Reference
+    captured_at: null
+  - id: installation-dashboard
+    image: src/assets/installation/dashboard.png
+    route: /
+    seed: org_with_one_workflow
+    diataxis:
+      page: src/content/docs/getting-started/installation.mdx
+      type: tutorial
+      heading: Quick Start
+    captured_at: null
+  - id: cascading-dropdowns-form-builder
+    image: src/assets/cascading-dropdowns/form-builder.png
+    route: /forms/new
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/how-to-guides/forms/cascading-dropdowns.mdx
+      type: how-to
+      heading: Configure Form Fields
+    captured_at: null
+  - id: html-content-field-palette
+    image: src/assets/html-content/field-palette.png
+    route: /forms/new
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/how-to-guides/forms/html-content.mdx
+      type: how-to
+      heading: Add HTML Content Field
+    captured_at: null
+  - id: context-references-inspector
+    image: src/assets/context-references/inspector.png
+    route: /forms/new
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/how-to-guides/forms/context-field-references.mdx
+      type: how-to
+      heading: Context Structure
+    captured_at: null
