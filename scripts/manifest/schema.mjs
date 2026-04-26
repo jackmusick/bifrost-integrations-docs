@@ -113,6 +113,13 @@ const CaptureSchema = z
     // Used when the target state isn't reachable by route alone (deep-modal
     // screenshots, multi-step forms, etc.).
     actions: z.array(ActionSchema).default([]),
+    // Per-entry override of the post-process pixel-diff threshold (fraction
+    // of pixels that must differ for the captured PNG to be promoted over
+    // the committed one). Useful for tight crops or small-text-only regions
+    // (e.g. agent-picker chip) where real semantic changes produce a tiny
+    // pixel-diff percentage that would otherwise fall below the global
+    // default. Range 0..1; falls back to the post-process CLI --threshold.
+    diff_threshold: z.number().min(0).max(1).optional(),
   })
   .default({});
 

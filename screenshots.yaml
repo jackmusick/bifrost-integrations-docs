@@ -532,6 +532,9 @@ entries:
         - scroll_into_view: label:has-text("Access level")
         - wait_for: text=Helpdesk Agents
         - wait_ms: 300
+      # Tight crop on a small chip — real text changes (UUID → role name)
+      # produce ~0.05% pixel diff, well below the 0.1% global default.
+      diff_threshold: 0.0001
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
@@ -648,7 +651,7 @@ entries:
         x: 256
         'y': 580
         width: 1184
-        height: 220
+        height: 340
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to

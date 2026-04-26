@@ -394,6 +394,109 @@ describe("lintManifest", () => {
     expect(result.errors).toEqual([]);
   });
 
+  it("accepts a per-entry diff_threshold within [0, 1]", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "with-diff-threshold",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: { diff_threshold: 0.0001 },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("rejects a diff_threshold outside [0, 1]", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "bad-diff-threshold",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: { diff_threshold: 1.5 },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(false);
+    expect(
+      result.errors.some((e) => e.includes("schema validation failed")),
+    ).toBe(true);
+  });
+
+  it("rejects a negative diff_threshold", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "negative-diff-threshold",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: { diff_threshold: -0.5 },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(false);
+    expect(
+      result.errors.some((e) => e.includes("schema validation failed")),
+    ).toBe(true);
+  });
+
   it("returns a clear error when manifest is missing", () => {
     const result = lintManifest({
       manifestPath: join(root, "nonexistent.yaml"),
