@@ -532,8 +532,6 @@ entries:
         - scroll_into_view: label:has-text("Access level")
         - wait_for: text=Helpdesk Agents
         - wait_ms: 300
-      # Tight crop on a small chip — real text changes (UUID → role name)
-      # produce ~0.05% pixel diff, well below the 0.1% global default.
       diff_threshold: 0.0001
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
@@ -592,8 +590,8 @@ entries:
       type: how-to
       heading: Open the dashboard
     captured_at:
-      bifrost_sha: bc5ee171723dd56345b58656ec1560834259b6c7
-      timestamp: '2026-04-26T19:23:50.691Z'
+      bifrost_sha: 055bed9ac7556430b77e884cc4bd80480a4f255d
+      timestamp: '2026-04-26T19:48:52.659Z'
   - id: operations-diagnostics-memory-chart
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
@@ -657,8 +655,8 @@ entries:
       type: how-to
       heading: Container table
     captured_at:
-      bifrost_sha: bc5ee171723dd56345b58656ec1560834259b6c7
-      timestamp: '2026-04-26T19:23:50.573Z'
+      bifrost_sha: 055bed9ac7556430b77e884cc4bd80480a4f255d
+      timestamp: '2026-04-26T19:48:52.503Z'
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
