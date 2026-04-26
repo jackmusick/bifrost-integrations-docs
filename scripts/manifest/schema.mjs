@@ -22,6 +22,20 @@ const CalloutSchema = RectSchema.extend({
   label: z.string().optional(),
 });
 
+const MockSchema = z.object({
+  // URL pattern in Playwright `page.route()` form.
+  // E.g., "**/api/forms" or "**/api/forms/*".
+  url: z.string().min(1),
+  // HTTP method (default GET).
+  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
+  // HTTP status code for the mock response.
+  status: z.number().int().min(100).max(599).default(200),
+  // Either an inline JSON body, or the path to a JSON fixture file
+  // relative to the docs repo root (e.g., "fixtures/forms-list.json").
+  body: z.union([z.record(z.unknown()), z.array(z.unknown())]).optional(),
+  fixture: z.string().min(1).optional(),
+});
+
 const CaptureSchema = z
   .object({
     selector: z.string().min(1).optional(),
@@ -30,6 +44,13 @@ const CaptureSchema = z
     crop: RectSchema.optional(),
     callouts: z.array(CalloutSchema).default([]),
     highlights: z.array(HighlightSchema).default([]),
+    // API mocks: every request matching `url` is fulfilled with the given
+    // body/fixture. Mocks are merged with the manifest's `defaults.mocks`
+    // (per-entry mocks override defaults with the same url+method key).
+    mocks: z.array(MockSchema).default([]),
+    // Wait this many ms after page load before screenshotting (animations,
+    // late-rendering charts, etc.). Defaults to manifest's `defaults.settle_ms`.
+    settle_ms: z.number().int().nonnegative().optional(),
   })
   .default({});
 
@@ -53,6 +74,10 @@ const EntrySchema = z.object({
     .regex(/^[a-z0-9][a-z0-9-]*$/, "id must be kebab-case ASCII"),
   image: z.string().min(1),
   route: z.string().startsWith("/", "route must start with /"),
+  // Mark images that aren't of the Bifrost UI (Azure portal, VS Code,
+  // external systems). The capture pipeline skips these — the existing
+  // PNG stays in place and `captured_at` is left untouched.
+  external: z.boolean().default(false),
   auth_as: z.string().optional(),
   seed: z.string().optional(),
   viewport: z
@@ -77,6 +102,8 @@ const DefaultsSchema = z
       })
       .default({ width: 1440, height: 900 }),
     pad: z.number().int().nonnegative().default(16),
+    settle_ms: z.number().int().nonnegative().default(500),
+    mocks: z.array(MockSchema).default([]),
   })
   .default({});
 

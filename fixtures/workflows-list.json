@@ -1,0 +1,135 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "name": "provision_employee",
+    "description": "Create accounts, mailbox, and license assignments for a new hire.",
+    "category": "Identity",
+    "type": "workflow",
+    "tool_description": null,
+    "execution_mode": "async",
+    "parameters": [
+      { "name": "employee_name", "type": "str" },
+      { "name": "department", "type": "str" },
+      { "name": "manager_email", "type": "str" }
+    ],
+    "tags": ["onboarding", "identity"],
+    "endpoint_enabled": false,
+    "is_active": true,
+    "organization_id": null,
+    "created_at": "2026-02-08T11:00:00.000000+00:00",
+    "updated_at": "2026-04-22T08:30:00.000000+00:00"
+  },
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "name": "replace_hardware",
+    "description": "Order a replacement laptop, open an asset ticket, and notify shipping.",
+    "category": "Assets",
+    "type": "workflow",
+    "tool_description": null,
+    "execution_mode": "sync",
+    "parameters": [
+      { "name": "user_id", "type": "str" },
+      { "name": "model", "type": "str" }
+    ],
+    "tags": ["hardware"],
+    "endpoint_enabled": false,
+    "is_active": true,
+    "organization_id": null,
+    "created_at": "2026-01-22T09:42:11.000000+00:00",
+    "updated_at": "2026-04-09T15:18:44.000000+00:00"
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "name": "submit_license_audit",
+    "description": "Reconcile per-user software license usage against billing records.",
+    "category": "Compliance",
+    "type": "workflow",
+    "tool_description": null,
+    "execution_mode": "async",
+    "parameters": [
+      { "name": "quarter", "type": "str" }
+    ],
+    "tags": ["compliance", "licensing"],
+    "endpoint_enabled": false,
+    "is_active": true,
+    "organization_id": null,
+    "created_at": "2026-01-15T10:00:00.000000+00:00",
+    "updated_at": "2026-03-22T16:50:00.000000+00:00"
+  },
+  {
+    "id": "44444444-4444-4444-4444-444444444444",
+    "name": "offboard_employee",
+    "description": "Disable accounts, archive mailbox, revoke devices, transfer drive ownership.",
+    "category": "Identity",
+    "type": "workflow",
+    "tool_description": null,
+    "execution_mode": "async",
+    "parameters": [
+      { "name": "user_id", "type": "str" },
+      { "name": "last_day", "type": "str" }
+    ],
+    "tags": ["offboarding", "identity"],
+    "endpoint_enabled": false,
+    "is_active": true,
+    "organization_id": null,
+    "created_at": "2026-01-10T08:15:00.000000+00:00",
+    "updated_at": "2026-04-15T11:48:00.000000+00:00"
+  },
+  {
+    "id": "55555555-5555-5555-5555-555555555555",
+    "name": "request_vpn_access",
+    "description": "Add a user to the VPN allow-list and email them a setup code.",
+    "category": "Access",
+    "type": "workflow",
+    "tool_description": null,
+    "execution_mode": "sync",
+    "parameters": [
+      { "name": "user_id", "type": "str" },
+      { "name": "duration_days", "type": "int" }
+    ],
+    "tags": ["network", "access"],
+    "endpoint_enabled": false,
+    "is_active": true,
+    "organization_id": null,
+    "created_at": "2026-02-19T13:35:00.000000+00:00",
+    "updated_at": "2026-04-21T09:18:00.000000+00:00"
+  },
+  {
+    "id": "66666666-6666-6666-6666-666666666666",
+    "name": "rollout_dns_change",
+    "description": "Stage a DNS change, run pre-flight checks, and apply it on approval.",
+    "category": "Network",
+    "type": "workflow",
+    "tool_description": null,
+    "execution_mode": "async",
+    "parameters": [
+      { "name": "zone", "type": "str" },
+      { "name": "record_type", "type": "str" },
+      { "name": "value", "type": "str" }
+    ],
+    "tags": ["network", "dns"],
+    "endpoint_enabled": false,
+    "is_active": true,
+    "organization_id": null,
+    "created_at": "2026-02-26T16:01:00.000000+00:00",
+    "updated_at": "2026-03-30T14:28:00.000000+00:00"
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777777",
+    "name": "rotate_api_key",
+    "description": "Generate a new API key, push it to the secret store, and notify owners.",
+    "category": "Security",
+    "type": "workflow",
+    "tool_description": null,
+    "execution_mode": "sync",
+    "parameters": [
+      { "name": "service_name", "type": "str" }
+    ],
+    "tags": ["security"],
+    "endpoint_enabled": false,
+    "is_active": true,
+    "organization_id": null,
+    "created_at": "2026-03-04T07:11:00.000000+00:00",
+    "updated_at": "2026-04-23T13:02:00.000000+00:00"
+  }
+]

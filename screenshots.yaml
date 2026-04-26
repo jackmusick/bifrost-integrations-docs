@@ -5,6 +5,26 @@ defaults:
     width: 1440
     height: 900
   pad: 16
+  settle_ms: 800
+  mocks:
+    - url: '**/api/forms'
+      fixture: fixtures/forms-list.json
+    - url: '**/api/workflows'
+      fixture: fixtures/workflows-list.json
+    - url: '**/api/workflows?**'
+      fixture: fixtures/workflows-list.json
+    - url: '**/api/integrations'
+      fixture: fixtures/integrations-list.json
+    - url: '**/api/integrations?**'
+      fixture: fixtures/integrations-list.json
+    - url: '**/api/applications'
+      fixture: fixtures/applications-list.json
+    - url: '**/api/applications?**'
+      fixture: fixtures/applications-list.json
+    - url: '**/api/agents'
+      body: []
+    - url: '**/api/metrics'
+      fixture: fixtures/dashboard-metrics.json
 entries:
   - id: core-concepts-apps
     image: src/assets/core-concepts/apps.png
@@ -14,7 +34,9 @@ entries:
       page: src/content/docs/core-concepts/app-builder.mdx
       type: explanation
       heading: What is App Builder?
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:24:51.895Z'
   - id: core-concepts-forms-list
     image: src/assets/core-concepts/forms-list.png
     route: /forms
@@ -23,16 +45,20 @@ entries:
       page: src/content/docs/core-concepts/forms.mdx
       type: explanation
       heading: What Are Forms?
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:24:52.072Z'
   - id: core-concepts-form-builder
     image: src/assets/core-concepts/form-builder.png
-    route: /forms
+    route: /forms/new
     seed: forms_with_sample_org
     diataxis:
       page: src/content/docs/core-concepts/forms.mdx
       type: explanation
       heading: Form Builder
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:24:52.240Z'
   - id: core-concepts-integrations
     image: src/assets/core-concepts/integrations.png
     route: /integrations
@@ -41,7 +67,9 @@ entries:
       page: src/content/docs/core-concepts/integrations.mdx
       type: explanation
       heading: What Are Integrations?
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:24:52.394Z'
   - id: core-concepts-dashboard
     image: src/assets/core-concepts/dashboard.png
     route: /
@@ -50,7 +78,9 @@ entries:
       page: src/content/docs/core-concepts/platform-overview.mdx
       type: explanation
       heading: Dashboard
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:35:37.505Z'
   - id: core-concepts-workflows
     image: src/assets/core-concepts/workflows.png
     route: /workflows
@@ -59,25 +89,31 @@ entries:
       page: src/content/docs/core-concepts/workflows.mdx
       type: explanation
       heading: What Are Workflows?
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:24:52.696Z'
   - id: getting-started-creating-forms-image
     image: src/assets/creating-forms/image.png
-    route: /forms
+    route: /forms/new
     seed: forms_with_sample_org
     diataxis:
       page: src/content/docs/getting-started/creating-forms.mdx
       type: tutorial
       heading: Create the Form
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.193Z'
   - id: creating-forms-image-1
     image: src/assets/creating-forms/image-1.png
-    route: /forms
+    route: /forms/new
     seed: forms_with_sample_org
     diataxis:
       page: src/content/docs/getting-started/creating-forms.mdx
       type: tutorial
       heading: Add Fields
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.273Z'
   - id: creating-forms-image-2
     image: src/assets/creating-forms/image-2.png
     route: /forms
@@ -86,11 +122,13 @@ entries:
       page: src/content/docs/getting-started/creating-forms.mdx
       type: tutorial
       heading: Test the Form
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.344Z'
   - id: getting-started-first-workflow-image
     image: src/assets/first-workflow/image.png
     route: /workflows
-    seed: org_with_one_workflow
+    external: true
     diataxis:
       page: src/content/docs/getting-started/first-workflow.mdx
       type: tutorial
@@ -99,7 +137,7 @@ entries:
   - id: first-workflow-image-1
     image: src/assets/first-workflow/image-1.png
     route: /workflows
-    seed: org_with_one_workflow
+    external: true
     diataxis:
       page: src/content/docs/getting-started/first-workflow.mdx
       type: tutorial
@@ -108,25 +146,27 @@ entries:
   - id: first-workflow-image-2
     image: src/assets/first-workflow/image-2.png
     route: /workflows
-    seed: org_with_one_workflow
     diataxis:
       page: src/content/docs/getting-started/first-workflow.mdx
       type: tutorial
       heading: Create the Workflow
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.407Z'
   - id: first-workflow-image-3
     image: src/assets/first-workflow/image-3.png
-    route: /workflows
-    seed: org_with_one_workflow
+    route: /history
     diataxis:
       page: src/content/docs/getting-started/first-workflow.mdx
       type: tutorial
       heading: Expected Result
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.503Z'
   - id: integrations-image-3
     image: src/assets/integrations/image-3.png
     route: /integrations
-    seed: org_with_integration
+    external: true
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
@@ -135,7 +175,7 @@ entries:
   - id: integrations-image-1
     image: src/assets/integrations/image-1.png
     route: /integrations
-    seed: org_with_integration
+    external: true
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
@@ -144,7 +184,7 @@ entries:
   - id: integrations-image-4
     image: src/assets/integrations/image-4.png
     route: /integrations
-    seed: org_with_integration
+    external: true
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
@@ -153,7 +193,7 @@ entries:
   - id: integrations-image-2
     image: src/assets/integrations/image-2.png
     route: /integrations
-    seed: org_with_integration
+    external: true
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
@@ -162,54 +202,64 @@ entries:
   - id: integrations-image-8
     image: src/assets/integrations/image-8.png
     route: /integrations
-    seed: org_with_integration
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
       heading: Create Integration in Bifrost
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.582Z'
   - id: integrations-image-7
     image: src/assets/integrations/image-7.png
     route: /integrations
-    seed: org_with_integration
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
       heading: Authorize the Connection
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.651Z'
   - id: creating-forms-image-3
     image: src/assets/creating-forms/image-3.png
-    route: /forms
+    route: /forms/new
     seed: forms_with_sample_org
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
       heading: Form Builder
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.722Z'
   - id: creating-forms-image-4
     image: src/assets/creating-forms/image-4.png
-    route: /forms
+    route: /forms/new
     seed: forms_with_sample_org
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
       heading: Form Builder
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.790Z'
   - id: creating-forms-image-5
     image: src/assets/creating-forms/image-5.png
-    route: /forms
+    route: /forms/new
     seed: forms_with_sample_org
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
       heading: Visibility Expressions
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:27.867Z'
   - id: screenshots-visibility-expression
     image: src/assets/screenshots/visibility-expression.png
-    route: /forms
+    route: /forms/new
     seed: forms_with_sample_org
     diataxis:
       page: src/content/docs/how-to-guides/forms/visibility-rules.mdx
       type: how-to
       heading: Add Fields with Visibility Rules
-    captured_at: null
+    captured_at:
+      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
+      timestamp: '2026-04-26T02:32:28.000Z'

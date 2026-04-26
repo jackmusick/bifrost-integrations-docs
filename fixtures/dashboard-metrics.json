@@ -1,0 +1,40 @@
+{
+  "workflow_count": 7,
+  "data_provider_count": 3,
+  "form_count": 6,
+  "execution_stats": {
+    "total_executions": 1842,
+    "success_count": 1791,
+    "failed_count": 41,
+    "running_count": 2,
+    "pending_count": 8,
+    "success_rate": 97.2,
+    "avg_duration_seconds": 18.4
+  },
+  "recent_failures": [
+    {
+      "execution_id": "f1c1c0e7-92aa-4a64-9f74-9e96e8f0d111",
+      "workflow_name": "rotate_api_key",
+      "error_message": "Secret store returned 503 — retried 3x",
+      "started_at": "2026-04-25T18:32:11.000000+00:00"
+    },
+    {
+      "execution_id": "21e3e9fa-1e7d-4f12-9b23-22caf6e7c5d2",
+      "workflow_name": "rollout_dns_change",
+      "error_message": "Pre-flight check failed: zone owner unreachable",
+      "started_at": "2026-04-25T16:08:44.000000+00:00"
+    },
+    {
+      "execution_id": "8d0a4b3c-77a5-4d8e-9b21-93f0a1c4ee05",
+      "workflow_name": "provision_employee",
+      "error_message": "Microsoft Graph 429 — quota exceeded",
+      "started_at": "2026-04-24T22:41:05.000000+00:00"
+    }
+  ],
+  "roi_24h": {
+    "total_time_saved": 487,
+    "total_value": 3215.00,
+    "time_saved_unit": "minutes",
+    "value_unit": "USD"
+  }
+}
