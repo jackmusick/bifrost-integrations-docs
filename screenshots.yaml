@@ -6,12 +6,9 @@ defaults:
     height: 900
   pad: 16
   settle_ms: 800
-  # Default content-area crop. Strips the 256px-wide sidebar and 64px-tall
-  # top header from every screenshot so docs images don't waste space on
-  # chrome. Per-entry `capture.crop` overrides this.
   crop:
     x: 256
-    y: 64
+    'y': 64
     width: 1184
     height: 836
   mocks:
@@ -43,8 +40,8 @@ entries:
       type: explanation
       heading: What is App Builder?
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:24:51.895Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.177Z'
   - id: core-concepts-forms-list
     image: src/assets/core-concepts/forms-list.png
     route: /forms
@@ -54,8 +51,8 @@ entries:
       type: explanation
       heading: What Are Forms?
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:24:52.072Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.275Z'
   - id: core-concepts-form-builder
     image: src/assets/core-concepts/form-builder.png
     route: /forms/new
@@ -65,8 +62,8 @@ entries:
       type: explanation
       heading: Form Builder
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:24:52.240Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.376Z'
   - id: core-concepts-integrations
     image: src/assets/core-concepts/integrations.png
     route: /integrations
@@ -76,8 +73,8 @@ entries:
       type: explanation
       heading: What Are Integrations?
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:24:52.394Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.476Z'
   - id: core-concepts-dashboard
     image: src/assets/core-concepts/dashboard.png
     route: /
@@ -87,8 +84,8 @@ entries:
       type: explanation
       heading: Dashboard
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:35:37.505Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.571Z'
   - id: core-concepts-workflows
     image: src/assets/core-concepts/workflows.png
     route: /workflows
@@ -98,8 +95,8 @@ entries:
       type: explanation
       heading: What Are Workflows?
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:24:52.696Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.656Z'
   - id: getting-started-creating-forms-image
     image: src/assets/creating-forms/image.png
     route: /forms/new
@@ -107,13 +104,13 @@ entries:
     capture:
       callouts:
         - x: 445
-          y: 240
+          'y': 240
           width: 555
           height: 60
           label: '1'
           color: '#f59e0b'
         - x: 445
-          y: 314
+          'y': 314
           width: 555
           height: 75
           label: '2'
@@ -123,21 +120,16 @@ entries:
       type: tutorial
       heading: Create the Form
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.193Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.800Z'
   - id: creating-forms-image-1
     image: src/assets/creating-forms/image-1.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # The "Add Fields" step ideally shows the canvas with one field after
-      # closing the modal. Since the route alone always opens the modal,
-      # we cannot reach that state without a per-entry click. As a stand-in
-      # we highlight the Save button in the modal — the action that takes
-      # the user to the field-add step in the real flow.
       callouts:
         - x: 932
-          y: 818
+          'y': 818
           width: 70
           height: 38
           label: '1'
@@ -147,8 +139,8 @@ entries:
       type: tutorial
       heading: Add Fields
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.273Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:48.951Z'
   - id: creating-forms-image-2
     image: src/assets/creating-forms/image-2.png
     route: /forms
@@ -156,7 +148,7 @@ entries:
     capture:
       callouts:
         - x: 305
-          y: 425
+          'y': 425
           width: 195
           height: 42
           label: '1'
@@ -166,8 +158,8 @@ entries:
       type: tutorial
       heading: Test the Form
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.344Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.085Z'
   - id: getting-started-first-workflow-image
     image: src/assets/first-workflow/image.png
     route: /workflows
@@ -192,13 +184,13 @@ entries:
     capture:
       callouts:
         - x: 590
-          y: 263
+          'y': 263
           width: 360
           height: 251
           label: '1'
           color: '#f59e0b'
         - x: 590
-          y: 471
+          'y': 471
           width: 360
           height: 36
           label: '2'
@@ -208,8 +200,8 @@ entries:
       type: tutorial
       heading: Create the Workflow
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.407Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.274Z'
   - id: first-workflow-image-3
     image: src/assets/first-workflow/image-3.png
     route: /history
@@ -221,7 +213,7 @@ entries:
           fixture: fixtures/executions-list.json
       callouts:
         - x: 290
-          y: 290
+          'y': 290
           width: 1110
           height: 60
           label: '1'
@@ -231,8 +223,8 @@ entries:
       type: tutorial
       heading: Expected Result
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.503Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.445Z'
   - id: integrations-image-3
     image: src/assets/integrations/image-3.png
     route: /integrations
@@ -273,19 +265,13 @@ entries:
     image: src/assets/integrations/image-8.png
     route: /integrations
     capture:
-      # "Create Integration in Bifrost" — opens the edit dialog on the
-      # Microsoft_Graph row to show its OAuth/config fields. Reached by
-      # clicking the pencil icon on the row; that flow is driven by
-      # per-entry actions below.
       mocks:
         - url: '**/api/integrations'
           fixture: fixtures/integrations-list-with-graph.json
         - url: '**/api/integrations?**'
           fixture: fixtures/integrations-list-with-graph.json
       actions:
-        # Click the pencil (Edit) button on the Microsoft_Graph row.
-        - click: 'tr:has-text("Microsoft_Graph") button[title="Edit"]'
-        # Wait for the edit dialog to render before screenshotting.
+        - click: tr:has-text("Microsoft_Graph") button[title="Edit"]
         - wait_for: '[role="dialog"]'
         - wait_ms: 300
     diataxis:
@@ -293,8 +279,8 @@ entries:
       type: tutorial
       heading: Create Integration in Bifrost
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.582Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.536Z'
   - id: integrations-image-7
     image: src/assets/integrations/image-7.png
     route: /integrations
@@ -306,7 +292,7 @@ entries:
           fixture: fixtures/integrations-list-with-graph.json
       callouts:
         - x: 1198
-          y: 312
+          'y': 312
           width: 100
           height: 42
           label: '1'
@@ -316,23 +302,16 @@ entries:
       type: tutorial
       heading: Authorize the Connection
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.651Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.663Z'
   - id: creating-forms-image-3
     image: src/assets/creating-forms/image-3.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # "Form Builder Field Palette" — ideally the modal is closed and the
-      # left palette card is visible. The route alone always opens the
-      # Form Information modal, partially obscuring the palette. As a
-      # stand-in we crop to the leftmost column to focus on what is visible
-      # of the palette card. Capturing the palette properly needs a
-      # per-entry "press Cancel" action that the pipeline does not yet
-      # support.
       crop:
         x: 256
-        y: 80
+        'y': 80
         width: 444
         height: 820
     diataxis:
@@ -340,21 +319,16 @@ entries:
       type: how-to
       heading: Form Builder
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.722Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.731Z'
   - id: creating-forms-image-4
     image: src/assets/creating-forms/image-4.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # "Form Builder Canvas with two fields" — the route opens the modal,
-      # so the canvas behind it is empty. Capturing two added fields needs
-      # per-entry actions (close modal, drag/drop two fields) which the
-      # pipeline does not yet support. Crop focuses on the right canvas
-      # column for now so at least the canvas pane is the framed subject.
       crop:
         x: 998
-        y: 80
+        'y': 80
         width: 442
         height: 820
     diataxis:
@@ -362,58 +336,46 @@ entries:
       type: how-to
       heading: Form Builder
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.790Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.811Z'
   - id: creating-forms-image-5
     image: src/assets/creating-forms/image-5.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # "Visibility Expressions" — opens the field configuration dialog so
-      # the Visibility Expression input is on screen. Sequence: cancel the
-      # Form Info modal, click the "+" Add Field button to open the field
-      # config dialog (Add Field state), then click the Visibility
-      # Expression label so Playwright auto-scrolls it into view. The Add
-      # Field dialog contains the same visibility-expression input as the
-      # Edit Field flow described in the doc copy, so this still frames
-      # the right control without needing drag-and-drop of a real field.
       actions:
         - click: '[role="dialog"] button:has-text("Cancel")'
-        - wait_for: 'button[title="Add Field"]'
-        - click: 'button[title="Add Field"]'
+        - wait_for: button[title="Add Field"]
+        - click: button[title="Add Field"]
         - wait_for: '[role="dialog"]:has-text("Add Field")'
-        - click: 'label:has-text("Visibility Expression")'
+        - click: label:has-text("Visibility Expression")
         - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
       heading: Visibility Expressions
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:27.867Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.874Z'
   - id: screenshots-visibility-expression
     image: src/assets/screenshots/visibility-expression.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # Same target as creating-forms-image-5 — frames the Visibility
-      # Expression input inside the field config dialog. See that entry
-      # for action-by-action rationale; this entry just reuses the same
-      # sequence under a different image path / doc page.
       actions:
         - click: '[role="dialog"] button:has-text("Cancel")'
-        - wait_for: 'button[title="Add Field"]'
-        - click: 'button[title="Add Field"]'
+        - wait_for: button[title="Add Field"]
+        - click: button[title="Add Field"]
         - wait_for: '[role="dialog"]:has-text("Add Field")'
-        - click: 'label:has-text("Visibility Expression")'
+        - click: label:has-text("Visibility Expression")
         - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/visibility-rules.mdx
       type: how-to
       heading: Add Fields with Visibility Rules
     captured_at:
-      bifrost_sha: f51161b2406449fe7cd7b5f70d44c783f49246c0
-      timestamp: '2026-04-26T02:32:28.000Z'
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.955Z'
   - id: cli-help
     image: src/assets/cli/help.png
     route: /
@@ -431,7 +393,9 @@ entries:
       page: src/content/docs/getting-started/installation.mdx
       type: tutorial
       heading: Quick Start
-    captured_at: null
+    captured_at:
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.968Z'
   - id: cascading-dropdowns-form-builder
     image: src/assets/cascading-dropdowns/form-builder.png
     route: /forms/new
@@ -440,7 +404,9 @@ entries:
       page: src/content/docs/how-to-guides/forms/cascading-dropdowns.mdx
       type: how-to
       heading: Configure Form Fields
-    captured_at: null
+    captured_at:
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:49.983Z'
   - id: html-content-field-palette
     image: src/assets/html-content/field-palette.png
     route: /forms/new
@@ -449,7 +415,9 @@ entries:
       page: src/content/docs/how-to-guides/forms/html-content.mdx
       type: how-to
       heading: Add HTML Content Field
-    captured_at: null
+    captured_at:
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:50.000Z'
   - id: context-references-inspector
     image: src/assets/context-references/inspector.png
     route: /forms/new
@@ -458,4 +426,6 @@ entries:
       page: src/content/docs/how-to-guides/forms/context-field-references.mdx
       type: how-to
       heading: Context Structure
-    captured_at: null
+    captured_at:
+      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
+      timestamp: '2026-04-26T03:33:50.019Z'
