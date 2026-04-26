@@ -8,7 +8,7 @@ export default defineConfig({
     vite: {
         server: {
             host: true,
-            allowedHosts: [".ngrok-free.app", ".ngrok.io"],
+            allowedHosts: [".ngrok-free.app", ".ngrok.io", "development"],
             watch: {
                 usePolling: true,
                 interval: 1000, // Check every 100ms

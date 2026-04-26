@@ -96,6 +96,20 @@ entries:
     image: src/assets/creating-forms/image.png
     route: /forms/new
     seed: forms_with_sample_org
+    capture:
+      callouts:
+        - x: 445
+          y: 240
+          width: 555
+          height: 60
+          label: '1'
+          color: '#f59e0b'
+        - x: 445
+          y: 314
+          width: 555
+          height: 75
+          label: '2'
+          color: '#f59e0b'
     diataxis:
       page: src/content/docs/getting-started/creating-forms.mdx
       type: tutorial
@@ -107,6 +121,19 @@ entries:
     image: src/assets/creating-forms/image-1.png
     route: /forms/new
     seed: forms_with_sample_org
+    capture:
+      # The "Add Fields" step ideally shows the canvas with one field after
+      # closing the modal. Since the route alone always opens the modal,
+      # we cannot reach that state without a per-entry click. As a stand-in
+      # we highlight the Save button in the modal — the action that takes
+      # the user to the field-add step in the real flow.
+      callouts:
+        - x: 932
+          y: 818
+          width: 70
+          height: 38
+          label: '1'
+          color: '#f59e0b'
     diataxis:
       page: src/content/docs/getting-started/creating-forms.mdx
       type: tutorial
@@ -118,6 +145,14 @@ entries:
     image: src/assets/creating-forms/image-2.png
     route: /forms
     seed: forms_with_sample_org
+    capture:
+      callouts:
+        - x: 305
+          y: 425
+          width: 195
+          height: 42
+          label: '1'
+          color: '#f59e0b'
     diataxis:
       page: src/content/docs/getting-started/creating-forms.mdx
       type: tutorial
@@ -146,6 +181,20 @@ entries:
   - id: first-workflow-image-2
     image: src/assets/first-workflow/image-2.png
     route: /workflows
+    capture:
+      callouts:
+        - x: 590
+          y: 263
+          width: 360
+          height: 251
+          label: '1'
+          color: '#f59e0b'
+        - x: 590
+          y: 471
+          width: 360
+          height: 36
+          label: '2'
+          color: '#3b82f6'
     diataxis:
       page: src/content/docs/getting-started/first-workflow.mdx
       type: tutorial
@@ -156,6 +205,19 @@ entries:
   - id: first-workflow-image-3
     image: src/assets/first-workflow/image-3.png
     route: /history
+    capture:
+      mocks:
+        - url: '**/api/executions'
+          fixture: fixtures/executions-list.json
+        - url: '**/api/executions?**'
+          fixture: fixtures/executions-list.json
+      callouts:
+        - x: 290
+          y: 290
+          width: 1110
+          height: 60
+          label: '1'
+          color: '#f59e0b'
     diataxis:
       page: src/content/docs/getting-started/first-workflow.mdx
       type: tutorial
@@ -202,6 +264,26 @@ entries:
   - id: integrations-image-8
     image: src/assets/integrations/image-8.png
     route: /integrations
+    capture:
+      # The "Create Integration in Bifrost" doc step shows the OAuth fields
+      # filled in inside the edit dialog. The dialog is reached only by
+      # clicking the pencil icon on a row, so the route alone cannot reach
+      # it. As a stand-in, the callout points at the "+" toolbar button
+      # users click to create a new integration. To capture the actual
+      # dialog content, this entry needs a per-entry click action that the
+      # current pipeline does not yet support.
+      mocks:
+        - url: '**/api/integrations'
+          fixture: fixtures/integrations-list-with-graph.json
+        - url: '**/api/integrations?**'
+          fixture: fixtures/integrations-list-with-graph.json
+      callouts:
+        - x: 1378
+          y: 118
+          width: 30
+          height: 30
+          label: '1'
+          color: '#f59e0b'
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
@@ -212,6 +294,19 @@ entries:
   - id: integrations-image-7
     image: src/assets/integrations/image-7.png
     route: /integrations
+    capture:
+      mocks:
+        - url: '**/api/integrations'
+          fixture: fixtures/integrations-list-with-graph.json
+        - url: '**/api/integrations?**'
+          fixture: fixtures/integrations-list-with-graph.json
+      callouts:
+        - x: 1198
+          y: 312
+          width: 100
+          height: 42
+          label: '1'
+          color: '#f59e0b'
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial
@@ -223,6 +318,19 @@ entries:
     image: src/assets/creating-forms/image-3.png
     route: /forms/new
     seed: forms_with_sample_org
+    capture:
+      # "Form Builder Field Palette" — ideally the modal is closed and the
+      # left palette card is visible. The route alone always opens the
+      # Form Information modal, partially obscuring the palette. As a
+      # stand-in we crop to the leftmost column to focus on what is visible
+      # of the palette card. Capturing the palette properly needs a
+      # per-entry "press Cancel" action that the pipeline does not yet
+      # support.
+      crop:
+        x: 256
+        y: 80
+        width: 444
+        height: 820
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
@@ -234,6 +342,17 @@ entries:
     image: src/assets/creating-forms/image-4.png
     route: /forms/new
     seed: forms_with_sample_org
+    capture:
+      # "Form Builder Canvas with two fields" — the route opens the modal,
+      # so the canvas behind it is empty. Capturing two added fields needs
+      # per-entry actions (close modal, drag/drop two fields) which the
+      # pipeline does not yet support. Crop focuses on the right canvas
+      # column for now so at least the canvas pane is the framed subject.
+      crop:
+        x: 998
+        y: 80
+        width: 442
+        height: 820
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
@@ -245,6 +364,13 @@ entries:
     image: src/assets/creating-forms/image-5.png
     route: /forms/new
     seed: forms_with_sample_org
+    # NOTE: "Visibility Expressions" should show the Edit Field dialog
+    # with a visibility expression typed in. That dialog is only reached
+    # by closing the Form Info modal, adding a field, and then clicking
+    # the field's edit pencil. The current pipeline does not support that
+    # per-entry sequence — leaving as the route-level capture (Form Info
+    # modal). Re-capture this manually until per-entry actions are
+    # supported.
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
@@ -256,6 +382,11 @@ entries:
     image: src/assets/screenshots/visibility-expression.png
     route: /forms/new
     seed: forms_with_sample_org
+    # NOTE: same constraint as creating-forms-image-5 — this should show
+    # the Edit Field dialog with the visibility expression input
+    # highlighted, but reaching that dialog requires closing the Form
+    # Info modal, adding a field, and clicking edit. Leaving as
+    # route-level capture until per-entry actions are supported.
     diataxis:
       page: src/content/docs/how-to-guides/forms/visibility-rules.mdx
       type: how-to
