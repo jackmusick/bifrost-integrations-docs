@@ -120,8 +120,8 @@ entries:
       type: tutorial
       heading: Create the Form
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:48.800Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:07.806Z'
   - id: creating-forms-image-2
     image: src/assets/creating-forms/image-2.png
     route: /forms
@@ -139,8 +139,8 @@ entries:
       type: tutorial
       heading: Test the Form
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.085Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:07.924Z'
   - id: getting-started-first-workflow-image
     image: src/assets/first-workflow/image.png
     route: /workflows
@@ -168,9 +168,6 @@ entries:
           fixture: fixtures/workflows-list-with-hello-world.json
         - url: '**/api/workflows?**'
           fixture: fixtures/workflows-list-with-hello-world.json
-      # TODO: nudge after pipeline run — coords assume hello_world lands in
-      # the first card slot (top-left) with a 2-column grid. Adjust if the
-      # actual layout shifts.
       callouts:
         - x: 335
           'y': 195
@@ -189,8 +186,8 @@ entries:
       type: tutorial
       heading: Create the Workflow
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.274Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.052Z'
   - id: first-workflow-image-3
     image: src/assets/first-workflow/image-3.png
     route: /history
@@ -252,12 +249,6 @@ entries:
     captured_at: null
   - id: integrations-image-8
     image: src/assets/integrations/image-8.png
-    # NOTE: Prose shows the OAuth connection edit dialog (Client ID, Client
-    # Secret, Auth URL, Scope) for Microsoft_Graph. That dialog lives on the
-    # integration detail page, not the integrations list — the row Edit
-    # button on /integrations opens CreateIntegrationDialog, which has no
-    # OAuth fields. So this entry navigates to the detail page and opens
-    # "Edit Configuration" from the OAuth card's overflow menu.
     route: /integrations/aaaa1111-1111-1111-1111-111111111111
     capture:
       mocks:
@@ -272,12 +263,12 @@ entries:
         - url: '**/api/organizations'
           body: []
       actions:
-        # Scope to the OAuth status Card (identified by its unique
-        # CardDescription text). Without this scope, the selector also
-        # matched the topbar user menu's DropdownMenuTrigger and tripped
-        # Playwright strict mode.
-        - wait_for: '[data-slot="card"]:has([data-slot="card-description"]:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
-        - click: '[data-slot="card"]:has([data-slot="card-description"]:has-text("Connection status and authentication")) button[aria-haspopup="menu"]'
+        - wait_for: >-
+            [data-slot="card"]:has([data-slot="card-description"]:has-text("Connection status and authentication"))
+            button[aria-haspopup="menu"]
+        - click: >-
+            [data-slot="card"]:has([data-slot="card-description"]:has-text("Connection status and authentication"))
+            button[aria-haspopup="menu"]
         - wait_for: '[role="menuitem"]:has-text("Edit Configuration")'
         - click: '[role="menuitem"]:has-text("Edit Configuration")'
         - wait_for: '[role="dialog"]:has-text("Edit OAuth Connection")'
@@ -287,8 +278,8 @@ entries:
       type: tutorial
       heading: Create Integration in Bifrost
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.536Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.324Z'
   - id: integrations-image-7
     image: src/assets/integrations/image-7.png
     route: /integrations
@@ -310,17 +301,13 @@ entries:
       type: tutorial
       heading: Authorize the Connection
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.663Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.466Z'
   - id: creating-forms-image-3
     image: src/assets/creating-forms/image-3.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # /forms/new opens a "Form Information" modal on top of the form builder.
-      # The left palette column the prose describes is hidden behind it;
-      # dismiss the modal and verify it actually closes before waiting for
-      # the palette (Add Field is in the DOM but occluded otherwise).
       actions:
         - click: '[role="dialog"] button:has-text("Cancel")'
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
@@ -335,16 +322,13 @@ entries:
       type: how-to
       heading: Form Builder
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.731Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.521Z'
   - id: creating-forms-image-4
     image: src/assets/creating-forms/image-4.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # See creating-forms-image-3: dismiss the Form Information modal and
-      # verify it actually closes so the right canvas column is visible
-      # behind the crop.
       actions:
         - click: '[role="dialog"] button:has-text("Cancel")'
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
@@ -359,8 +343,8 @@ entries:
       type: how-to
       heading: Form Builder
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.811Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.561Z'
   - id: creating-forms-image-5
     image: src/assets/creating-forms/image-5.png
     route: /forms/new
@@ -402,8 +386,8 @@ entries:
       type: how-to
       heading: Add Fields with Visibility Rules
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.955Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.680Z'
   - id: cli-help
     image: src/assets/cli/help.png
     route: /
@@ -429,12 +413,6 @@ entries:
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # NOTE: drag-and-drop via pragmatic-drag-and-drop is unreliable from
-      # Playwright, so we cannot place department/manager dropdowns onto the
-      # canvas. We dismiss the Form Information modal (and verify it
-      # actually closes) and capture the empty builder with the field
-      # palette visible — the prose describes which field types the user
-      # adds.
       actions:
         - click: '[role="dialog"] button:has-text("Cancel")'
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
@@ -445,39 +423,31 @@ entries:
       type: how-to
       heading: Configure Form Fields
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:49.983Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.828Z'
   - id: html-content-field-palette
     image: src/assets/html-content/field-palette.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # Dismiss the Form Information modal (and verify it actually closes)
-      # then wait for the field palette to render the HTML Content entry.
-      # The default crop keeps the palette + canvas visible.
       actions:
         - click: '[role="dialog"] button:has-text("Cancel")'
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
         - wait_for: button[title="Add Field"]
-        - wait_for: 'text="HTML Content"'
+        - wait_for: text="HTML Content"
         - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/html-content.mdx
       type: how-to
       heading: Add HTML Content Field
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:50.000Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.885Z'
   - id: context-references-inspector
     image: src/assets/context-references/inspector.png
     route: /forms/new
     seed: forms_with_sample_org
     capture:
-      # Dismiss the Form Information modal (and verify it actually closes
-      # before clicking Show Context, which would otherwise be occluded),
-      # then open the Show Context dialog ("Form Context Preview") which is
-      # the form-builder's context inspector for available runtime
-      # references.
       actions:
         - click: '[role="dialog"] button:has-text("Cancel")'
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
@@ -490,5 +460,5 @@ entries:
       type: how-to
       heading: Context Structure
     captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:50.019Z'
+      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
+      timestamp: '2026-04-26T04:25:08.945Z'
