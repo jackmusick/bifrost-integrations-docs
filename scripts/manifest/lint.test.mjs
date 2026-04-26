@@ -356,6 +356,44 @@ describe("lintManifest", () => {
     expect(result.errors).toEqual([]);
   });
 
+  it("accepts a press_key action (used to trigger keyboard shortcuts)", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "with-press-key",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: {
+              actions: [
+                { press_key: "Meta+k" },
+                { wait_for: '[role="dialog"]' },
+              ],
+            },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
   it("returns a clear error when manifest is missing", () => {
     const result = lintManifest({
       manifestPath: join(root, "nonexistent.yaml"),

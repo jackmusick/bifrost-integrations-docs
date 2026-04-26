@@ -11,6 +11,8 @@ The Quick Access command palette provides fast search and navigation to forms, w
 
 **Shortcut**: `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux)
 
+![Quick Access Palette Empty](../../../../assets/shortcuts/cmdk-empty.png)
+
 ### Features
 
 - **Search forms**: Find and execute forms by name or description
@@ -34,6 +36,8 @@ The Quick Access palette shows results grouped by type:
 - **Forms** - Navigate to form execution page
 - **Workflows** - Navigate to workflow execution page
 - **Scripts** - Open Python file in Code Editor with Run panel
+
+![Quick Access Palette With Results](../../../../assets/shortcuts/cmdk-results.png)
 
 Each result displays:
 - Name of the form/workflow/script

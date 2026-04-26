@@ -1,0 +1,40 @@
+---
+title: Subscribe a Workflow or Agent to an Event
+description: Route incoming events to a workflow or autonomous agent
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+A **subscription** binds an event source to a workflow or agent. Each subscription is org-scoped and maps fields from the inbound payload into the workflow or agent input.
+
+## Workflow vs Agent Targets
+
+| Target | When to use |
+|--------|-------------|
+| **Workflow** | Deterministic logic — log a ticket, update a record, fan out to other systems. |
+| **Agent** | LLM-driven triage — classify the event, decide a route, draft a response. The full payload is exposed as `_event` in the agent's context. |
+
+## Add a Subscription
+
+<Steps>
+
+1. Open the event source and click **Add Subscription**.
+
+   ![Subscription List](../../../../assets/events/subscriptions-list.png)
+
+2. Pick **Workflow** or **Agent**, choose the target, and map payload fields into the target's input parameters using `{{ payload.<field> }}` expressions.
+
+   ![Add Subscription Dialog](../../../../assets/events/add-subscription-dialog.png)
+
+3. Save. The next inbound event matching this source dispatches the target. Recent deliveries appear in the source's delivery log.
+
+</Steps>
+
+<Aside type="tip">
+The full event metadata is always available as `_event` in the workflow or agent context, even if you only mapped specific fields as inputs. See [Webhook & Event Variables](/how-to-guides/events/webhook-variables/) for the full reference.
+</Aside>
+
+## Next Steps
+
+- [Webhook HMAC Authentication](/how-to-guides/events/webhook-hmac/) — verify the request before dispatching.
+- [Webhook & Event Variables](/how-to-guides/events/webhook-variables/) — payload reference and template expressions.

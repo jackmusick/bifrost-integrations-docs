@@ -56,6 +56,11 @@ const WaitMsActionSchema = z
 const ScrollIntoViewActionSchema = z
   .object({ scroll_into_view: z.string().min(1) })
   .strict();
+// Keyboard input — passed straight to Playwright's `page.keyboard.press()`.
+// E.g. `press_key: "Meta+k"` or `press_key: "Escape"`.
+const PressKeyActionSchema = z
+  .object({ press_key: z.string().min(1) })
+  .strict();
 
 const ActionSchema = z.union(
   [
@@ -65,11 +70,12 @@ const ActionSchema = z.union(
     WaitForHiddenActionSchema,
     WaitMsActionSchema,
     ScrollIntoViewActionSchema,
+    PressKeyActionSchema,
   ],
   {
     errorMap: () => ({
       message:
-        "action must be exactly one of { click: <selector> } | { fill: { selector, value } } | { wait_for: <selector> } | { wait_for_hidden: <selector> } | { wait_ms: <number> } | { scroll_into_view: <selector> }",
+        "action must be exactly one of { click: <selector> } | { fill: { selector, value } } | { wait_for: <selector> } | { wait_for_hidden: <selector> } | { wait_ms: <number> } | { scroll_into_view: <selector> } | { press_key: <key> }",
     }),
   },
 );

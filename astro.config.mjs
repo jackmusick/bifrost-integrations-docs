@@ -9,6 +9,8 @@ export default defineConfig({
         "/core-concepts/app-builder": "/core-concepts/apps/",
         "/core-concepts/manifest-structure":
             "/how-to-guides/portability/manifest-format/",
+        "/how-to-guides/workflows/webhook-variables":
+            "/how-to-guides/events/webhook-variables/",
     },
     vite: {
         server: {
@@ -138,9 +140,27 @@ export default defineConfig({
                                     label: "Error Handling",
                                     slug: "how-to-guides/workflows/error-handling",
                                 },
+                            ],
+                        },
+                        {
+                            label: "Events & Webhooks",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Create an Event Source",
+                                    slug: "how-to-guides/events/event-sources",
+                                },
+                                {
+                                    label: "Subscribe a Workflow or Agent",
+                                    slug: "how-to-guides/events/subscriptions",
+                                },
+                                {
+                                    label: "Verify Webhook HMAC",
+                                    slug: "how-to-guides/events/webhook-hmac",
+                                },
                                 {
                                     label: "Webhook & Event Variables",
-                                    slug: "how-to-guides/workflows/webhook-variables",
+                                    slug: "how-to-guides/events/webhook-variables",
                                 },
                             ],
                         },
@@ -171,6 +191,50 @@ export default defineConfig({
                             ],
                         },
                         {
+                            label: "Agents",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Fleet Overview",
+                                    slug: "how-to-guides/agents/fleet-overview",
+                                },
+                                {
+                                    label: "Reviewing Runs",
+                                    slug: "how-to-guides/agents/reviewing-runs",
+                                },
+                                {
+                                    label: "Tuning Agents",
+                                    slug: "how-to-guides/agents/tuning-agents",
+                                },
+                                {
+                                    label: "Run History & Filters",
+                                    slug: "how-to-guides/agents/run-history-and-filters",
+                                },
+                            ],
+                        },
+                        {
+                            label: "AI",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Agents and Chat",
+                                    slug: "how-to-guides/ai/agents-and-chat",
+                                },
+                                {
+                                    label: "Using AI in Workflows",
+                                    slug: "how-to-guides/ai/using-ai-in-workflows",
+                                },
+                                {
+                                    label: "Knowledge Bases",
+                                    slug: "how-to-guides/ai/knowledge-bases",
+                                },
+                                {
+                                    label: "LLM Configuration",
+                                    slug: "how-to-guides/ai/llm-configuration",
+                                },
+                            ],
+                        },
+                        {
                             label: "Integrations",
                             collapsed: true,
                             items: [
@@ -185,6 +249,24 @@ export default defineConfig({
                                 {
                                     label: "Custom REST APIs",
                                     slug: "how-to-guides/integrations/creating-integrations",
+                                },
+                            ],
+                        },
+                        {
+                            label: "MCP",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Server Setup",
+                                    slug: "how-to-guides/mcp/server-setup",
+                                },
+                                {
+                                    label: "Connecting Clients",
+                                    slug: "how-to-guides/mcp/connecting-clients",
+                                },
+                                {
+                                    label: "Agents as MCP",
+                                    slug: "how-to-guides/mcp/agents-as-mcp",
                                 },
                             ],
                         },
