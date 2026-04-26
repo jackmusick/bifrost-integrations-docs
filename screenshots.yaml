@@ -530,7 +530,7 @@ entries:
       actions:
         - wait_for: label:has-text("Access level")
         - scroll_into_view: label:has-text("Access level")
-        - wait_for: 'text=Helpdesk Agents'
+        - wait_for: text=Helpdesk Agents
         - wait_ms: 300
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
@@ -590,7 +590,7 @@ entries:
       heading: Open the dashboard
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:47:24.748Z'
+      timestamp: '2026-04-26T19:06:46.986Z'
   - id: operations-diagnostics-memory-chart
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
@@ -655,7 +655,7 @@ entries:
       heading: Container table
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:47:24.636Z'
+      timestamp: '2026-04-26T19:06:46.849Z'
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
@@ -741,7 +741,7 @@ entries:
       heading: By-workflow / By-conversation / By-agent tables
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:47:24.873Z'
+      timestamp: '2026-04-26T19:06:47.116Z'
   - id: operations-roi-reports-overview
     image: src/assets/operations/roi-reports-overview.png
     route: /reports/roi
