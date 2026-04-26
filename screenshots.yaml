@@ -473,7 +473,9 @@ entries:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Forms
-    captured_at: null
+    captured_at:
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:40.656Z'
   - id: permissions-workflow-picker
     image: src/assets/permissions/workflow-picker.png
     route: /workflows
@@ -489,8 +491,12 @@ entries:
         - url: '**/api/roles'
           body: []
       actions:
-        - wait_for: '[data-slot="card"]:has([data-slot="card-title"]:text-is("hello_world")) button[title="Edit organization scope"]'
-        - click: '[data-slot="card"]:has([data-slot="card-title"]:text-is("hello_world")) button[title="Edit organization scope"]'
+        - wait_for: >-
+            [data-slot="card"]:has([data-slot="card-title"]:text-is("hello_world")) button[title="Edit organization
+            scope"]
+        - click: >-
+            [data-slot="card"]:has([data-slot="card-title"]:text-is("hello_world")) button[title="Edit organization
+            scope"]
         - wait_for: '[role="dialog"]:has-text("Edit Workflow Settings")'
         - click: '[role="tab"]:has-text("Access")'
         - wait_for: '[role="tabpanel"]:has-text("Access")'
@@ -499,7 +505,9 @@ entries:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Workflows
-    captured_at: null
+    captured_at:
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:40.699Z'
   - id: permissions-agent-picker
     image: src/assets/permissions/agent-picker.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111?tab=settings
@@ -526,8 +534,8 @@ entries:
       type: explanation
       heading: Agents
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.025Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:40.532Z'
   - id: permissions-app-picker
     image: src/assets/permissions/app-picker.png
     route: /apps/sample-app/edit
@@ -556,8 +564,8 @@ entries:
       type: explanation
       heading: Apps
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.078Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:40.617Z'
   - id: operations-diagnostics-overview
     image: src/assets/operations/diagnostics-overview.png
     route: /diagnostics
@@ -578,8 +586,8 @@ entries:
       type: how-to
       heading: Open the dashboard
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.126Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:27:25.717Z'
   - id: operations-diagnostics-memory-chart
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
@@ -596,8 +604,8 @@ entries:
         - url: '**/api/platform/queue?**'
           fixture: fixtures/workers-queue.json
       actions:
-        - wait_for: 'text=Total Memory Usage'
-        - scroll_into_view: 'text=Total Memory Usage'
+        - wait_for: text=Total Memory Usage
+        - scroll_into_view: text=Total Memory Usage
         - wait_ms: 200
       crop:
         x: 256
@@ -609,8 +617,8 @@ entries:
       type: how-to
       heading: Memory chart
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.153Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:27:25.628Z'
   - id: operations-diagnostics-container-table
     image: src/assets/operations/diagnostics-container-table.png
     route: /diagnostics
@@ -627,8 +635,8 @@ entries:
         - url: '**/api/platform/queue?**'
           fixture: fixtures/workers-queue.json
       actions:
-        - wait_for: 'th:has-text("Container")'
-        - scroll_into_view: 'th:has-text("Container")'
+        - wait_for: th:has-text("Container")
+        - scroll_into_view: th:has-text("Container")
         - wait_ms: 200
       crop:
         x: 256
@@ -640,8 +648,8 @@ entries:
       type: how-to
       heading: Container table
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.187Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:39.668Z'
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
@@ -656,8 +664,8 @@ entries:
       type: how-to
       heading: Open the page
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.240Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:39.626Z'
   - id: operations-audit-log-filters
     image: src/assets/operations/audit-log-filters.png
     route: /audit
@@ -680,8 +688,8 @@ entries:
       type: how-to
       heading: Filtering
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.292Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:39.498Z'
   - id: operations-usage-reports-overview
     image: src/assets/operations/usage-reports-overview.png
     route: /reports/usage
@@ -698,8 +706,8 @@ entries:
       type: how-to
       heading: Usage Reports
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.339Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:40.082Z'
   - id: operations-usage-reports-by-model
     image: src/assets/operations/usage-reports-by-model.png
     route: /reports/usage
@@ -712,8 +720,8 @@ entries:
         - url: '**/api/organizations'
           body: []
       actions:
-        - wait_for: 'text=Usage by Workflow'
-        - scroll_into_view: 'text=Usage by Workflow'
+        - wait_for: text=Usage by Workflow
+        - scroll_into_view: text=Usage by Workflow
         - wait_ms: 300
       crop:
         x: 256
@@ -725,8 +733,8 @@ entries:
       type: how-to
       heading: By-workflow / By-conversation / By-agent tables
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.363Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:39.973Z'
   - id: operations-roi-reports-overview
     image: src/assets/operations/roi-reports-overview.png
     route: /reports/roi
@@ -747,8 +755,8 @@ entries:
       type: how-to
       heading: ROI Reports
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.428Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:39.932Z'
   - id: workflows-schedule-for-later-checkbox
     image: src/assets/workflows/schedule-for-later-checkbox.png
     route: /workflows/hello_world/execute
@@ -767,8 +775,8 @@ entries:
       type: how-to
       heading: Schedule from the UI
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.480Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.553Z'
   - id: workflows-schedule-for-later-picker
     image: src/assets/workflows/schedule-for-later-picker.png
     route: /workflows/hello_world/execute
@@ -789,8 +797,8 @@ entries:
       type: how-to
       heading: Schedule from the UI
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.517Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.653Z'
   - id: workflows-scheduled-execution-cancel
     image: src/assets/workflows/scheduled-execution-cancel.png
     route: /history?status=Scheduled
@@ -807,20 +815,12 @@ entries:
       type: how-to
       heading: Cancel a scheduled execution
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.550Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.768Z'
   - id: about-ui-version-display
     image: src/assets/about/ui-version-display.png
     route: /
     seed: org_with_one_workflow
-    # NOTE: APP_VERSION is read from import.meta.env.VITE_BIFROST_VERSION which
-    # Vite resolves at build time. The test client container is built with the
-    # default "unknown" value, so the captured screenshot will show "unknown"
-    # in the version footer. addInitScript cannot patch a build-time-substituted
-    # constant, and rebuilding the test client image with a spoofed version is
-    # too risky for this round. Accepting "unknown" as a known cosmetic blemish
-    # until we either (a) wire VITE_BIFROST_VERSION into docker-compose.test.yml
-    # or (b) refactor APP_VERSION to read from a runtime endpoint.
     capture:
       actions:
         - wait_for: button[aria-haspopup="menu"]
@@ -832,8 +832,8 @@ entries:
       type: reference
       heading: Web client (sidebar / footer)
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.593Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:36.929Z'
   - id: agents-fleet-overview
     image: src/assets/agents/fleet-overview.png
     route: /agents
@@ -864,8 +864,8 @@ entries:
       type: how-to
       heading: View the dashboard
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:53:28.969Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:37.074Z'
   - id: agents-reviewing-runs-flipbook
     image: src/assets/agents/reviewing-runs-flipbook.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/review
@@ -892,8 +892,8 @@ entries:
       type: how-to
       heading: Open the review queue
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:53:28.978Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:37.186Z'
   - id: agents-tune-workbench
     image: src/assets/agents/tune-workbench.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/tune
@@ -916,8 +916,8 @@ entries:
       type: how-to
       heading: Open the workbench
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:53:28.987Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:37.500Z'
   - id: agents-run-history
     image: src/assets/agents/run-history.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111?tab=runs
@@ -938,8 +938,8 @@ entries:
       type: how-to
       heading: Search runs by content
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:53:28.998Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:37.401Z'
   - id: agents-run-detail-delegation
     image: src/assets/agents/run-detail-delegation.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/runs/bbbb2222-2222-2222-2222-222222222222
@@ -967,8 +967,8 @@ entries:
       type: how-to
       heading: Drill into a delegation chain
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:53:29.010Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:37.315Z'
   - id: mcp-settings-page
     image: src/assets/mcp/settings-page.png
     route: /settings/mcp
@@ -983,8 +983,8 @@ entries:
       type: how-to
       heading: Enable the MCP server
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:53:29.023Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:39.371Z'
   - id: sso-settings-sso-landing
     image: src/assets/sso/settings-sso-landing.png
     route: /settings/sso
@@ -997,8 +997,8 @@ entries:
       type: how-to
       heading: Open SSO settings
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.724Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.459Z'
   - id: sso-microsoft-card-empty
     image: src/assets/sso/microsoft-card-empty.png
     route: /settings/sso
@@ -1015,8 +1015,8 @@ entries:
       type: how-to
       heading: Configure Microsoft (Entra ID)
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.765Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.350Z'
   - id: sso-add-google-dialog
     image: src/assets/sso/add-google-dialog.png
     route: /settings/sso
@@ -1033,8 +1033,8 @@ entries:
       type: how-to
       heading: Configure Google
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.807Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:40.909Z'
   - id: sso-add-oidc-dialog
     image: src/assets/sso/add-oidc-dialog.png
     route: /settings/sso
@@ -1051,8 +1051,8 @@ entries:
       type: how-to
       heading: Configure generic OIDC
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.844Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.003Z'
   - id: sso-configured-state
     image: src/assets/sso/configured-state.png
     route: /settings/sso
@@ -1065,8 +1065,8 @@ entries:
       type: how-to
       heading: All providers configured
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.880Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.119Z'
   - id: sso-login-buttons
     image: src/assets/sso/login-buttons.png
     route: /login
@@ -1083,8 +1083,8 @@ entries:
       type: how-to
       heading: SSO buttons on the login page
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.931Z'
+      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
+      timestamp: '2026-04-26T18:19:41.238Z'
   - id: passkeys-security-landing
     image: src/assets/passkeys/security-landing.png
     route: /user-settings/security
