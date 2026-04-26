@@ -1,0 +1,100 @@
+{
+  "entries": [
+    {
+      "id": "f1f1f1f1-1111-1111-1111-111111111111",
+      "timestamp": "2026-04-25T18:42:11.000000+00:00",
+      "action": "auth.login.success",
+      "resource_type": "user",
+      "resource_id": "00000000-0000-0000-0000-000000000003",
+      "outcome": "success",
+      "source": "http",
+      "actor": {
+        "user_id": "00000000-0000-0000-0000-000000000003",
+        "user_email": "michael.chen@example.com",
+        "user_name": "Michael Chen",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "organization_name": "Northwind Logistics"
+      },
+      "ip_address": "203.0.113.41",
+      "user_agent": "Mozilla/5.0 (Macintosh)",
+      "details": {"method": "passkey"}
+    },
+    {
+      "id": "f4f4f4f4-4444-4444-4444-444444444444",
+      "timestamp": "2026-04-25T17:48:19.000000+00:00",
+      "action": "auth.login.failure",
+      "resource_type": "user",
+      "resource_id": null,
+      "outcome": "failure",
+      "source": "http",
+      "actor": {
+        "user_id": null,
+        "user_email": "old.account@northwind.com",
+        "user_name": null,
+        "organization_id": null,
+        "organization_name": null
+      },
+      "ip_address": "198.51.100.92",
+      "user_agent": "Mozilla/5.0 (Windows)",
+      "details": {"reason": "user_not_found"}
+    },
+    {
+      "id": "f7f7f7f7-7777-7777-7777-777777777777",
+      "timestamp": "2026-04-25T15:52:44.000000+00:00",
+      "action": "auth.logout",
+      "resource_type": "user",
+      "resource_id": "00000000-0000-0000-0000-000000000003",
+      "outcome": "success",
+      "source": "http",
+      "actor": {
+        "user_id": "00000000-0000-0000-0000-000000000003",
+        "user_email": "michael.chen@example.com",
+        "user_name": "Michael Chen",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "organization_name": "Northwind Logistics"
+      },
+      "ip_address": "203.0.113.41",
+      "user_agent": "Mozilla/5.0 (Macintosh)",
+      "details": null
+    },
+    {
+      "id": "f8f8f8f8-8888-8888-8888-888888888888",
+      "timestamp": "2026-04-25T15:22:13.000000+00:00",
+      "action": "auth.mfa.enroll.success",
+      "resource_type": "user",
+      "resource_id": "00000000-0000-0000-0000-000000000011",
+      "outcome": "success",
+      "source": "http",
+      "actor": {
+        "user_id": "00000000-0000-0000-0000-000000000011",
+        "user_email": "priya.shah@example.com",
+        "user_name": "Priya Shah",
+        "organization_id": "33333333-3333-3333-3333-333333333333",
+        "organization_name": "Globex"
+      },
+      "ip_address": "203.0.113.88",
+      "user_agent": "Mozilla/5.0 (iPhone)",
+      "details": {"method": "totp"}
+    },
+    {
+      "id": "fbfbfbfb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "timestamp": "2026-04-25T13:42:32.000000+00:00",
+      "action": "auth.login.failure",
+      "resource_type": "user",
+      "resource_id": null,
+      "outcome": "failure",
+      "source": "http",
+      "actor": {
+        "user_id": null,
+        "user_email": "michael.chen@example.com",
+        "user_name": null,
+        "organization_id": null,
+        "organization_name": null
+      },
+      "ip_address": "198.51.100.92",
+      "user_agent": "Mozilla/5.0 (Windows)",
+      "details": {"reason": "bad_password"}
+    }
+  ],
+  "continuation_token": null
+}

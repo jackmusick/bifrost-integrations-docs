@@ -1,0 +1,11 @@
+{
+  "agent_id": "aaaa5555-5555-5555-5555-555555555555",
+  "runs_7d": 0,
+  "success_rate": 0,
+  "avg_duration_ms": 0,
+  "total_cost_7d": "0.00",
+  "last_run_at": null,
+  "runs_by_day": [0, 0, 0, 0, 0, 0, 0],
+  "needs_review": 0,
+  "unreviewed": 0
+}

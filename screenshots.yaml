@@ -472,54 +472,97 @@ entries:
       type: explanation
       heading: Forms
     captured_at: null
-  # NOTE: needs seeder workflow_with_role_picker — the workflow-edit page must
-  # show the access_level + roles UI; today the default seed lands on a
-  # workflow with a role-bound access level so the picker is visible.
   - id: permissions-workflow-picker
     image: src/assets/permissions/workflow-picker.png
     route: /workflows
     seed: org_with_one_workflow
     capture:
+      mocks:
+        - url: '**/api/workflows'
+          fixture: fixtures/workflows-list-with-hello-world.json
+        - url: '**/api/workflows?**'
+          fixture: fixtures/workflows-list-with-hello-world.json
+        - url: '**/api/organizations'
+          body: []
+        - url: '**/api/roles'
+          body: []
       actions:
-        - wait_for: 'text="Access"'
-        - scroll_into_view: 'text="Access"'
+        - wait_for: 'button[title="Edit organization scope"]'
+        - click: 'button[title="Edit organization scope"]'
+        - wait_for: '[role="dialog"]:has-text("Edit Workflow Settings")'
+        - click: '[role="tab"]:has-text("Access")'
+        - wait_for: '[role="tabpanel"]:has-text("Access")'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Workflows
     captured_at: null
-  # NOTE: needs seeder agent_with_role_picker — fleet must contain at least
-  # one agent so the detail/settings page renders the access_level UI.
   - id: permissions-agent-picker
     image: src/assets/permissions/agent-picker.png
-    route: /agents
-    seed: org_with_one_agent
+    route: /agents/aaaa1111-1111-1111-1111-111111111111?tab=settings
     capture:
+      mocks:
+        - url: '**/api/agents'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/agent-detail-triage.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111/stats**'
+          fixture: fixtures/agent-stats-triage.json
+        - url: '**/api/agent-runs?**'
+          fixture: fixtures/agent-runs-list.json
+        - url: '**/api/organizations'
+          body: []
+        - url: '**/api/roles'
+          body: []
       actions:
-        - wait_for: 'text="Access"'
+        - wait_for: 'label:has-text("Access level")'
+        - scroll_into_view: 'label:has-text("Access level")'
+        - wait_ms: 200
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Agents
     captured_at: null
+  # NOTE: opens the App Info / Settings dialog from the app code editor page,
+  # which is where the access_level + role picker actually lives for Apps.
   - id: permissions-app-picker
     image: src/assets/permissions/app-picker.png
-    route: /apps
+    route: /apps/sample-app/edit
     seed: org_with_one_app
     capture:
+      mocks:
+        - url: '**/api/organizations'
+          body: []
+        - url: '**/api/roles'
+          body: []
       actions:
-        - wait_for: 'text="Access"'
+        - wait_for: 'button[title="Settings"]'
+        - click: 'button[title="Settings"]'
+        - wait_for: '[role="dialog"]'
+        - wait_for: 'label:has-text("Access")'
+        - scroll_into_view: 'label:has-text("Access")'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Apps
     captured_at: null
-  # NOTE: needs seeder with platform_admin auth + at least one connected worker
-  # container in the test stack so the diagnostics page has containers/forks to
-  # render. The page returns 403 for non-platform-admins.
   - id: operations-diagnostics-overview
     image: src/assets/operations/diagnostics-overview.png
     route: /diagnostics
+    capture:
+      mocks:
+        - url: '**/api/platform/workers'
+          fixture: fixtures/workers-pools.json
+        - url: '**/api/platform/workers/stats'
+          fixture: fixtures/workers-stats.json
+        - url: '**/api/platform/workers/metrics?**'
+          fixture: fixtures/workers-metrics.json
+        - url: '**/api/platform/queue'
+          fixture: fixtures/workers-queue.json
+        - url: '**/api/platform/queue?**'
+          fixture: fixtures/workers-queue.json
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
@@ -529,6 +572,17 @@ entries:
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
     capture:
+      mocks:
+        - url: '**/api/platform/workers'
+          fixture: fixtures/workers-pools.json
+        - url: '**/api/platform/workers/stats'
+          fixture: fixtures/workers-stats.json
+        - url: '**/api/platform/workers/metrics?**'
+          fixture: fixtures/workers-metrics.json
+        - url: '**/api/platform/queue'
+          fixture: fixtures/workers-queue.json
+        - url: '**/api/platform/queue?**'
+          fixture: fixtures/workers-queue.json
       crop:
         x: 256
         'y': 200
@@ -543,6 +597,17 @@ entries:
     image: src/assets/operations/diagnostics-container-table.png
     route: /diagnostics
     capture:
+      mocks:
+        - url: '**/api/platform/workers'
+          fixture: fixtures/workers-pools.json
+        - url: '**/api/platform/workers/stats'
+          fixture: fixtures/workers-stats.json
+        - url: '**/api/platform/workers/metrics?**'
+          fixture: fixtures/workers-metrics.json
+        - url: '**/api/platform/queue'
+          fixture: fixtures/workers-queue.json
+        - url: '**/api/platform/queue?**'
+          fixture: fixtures/workers-queue.json
       crop:
         x: 256
         'y': 480
@@ -553,11 +618,15 @@ entries:
       type: how-to
       heading: Container table
     captured_at: null
-  # NOTE: needs seeder with recent audit log entries (at least one auth.login.success,
-  # one user.create, one role.update) so the table is non-empty. Page is platform-admin only.
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
+    capture:
+      mocks:
+        - url: '**/api/audit'
+          fixture: fixtures/audit-log-overview.json
+        - url: '**/api/audit?**'
+          fixture: fixtures/audit-log-overview.json
     diataxis:
       page: src/content/docs/how-to-guides/operations/audit-log.mdx
       type: how-to
@@ -567,6 +636,13 @@ entries:
     image: src/assets/operations/audit-log-filters.png
     route: /audit
     capture:
+      mocks:
+        - url: '**/api/audit'
+          fixture: fixtures/audit-log-overview.json
+        - url: '**/api/audit?**action=auth.**'
+          fixture: fixtures/audit-log-auth-only.json
+        - url: '**/api/audit?**'
+          fixture: fixtures/audit-log-overview.json
       actions:
         - wait_for: 'button[role="combobox"]'
         - click: 'button[role="combobox"]:has-text("All actions")'
@@ -578,12 +654,15 @@ entries:
       type: how-to
       heading: Filtering
     captured_at: null
-  # NOTE: needs seeder with usage data — at least one workflow with AIUsage rows
-  # across multiple models, plus one agent with a recent run, plus one chat
-  # conversation. Demo Mode toggle is a fallback if real data is sparse.
   - id: operations-usage-reports-overview
     image: src/assets/operations/usage-reports-overview.png
     route: /usage
+    capture:
+      mocks:
+        - url: '**/api/reports/usage?**'
+          fixture: fixtures/usage-report.json
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
@@ -593,6 +672,11 @@ entries:
     image: src/assets/operations/usage-reports-by-model.png
     route: /usage
     capture:
+      mocks:
+        - url: '**/api/reports/usage?**'
+          fixture: fixtures/usage-report.json
+        - url: '**/api/organizations'
+          body: []
       crop:
         x: 256
         'y': 500
@@ -603,28 +687,38 @@ entries:
       type: how-to
       heading: By-workflow / By-conversation / By-agent tables
     captured_at: null
-  # NOTE: needs seeder with ROI-decorated workflows (roi_minutes_saved, roi_dollar_value)
-  # and at least 30 days of successful executions for trend visibility.
   - id: operations-roi-reports-overview
     image: src/assets/operations/roi-reports-overview.png
     route: /reports/roi
+    capture:
+      mocks:
+        - url: '**/api/reports/roi/summary?**'
+          fixture: fixtures/roi-summary.json
+        - url: '**/api/reports/roi/by-workflow?**'
+          fixture: fixtures/roi-by-workflow.json
+        - url: '**/api/reports/roi/by-organization?**'
+          fixture: fixtures/roi-by-organization.json
+        - url: '**/api/reports/roi/trends?**'
+          fixture: fixtures/roi-trends.json
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
       heading: ROI Reports
     captured_at: null
-  # NOTE: needs the Execute Workflow modal seeded — easiest via /workflows/{id}
-  # with a click action to open the run dialog, then tick "Schedule for later".
   - id: workflows-schedule-for-later-checkbox
     image: src/assets/workflows/schedule-for-later-checkbox.png
-    route: /workflows
-    seed: org_with_one_workflow
+    route: /workflows/hello_world/execute
     capture:
+      mocks:
+        - url: '**/api/workflows'
+          fixture: fixtures/workflows-list-with-hello-world.json
+        - url: '**/api/workflows?**'
+          fixture: fixtures/workflows-list-with-hello-world.json
       actions:
-        - wait_for: 'button:has-text("Run")'
-        - click: 'button:has-text("Run"):not([disabled])'
-        - wait_for: '[role="dialog"]'
         - wait_for: 'label:has-text("Schedule for later")'
+        - scroll_into_view: 'label:has-text("Schedule for later")'
         - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/workflows/scheduled-executions.mdx
@@ -633,15 +727,17 @@ entries:
     captured_at: null
   - id: workflows-schedule-for-later-picker
     image: src/assets/workflows/schedule-for-later-picker.png
-    route: /workflows
-    seed: org_with_one_workflow
+    route: /workflows/hello_world/execute
     capture:
+      mocks:
+        - url: '**/api/workflows'
+          fixture: fixtures/workflows-list-with-hello-world.json
+        - url: '**/api/workflows?**'
+          fixture: fixtures/workflows-list-with-hello-world.json
       actions:
-        - wait_for: 'button:has-text("Run")'
-        - click: 'button:has-text("Run"):not([disabled])'
-        - wait_for: '[role="dialog"]'
         - wait_for: 'label:has-text("Schedule for later")'
-        - click: 'label:has-text("Schedule for later") input[type="checkbox"]'
+        - scroll_into_view: 'label:has-text("Schedule for later")'
+        - click: 'label:has-text("Schedule for later") button[role="checkbox"]'
         - wait_for: 'button:has-text("In 15 min")'
         - wait_ms: 300
     diataxis:
@@ -649,20 +745,26 @@ entries:
       type: how-to
       heading: Schedule from the UI
     captured_at: null
-  # NOTE: needs seeder with at least one execution row in SCHEDULED status
-  # (run a workflow with delay_seconds=3600 so it stays scheduled). Then the
-  # cancel button on the execution detail surfaces.
   - id: workflows-scheduled-execution-cancel
     image: src/assets/workflows/scheduled-execution-cancel.png
-    route: /history
+    route: /history?status=Scheduled
+    capture:
+      mocks:
+        - url: '**/api/executions'
+          fixture: fixtures/executions-scheduled.json
+        - url: '**/api/executions?**'
+          fixture: fixtures/executions-scheduled.json
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/workflows/scheduled-executions.mdx
       type: how-to
       heading: Cancel a scheduled execution
     captured_at: null
-  # NOTE: VITE_BIFROST_VERSION must be set at build time for the menu to show
-  # a real version (otherwise it shows "unknown"). The capture action opens
-  # the user-menu dropdown so the version pill is visible.
+  # NOTE: VITE_BIFROST_VERSION must be set at the test-stack client build for the
+  # menu to show a real version — otherwise the pill renders "unknown", which is
+  # still a valid screenshot for the docs page (it shows where to click). The
+  # capture action opens the user-menu dropdown so the version pill is visible.
   - id: about-ui-version-display
     image: src/assets/about/ui-version-display.png
     route: /
@@ -681,7 +783,28 @@ entries:
   - id: agents-fleet-overview
     image: src/assets/agents/fleet-overview.png
     route: /agents
-    seed: agents_fleet_with_runs
+    capture:
+      mocks:
+        - url: '**/api/agents'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents?**'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents/stats/fleet'
+          fixture: fixtures/agent-fleet-stats.json
+        - url: '**/api/agents/stats/fleet?**'
+          fixture: fixtures/agent-fleet-stats.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111/stats**'
+          fixture: fixtures/agent-stats-triage.json
+        - url: '**/api/agents/aaaa2222-2222-2222-2222-222222222222/stats**'
+          fixture: fixtures/agent-stats-license.json
+        - url: '**/api/agents/aaaa3333-3333-3333-3333-333333333333/stats**'
+          fixture: fixtures/agent-stats-onboarding.json
+        - url: '**/api/agents/aaaa4444-4444-4444-4444-444444444444/stats**'
+          fixture: fixtures/agent-stats-backup.json
+        - url: '**/api/agents/aaaa5555-5555-5555-5555-555555555555/stats**'
+          fixture: fixtures/agent-stats-knowledge.json
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/agents/fleet-overview.mdx
       type: how-to
@@ -690,7 +813,23 @@ entries:
   - id: agents-reviewing-runs-flipbook
     image: src/assets/agents/reviewing-runs-flipbook.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/review
-    seed: agents_fleet_with_runs
+    capture:
+      mocks:
+        - url: '**/api/agents'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/agent-detail-triage.json
+        - url: '**/api/agent-runs?**verdict=down**'
+          fixture: fixtures/agent-runs-flagged.json
+        - url: '**/api/agent-runs?**'
+          fixture: fixtures/agent-runs-flagged.json
+        - url: '**/api/agent-runs/bbbb2222-2222-2222-2222-222222222222'
+          fixture: fixtures/agent-run-detail-flagged.json
+        - url: '**/api/agent-runs/bbbb2222-2222-2222-2222-222222222222/flag-conversation'
+          status: 404
+          body: {"detail": "no flag conversation"}
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/agents/reviewing-runs.mdx
       type: how-to
@@ -699,7 +838,20 @@ entries:
   - id: agents-tune-workbench
     image: src/assets/agents/tune-workbench.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/tune
-    seed: agents_fleet_with_runs
+    capture:
+      mocks:
+        - url: '**/api/agents'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/agent-detail-triage.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111/stats**'
+          fixture: fixtures/agent-stats-triage.json
+        - url: '**/api/agent-runs?**verdict=down**'
+          fixture: fixtures/agent-runs-flagged.json
+        - url: '**/api/agent-runs?**'
+          fixture: fixtures/agent-runs-flagged.json
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/agents/tuning-agents.mdx
       type: how-to
@@ -708,7 +860,18 @@ entries:
   - id: agents-run-history
     image: src/assets/agents/run-history.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111?tab=runs
-    seed: agents_fleet_with_runs
+    capture:
+      mocks:
+        - url: '**/api/agents'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/agent-detail-triage.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111/stats**'
+          fixture: fixtures/agent-stats-triage.json
+        - url: '**/api/agent-runs?**'
+          fixture: fixtures/agent-runs-list.json
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/agents/run-history-and-filters.mdx
       type: how-to
@@ -717,7 +880,19 @@ entries:
   - id: agents-run-detail-delegation
     image: src/assets/agents/run-detail-delegation.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/runs/bbbb2222-2222-2222-2222-222222222222
-    seed: agents_fleet_with_runs
+    capture:
+      mocks:
+        - url: '**/api/agents'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/agent-detail-triage.json
+        - url: '**/api/agent-runs/bbbb2222-2222-2222-2222-222222222222'
+          fixture: fixtures/agent-run-detail-delegation.json
+        - url: '**/api/agent-runs/bbbb2222-2222-2222-2222-222222222222/flag-conversation'
+          status: 404
+          body: {"detail": "no flag conversation"}
+        - url: '**/api/organizations'
+          body: []
     diataxis:
       page: src/content/docs/how-to-guides/agents/run-history-and-filters.mdx
       type: how-to
@@ -726,9 +901,189 @@ entries:
   - id: mcp-settings-page
     image: src/assets/mcp/settings-page.png
     route: /settings/mcp
-    seed: mcp_enabled_with_tools
+    capture:
+      mocks:
+        - url: '**/api/mcp/config'
+          fixture: fixtures/mcp-config.json
+        - url: '**/api/mcp/tools'
+          fixture: fixtures/mcp-tools.json
     diataxis:
       page: src/content/docs/how-to-guides/mcp/server-setup.mdx
       type: how-to
       heading: Enable the MCP server
+    captured_at: null
+  - id: sso-settings-sso-landing
+    image: src/assets/sso/settings-sso-landing.png
+    route: /settings/sso
+    capture:
+      mocks:
+        - url: '**/api/settings/oauth'
+          fixture: fixtures/oauth-configs-empty.json
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/sso.mdx
+      type: how-to
+      heading: Open SSO settings
+    captured_at: null
+  - id: sso-add-microsoft-dialog
+    image: src/assets/sso/add-microsoft-dialog.png
+    route: /settings/sso
+    capture:
+      mocks:
+        - url: '**/api/settings/oauth'
+          fixture: fixtures/oauth-configs-empty.json
+      actions:
+        - wait_for: 'text="Microsoft Entra ID"'
+        - scroll_into_view: 'text="Microsoft Entra ID"'
+        - wait_ms: 200
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/sso.mdx
+      type: how-to
+      heading: Configure Microsoft (Entra ID)
+    captured_at: null
+  - id: sso-add-google-dialog
+    image: src/assets/sso/add-google-dialog.png
+    route: /settings/sso
+    capture:
+      mocks:
+        - url: '**/api/settings/oauth'
+          fixture: fixtures/oauth-configs-empty.json
+      actions:
+        - wait_for: '[data-slot="card-title"]:has-text("Google")'
+        - scroll_into_view: '[data-slot="card-title"]:has-text("Google")'
+        - wait_ms: 200
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/sso.mdx
+      type: how-to
+      heading: Configure Google
+    captured_at: null
+  - id: sso-add-oidc-dialog
+    image: src/assets/sso/add-oidc-dialog.png
+    route: /settings/sso
+    capture:
+      mocks:
+        - url: '**/api/settings/oauth'
+          fixture: fixtures/oauth-configs-empty.json
+      actions:
+        - wait_for: 'text="OIDC Provider"'
+        - scroll_into_view: 'text="OIDC Provider"'
+        - wait_ms: 200
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/sso.mdx
+      type: how-to
+      heading: Configure generic OIDC
+    captured_at: null
+  - id: sso-configured-state
+    image: src/assets/sso/configured-state.png
+    route: /settings/sso
+    capture:
+      mocks:
+        - url: '**/api/settings/oauth'
+          fixture: fixtures/oauth-configs-three.json
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/sso.mdx
+      type: how-to
+      heading: All providers configured
+    captured_at: null
+  # NOTE: /login is unauthenticated; auth_as override is required so the
+  # capture pipeline does not log in as platform_admin first (which would
+  # redirect away from the login page).
+  - id: sso-login-buttons
+    image: src/assets/sso/login-buttons.png
+    route: /login
+    auth_as: unauthenticated
+    capture:
+      mocks:
+        - url: '**/auth/status'
+          fixture: fixtures/auth-status-with-sso.json
+      actions:
+        - wait_for: 'button:has-text("Microsoft"), button:has-text("Google"), button:has-text("Northwind SSO")'
+        - wait_ms: 200
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/sso.mdx
+      type: how-to
+      heading: SSO buttons on the login page
+    captured_at: null
+  - id: passkeys-security-landing
+    image: src/assets/passkeys/security-landing.png
+    route: /user-settings/security
+    capture:
+      mocks:
+        - url: '**/auth/passkeys'
+          fixture: fixtures/passkeys-empty.json
+        - url: '**/auth/mfa/status'
+          fixture: fixtures/mfa-status.json
+        - url: '**/auth/mfa/recovery-codes/count'
+          body: {"count": 0}
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/passkeys.mdx
+      type: how-to
+      heading: Open Security settings
+    captured_at: null
+  - id: passkeys-add-dialog
+    image: src/assets/passkeys/add-dialog.png
+    route: /user-settings/security
+    capture:
+      mocks:
+        - url: '**/auth/passkeys'
+          fixture: fixtures/passkeys-empty.json
+        - url: '**/auth/mfa/status'
+          fixture: fixtures/mfa-status.json
+        - url: '**/auth/mfa/recovery-codes/count'
+          body: {"count": 0}
+      actions:
+        - wait_for: 'button:has-text("Add Passkey")'
+        - click: 'button:has-text("Add Passkey")'
+        - wait_for: '[role="dialog"]'
+        - wait_ms: 300
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/passkeys.mdx
+      type: how-to
+      heading: Add a passkey
+    captured_at: null
+  # NOTE: this captures the same dialog as `passkeys-add-dialog` once the user
+  # has tabbed into the device-name input. The actual WebAuthn browser prompt
+  # cannot be screenshotted (it is OS-level UI), so the docs page documents the
+  # pre-prompt state where the user names the credential.
+  - id: passkeys-name-prompt
+    image: src/assets/passkeys/name-prompt.png
+    route: /user-settings/security
+    capture:
+      mocks:
+        - url: '**/auth/passkeys'
+          fixture: fixtures/passkeys-empty.json
+        - url: '**/auth/mfa/status'
+          fixture: fixtures/mfa-status.json
+        - url: '**/auth/mfa/recovery-codes/count'
+          body: {"count": 0}
+      actions:
+        - wait_for: 'button:has-text("Add Passkey")'
+        - click: 'button:has-text("Add Passkey")'
+        - wait_for: '[role="dialog"] input[id*="device" i], [role="dialog"] input[placeholder*="MacBook" i], [role="dialog"] input'
+        - click: '[role="dialog"] input'
+        - fill: {selector: '[role="dialog"] input', value: 'MacBook Pro (work)'}
+        - wait_ms: 300
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/passkeys.mdx
+      type: how-to
+      heading: Name the passkey
+    captured_at: null
+  - id: passkeys-registered-list
+    image: src/assets/passkeys/registered-list.png
+    route: /user-settings/security
+    capture:
+      mocks:
+        - url: '**/auth/passkeys'
+          fixture: fixtures/passkeys-list.json
+        - url: '**/auth/mfa/status'
+          fixture: fixtures/mfa-status.json
+        - url: '**/auth/mfa/recovery-codes/count'
+          body: {"count": 0}
+      actions:
+        - wait_for: 'text="MacBook Pro (Touch ID)"'
+        - scroll_into_view: 'text="MacBook Pro (Touch ID)"'
+        - wait_ms: 200
+    diataxis:
+      page: src/content/docs/how-to-guides/authentication/passkeys.mdx
+      type: how-to
+      heading: Registered passkeys
     captured_at: null

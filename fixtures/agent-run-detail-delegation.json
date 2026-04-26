@@ -1,0 +1,137 @@
+{
+  "id": "bbbb2222-2222-2222-2222-222222222222",
+  "agent_id": "aaaa1111-1111-1111-1111-111111111111",
+  "agent_name": "Onboarding Coordinator",
+  "trigger_type": "chat",
+  "trigger_source": "chat-conversation",
+  "conversation_id": "cccc1111-1111-1111-1111-111111111111",
+  "event_delivery_id": null,
+  "input": {
+    "message": "Provision Maya Chen, starting Monday, on the analytics team. Standard kit + Power BI license."
+  },
+  "output": {
+    "user_id": "u-9d12",
+    "mailbox": "maya.chen@example.com",
+    "hardware_ticket": "HW-44021",
+    "licenses": ["O365-E3", "PowerBI-Pro"]
+  },
+  "status": "completed",
+  "error": null,
+  "org_id": null,
+  "caller_user_id": "00000000-0000-0000-0000-000000000003",
+  "caller_email": "michael.chen@example.com",
+  "caller_name": "Michael Chen",
+  "iterations_used": 7,
+  "tokens_used": 8420,
+  "budget_max_iterations": 16,
+  "budget_max_tokens": 64000,
+  "duration_ms": 64320,
+  "llm_model": "claude-opus-4-7",
+  "asked": "Provision Maya Chen, starting Monday, on the analytics team. Standard kit + Power BI license.",
+  "did": "Coordinated identity, hardware, and license provisioning across three sub-agents.",
+  "answered": "Maya Chen is fully provisioned (mailbox, laptop ticket, Power BI license).",
+  "metadata": {"customer": "Northwind Logistics", "channel": "chat"},
+  "confidence": 0.93,
+  "confidence_reason": "All three sub-agents reported success; license validation passed.",
+  "summary_status": "completed",
+  "summary_error": null,
+  "summary_prompt_version": "v3",
+  "verdict": null,
+  "verdict_note": null,
+  "verdict_set_at": null,
+  "verdict_set_by": null,
+  "created_at": "2026-04-25T13:22:00.000000+00:00",
+  "started_at": "2026-04-25T13:22:00.000000+00:00",
+  "completed_at": "2026-04-25T13:23:04.000000+00:00",
+  "parent_run_id": null,
+  "steps": [
+    {
+      "id": "sss10001-0001-0001-0001-000000000001",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 1,
+      "type": "user_message",
+      "content": {"text": "Provision Maya Chen, starting Monday, on the analytics team. Standard kit + Power BI license."},
+      "tokens_used": 32,
+      "duration_ms": 0,
+      "created_at": "2026-04-25T13:22:00.100000+00:00"
+    },
+    {
+      "id": "sss10002-0002-0002-0002-000000000002",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 2,
+      "type": "delegate",
+      "content": {
+        "agent": "Identity Provisioner",
+        "child_run_id": "dddd1111-1111-1111-1111-111111111111",
+        "task": "Create AD account, M365 mailbox, and assign O365 E3 + Power BI Pro for maya.chen@example.com."
+      },
+      "tokens_used": 612,
+      "duration_ms": 18420,
+      "created_at": "2026-04-25T13:22:18.520000+00:00"
+    },
+    {
+      "id": "sss10003-0003-0003-0003-000000000003",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 3,
+      "type": "delegate",
+      "content": {
+        "agent": "Hardware Coordinator",
+        "child_run_id": "dddd2222-2222-2222-2222-222222222222",
+        "task": "File a hardware ticket for the standard analytics kit (laptop + dock + 2 monitors)."
+      },
+      "tokens_used": 528,
+      "duration_ms": 12840,
+      "created_at": "2026-04-25T13:22:31.360000+00:00"
+    },
+    {
+      "id": "sss10004-0004-0004-0004-000000000004",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 4,
+      "type": "delegate",
+      "content": {
+        "agent": "Workspace Configurator",
+        "child_run_id": "dddd3333-3333-3333-3333-333333333333",
+        "task": "Add maya.chen@example.com to analytics-team distribution list and the BI-data-readers Entra group."
+      },
+      "tokens_used": 482,
+      "duration_ms": 9420,
+      "created_at": "2026-04-25T13:22:40.780000+00:00"
+    },
+    {
+      "id": "sss10005-0005-0005-0005-000000000005",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 5,
+      "type": "assistant_message",
+      "content": {
+        "text": "All three sub-agents completed successfully. Maya is fully provisioned. Hardware ticket HW-44021 will deliver Friday. Mailbox active immediately."
+      },
+      "tokens_used": 940,
+      "duration_ms": 3210,
+      "created_at": "2026-04-25T13:22:43.990000+00:00"
+    }
+  ],
+  "child_run_ids": [
+    "dddd1111-1111-1111-1111-111111111111",
+    "dddd2222-2222-2222-2222-222222222222",
+    "dddd3333-3333-3333-3333-333333333333"
+  ],
+  "ai_usage": [
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-7",
+      "input_tokens": 4800,
+      "output_tokens": 1820,
+      "cost": "0.0944",
+      "duration_ms": 18400,
+      "timestamp": "2026-04-25T13:22:43.990000+00:00",
+      "sequence": 1
+    }
+  ],
+  "ai_totals": {
+    "total_input_tokens": 4800,
+    "total_output_tokens": 1820,
+    "total_cost": "0.0944",
+    "total_duration_ms": 18400,
+    "call_count": 1
+  }
+}

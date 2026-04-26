@@ -1,0 +1,131 @@
+{
+  "id": "bbbb2222-2222-2222-2222-222222222222",
+  "agent_id": "aaaa1111-1111-1111-1111-111111111111",
+  "agent_name": "Ticket Triage Agent",
+  "trigger_type": "chat",
+  "trigger_source": "chat-conversation",
+  "conversation_id": "cccc1111-1111-1111-1111-111111111111",
+  "event_delivery_id": null,
+  "input": {
+    "message": "Outlook keeps crashing on launch for my whole team — started right after Tuesday's update."
+  },
+  "output": {
+    "priority": "P3",
+    "category": "software",
+    "routing": "tier1"
+  },
+  "status": "completed",
+  "error": null,
+  "org_id": null,
+  "caller_user_id": "00000000-0000-0000-0000-000000000005",
+  "caller_email": "tina.morris@example.com",
+  "caller_name": "Tina Morris",
+  "iterations_used": 4,
+  "tokens_used": 2840,
+  "budget_max_iterations": 12,
+  "budget_max_tokens": 32000,
+  "duration_ms": 14210,
+  "llm_model": "claude-sonnet-4-5",
+  "asked": "Outlook keeps crashing on launch for my whole team — started right after Tuesday's update.",
+  "did": "Classified as P3 software issue, routed to tier1.",
+  "answered": "Looks like a P3 software issue — routing to tier1 to start investigating.",
+  "metadata": {
+    "customer": "Northwind Logistics",
+    "channel": "chat"
+  },
+  "confidence": 0.62,
+  "confidence_reason": "Reporter said 'whole team' but did not provide a count — could be P1.",
+  "summary_status": "completed",
+  "summary_error": null,
+  "summary_prompt_version": "v3",
+  "verdict": "down",
+  "verdict_note": "Should have been P1 — outage scope was company-wide.",
+  "verdict_set_at": "2026-04-25T18:10:00.000000+00:00",
+  "verdict_set_by": "00000000-0000-0000-0000-000000000001",
+  "created_at": "2026-04-25T17:42:00.000000+00:00",
+  "started_at": "2026-04-25T17:42:00.000000+00:00",
+  "completed_at": "2026-04-25T17:42:14.000000+00:00",
+  "parent_run_id": null,
+  "steps": [
+    {
+      "id": "ssss0001-0001-0001-0001-000000000001",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 1,
+      "type": "user_message",
+      "content": {
+        "text": "Outlook keeps crashing on launch for my whole team — started right after Tuesday's update."
+      },
+      "tokens_used": 28,
+      "duration_ms": 0,
+      "created_at": "2026-04-25T17:42:00.100000+00:00"
+    },
+    {
+      "id": "ssss0002-0002-0002-0002-000000000002",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 2,
+      "type": "thought",
+      "content": {
+        "text": "User reports an Outlook crash impacting 'my whole team.' Estimating P3 since exact user count is unknown — could be P2 or P1 if many users."
+      },
+      "tokens_used": 412,
+      "duration_ms": 3120,
+      "created_at": "2026-04-25T17:42:03.220000+00:00"
+    },
+    {
+      "id": "ssss0003-0003-0003-0003-000000000003",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 3,
+      "type": "tool_call",
+      "content": {
+        "tool": "search_recent_tickets",
+        "args": {"customer": "Northwind Logistics", "category": "software"},
+        "result": {"matches": 0}
+      },
+      "tokens_used": 320,
+      "duration_ms": 1820,
+      "created_at": "2026-04-25T17:42:05.040000+00:00"
+    },
+    {
+      "id": "ssss0004-0004-0004-0004-000000000004",
+      "run_id": "bbbb2222-2222-2222-2222-222222222222",
+      "step_number": 4,
+      "type": "assistant_message",
+      "content": {
+        "text": "Classified P3 software / tier1. Setting confidence to 0.62 — reporter did not provide an affected-user count."
+      },
+      "tokens_used": 480,
+      "duration_ms": 2100,
+      "created_at": "2026-04-25T17:42:07.140000+00:00"
+    }
+  ],
+  "child_run_ids": [],
+  "ai_usage": [
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5",
+      "input_tokens": 1840,
+      "output_tokens": 920,
+      "cost": "0.0184",
+      "duration_ms": 7040,
+      "timestamp": "2026-04-25T17:42:07.140000+00:00",
+      "sequence": 1
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5",
+      "input_tokens": 1200,
+      "output_tokens": 280,
+      "cost": "0.0014",
+      "duration_ms": 1240,
+      "timestamp": "2026-04-25T17:42:14.000000+00:00",
+      "sequence": 2
+    }
+  ],
+  "ai_totals": {
+    "total_input_tokens": 3040,
+    "total_output_tokens": 1200,
+    "total_cost": "0.0198",
+    "total_duration_ms": 8280,
+    "call_count": 2
+  }
+}

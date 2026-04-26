@@ -1,0 +1,4 @@
+{
+  "providers": [],
+  "callback_url": "https://app.example.com/auth/oauth/callback"
+}

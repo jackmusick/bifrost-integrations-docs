@@ -1,0 +1,52 @@
+{
+  "tools": [
+    {
+      "id": "create_ticket",
+      "name": "create_ticket",
+      "description": "Create a HaloPSA ticket for the given customer.",
+      "is_system": false
+    },
+    {
+      "id": "list_tickets",
+      "name": "list_tickets",
+      "description": "List recent HaloPSA tickets, with optional status and customer filters.",
+      "is_system": false
+    },
+    {
+      "id": "search_users",
+      "name": "search_users",
+      "description": "Search Microsoft Graph users by email or display name.",
+      "is_system": false
+    },
+    {
+      "id": "list_user_licenses",
+      "name": "list_user_licenses",
+      "description": "Return the M365 license assignments for a given user.",
+      "is_system": false
+    },
+    {
+      "id": "rotate_password",
+      "name": "rotate_password",
+      "description": "Rotate the password for a Microsoft Graph user and email the new credentials.",
+      "is_system": false
+    },
+    {
+      "id": "create_organization",
+      "name": "create_organization",
+      "description": "Create a new tenant organization in Bifrost.",
+      "is_system": true
+    },
+    {
+      "id": "list_organizations",
+      "name": "list_organizations",
+      "description": "List all organizations the caller has access to.",
+      "is_system": true
+    },
+    {
+      "id": "get_role",
+      "name": "get_role",
+      "description": "Look up a role by name or ID.",
+      "is_system": true
+    }
+  ]
+}

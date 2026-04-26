@@ -1,0 +1,150 @@
+{
+  "items": [
+    {
+      "id": "bbbb2222-2222-2222-2222-222222222222",
+      "agent_id": "aaaa1111-1111-1111-1111-111111111111",
+      "agent_name": "Ticket Triage Agent",
+      "trigger_type": "chat",
+      "trigger_source": "chat-conversation",
+      "conversation_id": "cccc1111-1111-1111-1111-111111111111",
+      "event_delivery_id": null,
+      "input": {
+        "message": "Outlook keeps crashing on launch for my whole team — started right after Tuesday's update."
+      },
+      "output": {
+        "priority": "P3",
+        "category": "software",
+        "routing": "tier1"
+      },
+      "status": "completed",
+      "error": null,
+      "org_id": null,
+      "caller_user_id": "00000000-0000-0000-0000-000000000005",
+      "caller_email": "tina.morris@example.com",
+      "caller_name": "Tina Morris",
+      "iterations_used": 4,
+      "tokens_used": 2840,
+      "budget_max_iterations": 12,
+      "budget_max_tokens": 32000,
+      "duration_ms": 14210,
+      "llm_model": "claude-sonnet-4-5",
+      "asked": "Outlook keeps crashing on launch for my whole team — started right after Tuesday's update.",
+      "did": "Classified as P3 software issue, routed to tier1.",
+      "answered": "P3 / software / tier1",
+      "metadata": {
+        "customer": "Northwind Logistics"
+      },
+      "confidence": 0.62,
+      "confidence_reason": "Reporter said 'whole team' but did not provide a count — could be P1.",
+      "summary_status": "completed",
+      "summary_error": null,
+      "summary_prompt_version": "v3",
+      "verdict": "down",
+      "verdict_note": "Should have been P1 — outage scope was company-wide.",
+      "verdict_set_at": "2026-04-25T18:10:00.000000+00:00",
+      "verdict_set_by": "00000000-0000-0000-0000-000000000001",
+      "created_at": "2026-04-25T17:42:00.000000+00:00",
+      "started_at": "2026-04-25T17:42:00.000000+00:00",
+      "completed_at": "2026-04-25T17:42:14.000000+00:00",
+      "parent_run_id": null
+    },
+    {
+      "id": "bbbb3333-3333-3333-3333-333333333333",
+      "agent_id": "aaaa1111-1111-1111-1111-111111111111",
+      "agent_name": "Ticket Triage Agent",
+      "trigger_type": "chat",
+      "trigger_source": "chat-conversation",
+      "conversation_id": "cccc2222-2222-2222-2222-222222222222",
+      "event_delivery_id": null,
+      "input": {
+        "message": "I can't print to the conference-room printer."
+      },
+      "output": {
+        "priority": "P4",
+        "category": "hardware",
+        "routing": "tier1"
+      },
+      "status": "completed",
+      "error": null,
+      "org_id": null,
+      "caller_user_id": "00000000-0000-0000-0000-000000000007",
+      "caller_email": "ryan.kapoor@example.com",
+      "caller_name": "Ryan Kapoor",
+      "iterations_used": 3,
+      "tokens_used": 1890,
+      "budget_max_iterations": 12,
+      "budget_max_tokens": 32000,
+      "duration_ms": 9870,
+      "llm_model": "claude-sonnet-4-5",
+      "asked": "I can't print to the conference-room printer.",
+      "did": "Classified as P4 hardware, routed to tier1.",
+      "answered": "P4 / hardware / tier1",
+      "metadata": {
+        "customer": "Acme Corp"
+      },
+      "confidence": 0.71,
+      "confidence_reason": "Single-user impact assumed; could be print server outage.",
+      "summary_status": "completed",
+      "summary_error": null,
+      "summary_prompt_version": "v3",
+      "verdict": "down",
+      "verdict_note": "Routing should have flagged the print server (multiple recent reports).",
+      "verdict_set_at": "2026-04-25T15:20:00.000000+00:00",
+      "verdict_set_by": "00000000-0000-0000-0000-000000000001",
+      "created_at": "2026-04-25T14:55:00.000000+00:00",
+      "started_at": "2026-04-25T14:55:00.000000+00:00",
+      "completed_at": "2026-04-25T14:55:10.000000+00:00",
+      "parent_run_id": null
+    },
+    {
+      "id": "bbbb4444-4444-4444-4444-444444444444",
+      "agent_id": "aaaa1111-1111-1111-1111-111111111111",
+      "agent_name": "Ticket Triage Agent",
+      "trigger_type": "chat",
+      "trigger_source": "chat-conversation",
+      "conversation_id": "cccc3333-3333-3333-3333-333333333333",
+      "event_delivery_id": null,
+      "input": {
+        "message": "VPN won't connect from home, just for me as far as I know."
+      },
+      "output": {
+        "priority": "P3",
+        "category": "network",
+        "routing": "tier2"
+      },
+      "status": "completed",
+      "error": null,
+      "org_id": null,
+      "caller_user_id": "00000000-0000-0000-0000-000000000009",
+      "caller_email": "jen.alvarez@example.com",
+      "caller_name": "Jen Alvarez",
+      "iterations_used": 5,
+      "tokens_used": 3200,
+      "budget_max_iterations": 12,
+      "budget_max_tokens": 32000,
+      "duration_ms": 18420,
+      "llm_model": "claude-sonnet-4-5",
+      "asked": "VPN won't connect from home, just for me as far as I know.",
+      "did": "Classified as P3 network, escalated to tier2.",
+      "answered": "P3 / network / tier2",
+      "metadata": {
+        "customer": "Globex"
+      },
+      "confidence": 0.55,
+      "confidence_reason": "User reports affect single-user only, but recent VPN cert rotation suggests broader impact.",
+      "summary_status": "completed",
+      "summary_error": null,
+      "summary_prompt_version": "v3",
+      "verdict": "down",
+      "verdict_note": "Tier1 should have run the VPN cert check first before escalating.",
+      "verdict_set_at": "2026-04-24T11:30:00.000000+00:00",
+      "verdict_set_by": "00000000-0000-0000-0000-000000000001",
+      "created_at": "2026-04-24T10:42:00.000000+00:00",
+      "started_at": "2026-04-24T10:42:00.000000+00:00",
+      "completed_at": "2026-04-24T10:42:18.000000+00:00",
+      "parent_run_id": null
+    }
+  ],
+  "total": 3,
+  "next_cursor": null
+}

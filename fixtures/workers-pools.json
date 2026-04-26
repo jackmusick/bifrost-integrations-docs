@@ -1,0 +1,41 @@
+{
+  "pools": [
+    {
+      "worker_id": "worker-prod-a-7c4f",
+      "hostname": "bifrost-worker-prod-a-7c4f",
+      "status": "healthy",
+      "started_at": "2026-04-22T08:14:11.000000+00:00",
+      "pool_size": 8,
+      "idle_count": 5,
+      "busy_count": 3,
+      "last_heartbeat": "2026-04-25T18:42:11.000000+00:00",
+      "requirements_installed": 64,
+      "requirements_total": 64
+    },
+    {
+      "worker_id": "worker-prod-b-91ab",
+      "hostname": "bifrost-worker-prod-b-91ab",
+      "status": "healthy",
+      "started_at": "2026-04-22T08:14:11.000000+00:00",
+      "pool_size": 8,
+      "idle_count": 6,
+      "busy_count": 2,
+      "last_heartbeat": "2026-04-25T18:42:08.000000+00:00",
+      "requirements_installed": 64,
+      "requirements_total": 64
+    },
+    {
+      "worker_id": "worker-prod-c-d214",
+      "hostname": "bifrost-worker-prod-c-d214",
+      "status": "draining",
+      "started_at": "2026-04-22T08:14:11.000000+00:00",
+      "pool_size": 8,
+      "idle_count": 7,
+      "busy_count": 1,
+      "last_heartbeat": "2026-04-25T18:42:09.000000+00:00",
+      "requirements_installed": 64,
+      "requirements_total": 64
+    }
+  ],
+  "total": 3
+}

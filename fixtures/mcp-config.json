@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "allowed_tool_ids": null,
+  "blocked_tool_ids": [],
+  "is_configured": true,
+  "configured_at": "2026-04-22T11:14:08.000000+00:00",
+  "configured_by": "admin@gobifrost.com"
+}
