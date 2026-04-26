@@ -381,6 +381,16 @@ entries:
     image: src/assets/cascading-dropdowns/form-builder.png
     route: /forms/new
     seed: forms_with_sample_org
+    capture:
+      # NOTE: drag-and-drop via pragmatic-drag-and-drop is unreliable from
+      # Playwright, so we cannot place department/manager dropdowns onto the
+      # canvas. We dismiss the New Form modal and capture the empty builder
+      # with the field palette visible — the prose describes which field
+      # types the user adds.
+      actions:
+        - click: '[role="dialog"] button:has-text("Cancel")'
+        - wait_for: button[title="Add Field"]
+        - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/cascading-dropdowns.mdx
       type: how-to
@@ -392,6 +402,15 @@ entries:
     image: src/assets/html-content/field-palette.png
     route: /forms/new
     seed: forms_with_sample_org
+    capture:
+      # Dismiss the New Form modal and wait for the field palette to render
+      # the HTML Content entry. The default crop keeps the palette + canvas
+      # visible.
+      actions:
+        - click: '[role="dialog"] button:has-text("Cancel")'
+        - wait_for: button[title="Add Field"]
+        - wait_for: 'text="HTML Content"'
+        - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/html-content.mdx
       type: how-to
@@ -403,6 +422,16 @@ entries:
     image: src/assets/context-references/inspector.png
     route: /forms/new
     seed: forms_with_sample_org
+    capture:
+      # Dismiss the New Form modal, then open the Show Context dialog
+      # ("Form Context Preview") which is the form-builder's context
+      # inspector for available runtime references.
+      actions:
+        - click: '[role="dialog"] button:has-text("Cancel")'
+        - wait_for: button[title="Show Context"]
+        - click: button[title="Show Context"]
+        - wait_for: '[role="dialog"]:has-text("Form Context Preview")'
+        - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/context-field-references.mdx
       type: how-to
