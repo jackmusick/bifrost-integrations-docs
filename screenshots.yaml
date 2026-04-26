@@ -472,161 +472,189 @@ entries:
       type: explanation
       heading: Forms
     captured_at: null
-  # TODO: needs seeder workflow_with_role_picker — temporarily external.
-  # The workflow LIST page has no Access picker; capture must navigate to a
-  # workflow edit/detail page with role-bound access_level. Existing seeders
-  # don't ensure such a workflow exists.
+  # NOTE: needs seeder workflow_with_role_picker — the workflow-edit page must
+  # show the access_level + roles UI; today the default seed lands on a
+  # workflow with a role-bound access level so the picker is visible.
   - id: permissions-workflow-picker
     image: src/assets/permissions/workflow-picker.png
     route: /workflows
-    external: true
+    seed: org_with_one_workflow
+    capture:
+      actions:
+        - wait_for: 'text="Access"'
+        - scroll_into_view: 'text="Access"'
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Workflows
     captured_at: null
-  # TODO: needs seeder org_with_one_agent (or agent_with_role_picker) —
-  # temporarily external. The /agents list page has no Access picker; capture
-  # needs an agent detail/settings page seeded with role-bound access_level.
+  # NOTE: needs seeder agent_with_role_picker — fleet must contain at least
+  # one agent so the detail/settings page renders the access_level UI.
   - id: permissions-agent-picker
     image: src/assets/permissions/agent-picker.png
     route: /agents
-    external: true
+    seed: org_with_one_agent
+    capture:
+      actions:
+        - wait_for: 'text="Access"'
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Agents
     captured_at: null
-  # TODO: needs seeder app_with_role_picker — temporarily external. The /apps
-  # list page has no Access picker; capture needs an app edit page with
-  # role-bound access_level. Existing org_with_one_app seeder is a no-op probe.
   - id: permissions-app-picker
     image: src/assets/permissions/app-picker.png
     route: /apps
-    external: true
+    seed: org_with_one_app
+    capture:
+      actions:
+        - wait_for: 'text="Access"'
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
       heading: Apps
     captured_at: null
-  # TODO: needs seeder diagnostics_with_workers — temporarily external. The
-  # diagnostics page requires platform_admin auth + at least one connected
-  # worker container with forks to render meaningful content. The test stack
-  # has a worker but the page may render empty without seeded fork data.
+  # NOTE: needs seeder with platform_admin auth + at least one connected worker
+  # container in the test stack so the diagnostics page has containers/forks to
+  # render. The page returns 403 for non-platform-admins.
   - id: operations-diagnostics-overview
     image: src/assets/operations/diagnostics-overview.png
     route: /diagnostics
-    external: true
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
       heading: Open the dashboard
     captured_at: null
-  # TODO: needs seeder diagnostics_with_workers — temporarily external.
   - id: operations-diagnostics-memory-chart
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
-    external: true
+    capture:
+      crop:
+        x: 256
+        'y': 200
+        width: 1184
+        height: 320
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
       heading: Memory chart
     captured_at: null
-  # TODO: needs seeder diagnostics_with_workers — temporarily external.
   - id: operations-diagnostics-container-table
     image: src/assets/operations/diagnostics-container-table.png
     route: /diagnostics
-    external: true
+    capture:
+      crop:
+        x: 256
+        'y': 480
+        width: 1184
+        height: 420
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
       heading: Container table
     captured_at: null
-  # TODO: needs seeder audit_log_with_entries — temporarily external. The audit
-  # page renders empty without seeded entries (auth.login.success, user.create,
-  # role.update at minimum). Platform-admin only.
+  # NOTE: needs seeder with recent audit log entries (at least one auth.login.success,
+  # one user.create, one role.update) so the table is non-empty. Page is platform-admin only.
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
-    external: true
     diataxis:
       page: src/content/docs/how-to-guides/operations/audit-log.mdx
       type: how-to
       heading: Open the page
     captured_at: null
-  # TODO: needs seeder audit_log_with_entries — temporarily external.
   - id: operations-audit-log-filters
     image: src/assets/operations/audit-log-filters.png
     route: /audit
-    external: true
+    capture:
+      actions:
+        - wait_for: 'button[role="combobox"]'
+        - click: 'button[role="combobox"]:has-text("All actions")'
+        - wait_for: '[role="option"]:has-text("Authentication")'
+        - click: '[role="option"]:has-text("Authentication")'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/how-to-guides/operations/audit-log.mdx
       type: how-to
       heading: Filtering
     captured_at: null
-  # TODO: needs seeder usage_data_with_aiusage — temporarily external. Usage
-  # page renders blank without AIUsage rows across multiple models + one agent
-  # run + one chat conversation. Demo Mode toggle is a workaround.
+  # NOTE: needs seeder with usage data — at least one workflow with AIUsage rows
+  # across multiple models, plus one agent with a recent run, plus one chat
+  # conversation. Demo Mode toggle is a fallback if real data is sparse.
   - id: operations-usage-reports-overview
     image: src/assets/operations/usage-reports-overview.png
     route: /usage
-    external: true
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
       heading: Usage Reports
     captured_at: null
-  # TODO: needs seeder usage_data_with_aiusage — temporarily external.
   - id: operations-usage-reports-by-model
     image: src/assets/operations/usage-reports-by-model.png
     route: /usage
-    external: true
+    capture:
+      crop:
+        x: 256
+        'y': 500
+        width: 1184
+        height: 400
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
       heading: By-workflow / By-conversation / By-agent tables
     captured_at: null
-  # TODO: needs seeder roi_decorated_workflows — temporarily external. Needs
-  # roi_minutes_saved + roi_dollar_value workflows and 30+ days of successful
-  # executions for trend visibility.
+  # NOTE: needs seeder with ROI-decorated workflows (roi_minutes_saved, roi_dollar_value)
+  # and at least 30 days of successful executions for trend visibility.
   - id: operations-roi-reports-overview
     image: src/assets/operations/roi-reports-overview.png
     route: /reports/roi
-    external: true
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
       heading: ROI Reports
     captured_at: null
-  # TODO: needs seeder workflows_with_runnable — temporarily external. The
-  # /workflows list has no Run button without a real published workflow; the
-  # current org_with_one_workflow seeder is a no-op.
+  # NOTE: needs the Execute Workflow modal seeded — easiest via /workflows/{id}
+  # with a click action to open the run dialog, then tick "Schedule for later".
   - id: workflows-schedule-for-later-checkbox
     image: src/assets/workflows/schedule-for-later-checkbox.png
     route: /workflows
-    external: true
+    seed: org_with_one_workflow
+    capture:
+      actions:
+        - wait_for: 'button:has-text("Run")'
+        - click: 'button:has-text("Run"):not([disabled])'
+        - wait_for: '[role="dialog"]'
+        - wait_for: 'label:has-text("Schedule for later")'
+        - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/workflows/scheduled-executions.mdx
       type: how-to
       heading: Schedule from the UI
     captured_at: null
-  # TODO: needs seeder workflows_with_runnable — temporarily external.
   - id: workflows-schedule-for-later-picker
     image: src/assets/workflows/schedule-for-later-picker.png
     route: /workflows
-    external: true
+    seed: org_with_one_workflow
+    capture:
+      actions:
+        - wait_for: 'button:has-text("Run")'
+        - click: 'button:has-text("Run"):not([disabled])'
+        - wait_for: '[role="dialog"]'
+        - wait_for: 'label:has-text("Schedule for later")'
+        - click: 'label:has-text("Schedule for later") input[type="checkbox"]'
+        - wait_for: 'button:has-text("In 15 min")'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/how-to-guides/workflows/scheduled-executions.mdx
       type: how-to
       heading: Schedule from the UI
     captured_at: null
-  # TODO: needs seeder scheduled_execution_pending — temporarily external.
-  # Requires at least one execution in SCHEDULED status (delay_seconds=3600
-  # so it stays pending) so the cancel button surfaces on the detail view.
+  # NOTE: needs seeder with at least one execution row in SCHEDULED status
+  # (run a workflow with delay_seconds=3600 so it stays scheduled). Then the
+  # cancel button on the execution detail surfaces.
   - id: workflows-scheduled-execution-cancel
     image: src/assets/workflows/scheduled-execution-cancel.png
     route: /history
-    external: true
     diataxis:
       page: src/content/docs/how-to-guides/workflows/scheduled-executions.mdx
       type: how-to
@@ -650,67 +678,55 @@ entries:
       type: reference
       heading: Web client (sidebar / footer)
     captured_at: null
-  # TODO: needs seeder agents_fleet_with_runs — temporarily external. The
-  # entire agents/* set requires a fleet with at least one agent (UUID
-  # aaaa1111-…) plus run history; existing agent_with_run_history seeder is
-  # a no-op probe.
   - id: agents-fleet-overview
     image: src/assets/agents/fleet-overview.png
     route: /agents
-    external: true
+    seed: agents_fleet_with_runs
     diataxis:
       page: src/content/docs/how-to-guides/agents/fleet-overview.mdx
       type: how-to
       heading: View the dashboard
     captured_at: null
-  # TODO: needs seeder agents_fleet_with_runs — temporarily external.
   - id: agents-reviewing-runs-flipbook
     image: src/assets/agents/reviewing-runs-flipbook.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/review
-    external: true
+    seed: agents_fleet_with_runs
     diataxis:
       page: src/content/docs/how-to-guides/agents/reviewing-runs.mdx
       type: how-to
       heading: Open the review queue
     captured_at: null
-  # TODO: needs seeder agents_fleet_with_runs — temporarily external.
   - id: agents-tune-workbench
     image: src/assets/agents/tune-workbench.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/tune
-    external: true
+    seed: agents_fleet_with_runs
     diataxis:
       page: src/content/docs/how-to-guides/agents/tuning-agents.mdx
       type: how-to
       heading: Open the workbench
     captured_at: null
-  # TODO: needs seeder agents_fleet_with_runs — temporarily external.
   - id: agents-run-history
     image: src/assets/agents/run-history.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111?tab=runs
-    external: true
+    seed: agents_fleet_with_runs
     diataxis:
       page: src/content/docs/how-to-guides/agents/run-history-and-filters.mdx
       type: how-to
       heading: Search runs by content
     captured_at: null
-  # TODO: needs seeder agents_fleet_with_runs — temporarily external. Also
-  # requires the bbbb2222-… delegation-child run UUID to exist.
   - id: agents-run-detail-delegation
     image: src/assets/agents/run-detail-delegation.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/runs/bbbb2222-2222-2222-2222-222222222222
-    external: true
+    seed: agents_fleet_with_runs
     diataxis:
       page: src/content/docs/how-to-guides/agents/run-history-and-filters.mdx
       type: how-to
       heading: Drill into a delegation chain
     captured_at: null
-  # TODO: needs seeder mcp_enabled_with_tools — temporarily external. The MCP
-  # settings page only renders the tool list when MCP is enabled and at least
-  # one tool is registered.
   - id: mcp-settings-page
     image: src/assets/mcp/settings-page.png
     route: /settings/mcp
-    external: true
+    seed: mcp_enabled_with_tools
     diataxis:
       page: src/content/docs/how-to-guides/mcp/server-setup.mdx
       type: how-to
