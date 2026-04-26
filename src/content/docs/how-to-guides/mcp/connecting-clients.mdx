@@ -1,0 +1,124 @@
+---
+title: Connecting Claude, Copilot, Cursor, and Open WebUI
+description: Concrete client config examples plus the OAuth login flow
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Once Bifrost's MCP server is enabled (see [Server Setup](/how-to-guides/mcp/server-setup)), any MCP-compliant client can connect. This page walks through Claude Desktop, GitHub Copilot, Cursor, and Open WebUI.
+
+The general flow is the same for all of them:
+
+1. Tell the client the MCP server URL (`https://your-instance/mcp`).
+2. The client kicks off OAuth: it registers via `/register`, redirects you to Bifrost's login, and exchanges the code for a token.
+3. Tools matching your roles appear in the client.
+
+## Claude Desktop
+
+<Steps>
+
+1. Open Claude Desktop's settings file:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+2. Add a `mcpServers` entry pointing at Bifrost. Claude Desktop uses the streamable HTTP transport for hosted MCP servers:
+
+   ```json
+   {
+     "mcpServers": {
+       "bifrost": {
+         "url": "https://your-instance.com/mcp"
+       }
+     }
+   }
+   ```
+
+3. Restart Claude Desktop. The first time you mention a Bifrost tool, Claude opens the OAuth flow in your browser.
+
+4. Sign in to Bifrost. Claude receives the access token and your tools appear in the tool tray.
+
+</Steps>
+
+<Aside type="tip">
+If Claude Desktop doesn't trigger the OAuth popup, check **Settings → Developer → MCP Servers** for connection errors. The most common issue is a stale `client_id` cache after re-enabling MCP — restart Claude to re-register.
+</Aside>
+
+## GitHub Copilot
+
+<Steps>
+
+1. In VS Code, open **Settings (JSON)** and add an `mcp.servers` entry:
+
+   ```json
+   {
+     "mcp.servers": {
+       "bifrost": {
+         "url": "https://your-instance.com/mcp"
+       }
+     }
+   }
+   ```
+
+2. Reload VS Code. Open the Copilot Chat panel and type `@bifrost` — Copilot prompts you to authorize.
+
+3. Click **Sign in** and complete the Bifrost login. Tool calls now flow through Copilot Chat.
+
+</Steps>
+
+## Cursor
+
+<Steps>
+
+1. Open Cursor's settings (`Cmd/Ctrl + ,`) and search for **MCP**.
+
+2. Add a server entry:
+
+   ```json
+   {
+     "mcpServers": {
+       "bifrost": {
+         "url": "https://your-instance.com/mcp"
+       }
+     }
+   }
+   ```
+
+3. Restart Cursor. The first tool call triggers the OAuth login in your browser.
+
+</Steps>
+
+## Open WebUI
+
+<Steps>
+
+1. In Open WebUI, go to **Admin Settings → External Tools → MCP**.
+
+2. Click **Add MCP Server** and enter the Bifrost URL (`https://your-instance.com/mcp`). Open WebUI auto-discovers the OAuth endpoints.
+
+3. Click **Authorize**, complete the Bifrost login, and approve the tool list. Tools now appear under the model's tool tray.
+
+</Steps>
+
+## What tools become available
+
+The exact tool list depends on:
+
+- The **Allowed / Blocked Tools** lists in **Settings → MCP**.
+- Your user's roles (the `roles` claim on the JWT).
+- Which agents have your roles in their access list — only those agents' workflow tools and `system_tools` appear.
+
+To see exactly what's exposed, query `GET /api/mcp/tools` with your user token, or run the connected client's "list tools" command.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---------|-------------|
+| OAuth flow opens but never returns | Client redirect URI doesn't match. Re-register the client (delete and re-add the server). |
+| 401 on every request | Bifrost MCP toggle is off. Re-enable in **Settings → MCP**. |
+| Empty tool list, but connection succeeds | User has no roles matching any agent. Assign the user a role and reconnect. |
+| Cross-origin error in browser-based client | Verify the discovery endpoints serve `Access-Control-Allow-Origin: *`. |
+
+## Next steps
+
+- [Configuring the MCP server](/how-to-guides/mcp/server-setup)
+- [Publishing agents as MCP tool providers](/how-to-guides/mcp/agents-as-mcp)

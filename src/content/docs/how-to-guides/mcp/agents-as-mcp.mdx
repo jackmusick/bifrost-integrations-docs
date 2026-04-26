@@ -1,0 +1,101 @@
+---
+title: Publishing agents as MCP tool providers
+description: Expose a single agent's tool surface as its own MCP endpoint so external chat services can use Bifrost agents as tools
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+The global Bifrost MCP server exposes *every* tool the connecting user has access to. Sometimes you want the opposite: a focused, single-agent endpoint that an external chat service (Claude, Copilot, Cursor) can use *as* a tool. Bifrost supports this via per-agent MCP endpoints.
+
+## What this gives you
+
+A per-agent MCP endpoint scopes tool visibility to exactly one agent's tool list. From the client's perspective, the endpoint is a single coherent capability — "Bifrost ticket-triage agent" — rather than the full platform surface.
+
+Use it to:
+
+- Publish a domain-specific agent (a billing assistant, a Microsoft 365 inspector, a runbook executor) as a callable tool inside Claude Desktop, Copilot, or Cursor.
+- Hand a community user one URL that gives them exactly the tools you've curated, with no ability to enumerate the full platform.
+- Compose Bifrost agents inside another organization's MCP-enabled chat service via OAuth.
+
+## How agent-scoped endpoints work
+
+The Bifrost MCP server intercepts requests to `https://your-instance/mcp/{agent_id}`. The middleware extracts the agent UUID from the path, scopes the tool list to that agent's `tools` and `system_tools`, and rewrites the path to `/mcp` so the underlying server logic still runs.
+
+OAuth discovery is served per-agent at `/.well-known/oauth-authorization-server/mcp/{agent_id}` and `/.well-known/oauth-protected-resource/mcp/{agent_id}` — clients that perform path-aware discovery (Claude, Cursor) will use the correct endpoints automatically.
+
+## Publish an agent as MCP
+
+<Steps>
+
+1. Confirm the global MCP server is enabled in **Settings → MCP**. Per-agent endpoints share the same OAuth provider as the root endpoint.
+
+2. On the agent detail page, copy the agent's UUID from the URL bar (`/agents/{id}`). This is the path component for the MCP URL.
+
+3. Build the per-agent URL: `https://your-instance.com/mcp/{agent_id}`. Share it with whoever is configuring the external client.
+
+</Steps>
+
+<Aside type="note">
+The agent's **Access Level** still applies. If the agent is **Role-based**, the connecting user must have a matching role or they connect successfully but see an empty tool set.
+</Aside>
+
+## Configure in Claude Desktop
+
+<Steps>
+
+1. Open Claude Desktop's `claude_desktop_config.json`.
+
+2. Add an `mcpServers` entry for the agent endpoint:
+
+   ```json
+   {
+     "mcpServers": {
+       "bifrost-ticket-triage": {
+         "url": "https://your-instance.com/mcp/aaaa1111-bbbb-2222-cccc-333344445555"
+       }
+     }
+   }
+   ```
+
+3. Restart Claude. On first use, Claude opens the OAuth flow scoped to this agent. After login, only this agent's tools appear in the tool tray.
+
+</Steps>
+
+## Example: a triage agent inside Claude
+
+Imagine you have `ticket-triage-agent` configured in Bifrost with three tools: `lookup_customer`, `get_ticket`, and `update_ticket`. Publishing it as MCP gives Claude exactly those three tools — not the full Bifrost surface.
+
+A user in Claude can now say:
+
+> Look up customer alice@example.com and triage their open ticket.
+
+Claude calls `lookup_customer`, then `get_ticket`, then `update_ticket`, all through the agent-scoped MCP endpoint. Each call is authenticated as the connecting user, runs through Bifrost's normal permission checks, and is recorded as a regular tool execution in **History**.
+
+## Compose with other MCP servers
+
+Because the per-agent endpoint is just another MCP server from the client's perspective, it sits alongside any other MCP server the client uses. A Claude Desktop config might look like:
+
+```json
+{
+  "mcpServers": {
+    "bifrost-platform": {
+      "url": "https://your-instance.com/mcp"
+    },
+    "bifrost-ticket-triage": {
+      "url": "https://your-instance.com/mcp/aaaa1111-bbbb-2222-cccc-333344445555"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"]
+    }
+  }
+}
+```
+
+Claude blends tools from all three. The agent-scoped endpoint keeps Bifrost's surface narrow and predictable while the platform endpoint stays available for power users.
+
+## Next steps
+
+- [Configuring the MCP server](/how-to-guides/mcp/server-setup)
+- [Connecting Claude, Copilot, Cursor, and Open WebUI](/how-to-guides/mcp/connecting-clients)
+- [Agents and Chat](/how-to-guides/ai/agents-and-chat) — agent configuration including `system_tools` and `Access Level`
