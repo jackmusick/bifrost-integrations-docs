@@ -1,11 +1,24 @@
 import { z } from "zod";
 
+const HexColor = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, "color must be a 6-digit hex like #f59e0b");
+
 const HighlightSchema = z.object({
   selector: z.string().min(1),
-  color: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "color must be a 6-digit hex like #f59e0b")
-    .default("#f59e0b"),
+  color: HexColor.default("#f59e0b"),
+  label: z.string().optional(),
+});
+
+const RectSchema = z.object({
+  x: z.number().int().nonnegative(),
+  y: z.number().int().nonnegative(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+
+const CalloutSchema = RectSchema.extend({
+  color: HexColor.default("#f59e0b"),
   label: z.string().optional(),
 });
 
@@ -14,6 +27,8 @@ const CaptureSchema = z
     selector: z.string().min(1).optional(),
     pad: z.number().int().nonnegative().optional(),
     fullPage: z.boolean().optional(),
+    crop: RectSchema.optional(),
+    callouts: z.array(CalloutSchema).default([]),
     highlights: z.array(HighlightSchema).default([]),
   })
   .default({});

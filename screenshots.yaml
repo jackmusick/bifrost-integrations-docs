@@ -1,0 +1,215 @@
+version: 1
+defaults:
+  auth_as: platform_admin
+  viewport:
+    width: 1440
+    height: 900
+  pad: 16
+entries:
+  - id: core-concepts-apps
+    image: src/assets/core-concepts/apps.png
+    route: /apps
+    seed: org_with_one_app
+    diataxis:
+      page: src/content/docs/core-concepts/app-builder.mdx
+      type: explanation
+      heading: What is App Builder?
+    captured_at: null
+  - id: core-concepts-forms-list
+    image: src/assets/core-concepts/forms-list.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/core-concepts/forms.mdx
+      type: explanation
+      heading: What Are Forms?
+    captured_at: null
+  - id: core-concepts-form-builder
+    image: src/assets/core-concepts/form-builder.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/core-concepts/forms.mdx
+      type: explanation
+      heading: Form Builder
+    captured_at: null
+  - id: core-concepts-integrations
+    image: src/assets/core-concepts/integrations.png
+    route: /integrations
+    seed: org_with_integration
+    diataxis:
+      page: src/content/docs/core-concepts/integrations.mdx
+      type: explanation
+      heading: What Are Integrations?
+    captured_at: null
+  - id: core-concepts-dashboard
+    image: src/assets/core-concepts/dashboard.png
+    route: /
+    seed: org_with_one_workflow
+    diataxis:
+      page: src/content/docs/core-concepts/platform-overview.mdx
+      type: explanation
+      heading: Dashboard
+    captured_at: null
+  - id: core-concepts-workflows
+    image: src/assets/core-concepts/workflows.png
+    route: /workflows
+    seed: org_with_one_workflow
+    diataxis:
+      page: src/content/docs/core-concepts/workflows.mdx
+      type: explanation
+      heading: What Are Workflows?
+    captured_at: null
+  - id: getting-started-creating-forms-image
+    image: src/assets/creating-forms/image.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/getting-started/creating-forms.mdx
+      type: tutorial
+      heading: Create the Form
+    captured_at: null
+  - id: creating-forms-image-1
+    image: src/assets/creating-forms/image-1.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/getting-started/creating-forms.mdx
+      type: tutorial
+      heading: Add Fields
+    captured_at: null
+  - id: creating-forms-image-2
+    image: src/assets/creating-forms/image-2.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/getting-started/creating-forms.mdx
+      type: tutorial
+      heading: Test the Form
+    captured_at: null
+  - id: getting-started-first-workflow-image
+    image: src/assets/first-workflow/image.png
+    route: /workflows
+    seed: org_with_one_workflow
+    diataxis:
+      page: src/content/docs/getting-started/first-workflow.mdx
+      type: tutorial
+      heading: Create the Workflow
+    captured_at: null
+  - id: first-workflow-image-1
+    image: src/assets/first-workflow/image-1.png
+    route: /workflows
+    seed: org_with_one_workflow
+    diataxis:
+      page: src/content/docs/getting-started/first-workflow.mdx
+      type: tutorial
+      heading: Create the Workflow
+    captured_at: null
+  - id: first-workflow-image-2
+    image: src/assets/first-workflow/image-2.png
+    route: /workflows
+    seed: org_with_one_workflow
+    diataxis:
+      page: src/content/docs/getting-started/first-workflow.mdx
+      type: tutorial
+      heading: Create the Workflow
+    captured_at: null
+  - id: first-workflow-image-3
+    image: src/assets/first-workflow/image-3.png
+    route: /workflows
+    seed: org_with_one_workflow
+    diataxis:
+      page: src/content/docs/getting-started/first-workflow.mdx
+      type: tutorial
+      heading: Expected Result
+    captured_at: null
+  - id: integrations-image-3
+    image: src/assets/integrations/image-3.png
+    route: /integrations
+    seed: org_with_integration
+    diataxis:
+      page: src/content/docs/getting-started/integrations.mdx
+      type: tutorial
+      heading: Create Entra ID App Registration
+    captured_at: null
+  - id: integrations-image-1
+    image: src/assets/integrations/image-1.png
+    route: /integrations
+    seed: org_with_integration
+    diataxis:
+      page: src/content/docs/getting-started/integrations.mdx
+      type: tutorial
+      heading: Create Entra ID App Registration
+    captured_at: null
+  - id: integrations-image-4
+    image: src/assets/integrations/image-4.png
+    route: /integrations
+    seed: org_with_integration
+    diataxis:
+      page: src/content/docs/getting-started/integrations.mdx
+      type: tutorial
+      heading: Create Entra ID App Registration
+    captured_at: null
+  - id: integrations-image-2
+    image: src/assets/integrations/image-2.png
+    route: /integrations
+    seed: org_with_integration
+    diataxis:
+      page: src/content/docs/getting-started/integrations.mdx
+      type: tutorial
+      heading: Create Entra ID App Registration
+    captured_at: null
+  - id: integrations-image-8
+    image: src/assets/integrations/image-8.png
+    route: /integrations
+    seed: org_with_integration
+    diataxis:
+      page: src/content/docs/getting-started/integrations.mdx
+      type: tutorial
+      heading: Create Integration in Bifrost
+    captured_at: null
+  - id: integrations-image-7
+    image: src/assets/integrations/image-7.png
+    route: /integrations
+    seed: org_with_integration
+    diataxis:
+      page: src/content/docs/getting-started/integrations.mdx
+      type: tutorial
+      heading: Authorize the Connection
+    captured_at: null
+  - id: creating-forms-image-3
+    image: src/assets/creating-forms/image-3.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/how-to-guides/forms/creating-forms.mdx
+      type: how-to
+      heading: Form Builder
+    captured_at: null
+  - id: creating-forms-image-4
+    image: src/assets/creating-forms/image-4.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/how-to-guides/forms/creating-forms.mdx
+      type: how-to
+      heading: Form Builder
+    captured_at: null
+  - id: creating-forms-image-5
+    image: src/assets/creating-forms/image-5.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/how-to-guides/forms/creating-forms.mdx
+      type: how-to
+      heading: Visibility Expressions
+    captured_at: null
+  - id: screenshots-visibility-expression
+    image: src/assets/screenshots/visibility-expression.png
+    route: /forms
+    seed: forms_with_sample_org
+    diataxis:
+      page: src/content/docs/how-to-guides/forms/visibility-rules.mdx
+      type: how-to
+      heading: Add Fields with Visibility Rules
+    captured_at: null
