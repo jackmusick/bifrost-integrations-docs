@@ -24,14 +24,15 @@ const CalloutSchema = RectSchema.extend({
 
 // UI actions to perform after the page settles, before the screenshot.
 // Each action targets one of: click, fill, wait_for, wait_for_hidden,
-// wait_ms. We use a discriminated union (one key per action) rather than a
-// `type` field so the YAML reads naturally:
+// wait_ms, scroll_into_view. We use a discriminated union (one key per
+// action) rather than a `type` field so the YAML reads naturally:
 //   actions:
 //     - click: 'button[title="Edit"]'
 //     - fill: { selector: '#name', value: 'foo' }
 //     - wait_for: '[role="dialog"]'
 //     - wait_for_hidden: '[role="dialog"]'
 //     - wait_ms: 200
+//     - scroll_into_view: 'text="HTML Content"'
 const ClickActionSchema = z
   .object({ click: z.string().min(1) })
   .strict();
@@ -52,6 +53,9 @@ const WaitForHiddenActionSchema = z
 const WaitMsActionSchema = z
   .object({ wait_ms: z.number().int().nonnegative() })
   .strict();
+const ScrollIntoViewActionSchema = z
+  .object({ scroll_into_view: z.string().min(1) })
+  .strict();
 
 const ActionSchema = z.union(
   [
@@ -60,11 +64,12 @@ const ActionSchema = z.union(
     WaitForActionSchema,
     WaitForHiddenActionSchema,
     WaitMsActionSchema,
+    ScrollIntoViewActionSchema,
   ],
   {
     errorMap: () => ({
       message:
-        "action must be exactly one of { click: <selector> } | { fill: { selector, value } } | { wait_for: <selector> } | { wait_for_hidden: <selector> } | { wait_ms: <number> }",
+        "action must be exactly one of { click: <selector> } | { fill: { selector, value } } | { wait_for: <selector> } | { wait_for_hidden: <selector> } | { wait_ms: <number> } | { scroll_into_view: <selector> }",
     }),
   },
 );

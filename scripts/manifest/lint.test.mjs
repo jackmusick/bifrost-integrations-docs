@@ -317,6 +317,45 @@ describe("lintManifest", () => {
     expect(result.errors).toEqual([]);
   });
 
+  it("accepts a scroll_into_view action (used to bring offscreen targets into view)", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "with-scroll-into-view",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: {
+              actions: [
+                { wait_for: 'text="HTML Content"' },
+                { scroll_into_view: 'text="HTML Content"' },
+                { wait_ms: 200 },
+              ],
+            },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
   it("returns a clear error when manifest is missing", () => {
     const result = lintManifest({
       manifestPath: join(root, "nonexistent.yaml"),

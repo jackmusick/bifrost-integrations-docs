@@ -440,6 +440,7 @@ entries:
         - wait_for_hidden: '[role="dialog"]:has-text("Form Information")'
         - wait_for: button[title="Add Field"]
         - wait_for: text="HTML Content"
+        - scroll_into_view: text="HTML Content"
         - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/html-content.mdx
