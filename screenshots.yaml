@@ -525,10 +525,13 @@ entries:
           body: []
         - url: '**/api/roles'
           fixture: fixtures/agents-roles-list.json
+        - url: '**/api/roles?**'
+          fixture: fixtures/agents-roles-list.json
       actions:
         - wait_for: label:has-text("Access level")
         - scroll_into_view: label:has-text("Access level")
-        - wait_ms: 200
+        - wait_for: 'text=Helpdesk Agents'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
       type: explanation
@@ -643,9 +646,9 @@ entries:
         - wait_ms: 200
       crop:
         x: 256
-        'y': 800
+        'y': 540
         width: 1184
-        height: 500
+        height: 280
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
@@ -729,9 +732,9 @@ entries:
         - wait_ms: 300
       crop:
         x: 256
-        'y': 600
+        'y': 920
         width: 1184
-        height: 700
+        height: 480
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
