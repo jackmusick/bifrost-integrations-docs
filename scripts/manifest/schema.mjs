@@ -22,6 +22,48 @@ const CalloutSchema = RectSchema.extend({
   label: z.string().optional(),
 });
 
+// UI actions to perform after the page settles, before the screenshot.
+// Each action targets one of: click, fill, wait_for, wait_ms. We use a
+// discriminated union (one key per action) rather than a `type` field so
+// the YAML reads naturally:
+//   actions:
+//     - click: 'button[title="Edit"]'
+//     - fill: { selector: '#name', value: 'foo' }
+//     - wait_for: '[role="dialog"]'
+//     - wait_ms: 200
+const ClickActionSchema = z
+  .object({ click: z.string().min(1) })
+  .strict();
+const FillActionSchema = z
+  .object({
+    fill: z.object({
+      selector: z.string().min(1),
+      value: z.string(),
+    }),
+  })
+  .strict();
+const WaitForActionSchema = z
+  .object({ wait_for: z.string().min(1) })
+  .strict();
+const WaitMsActionSchema = z
+  .object({ wait_ms: z.number().int().nonnegative() })
+  .strict();
+
+const ActionSchema = z.union(
+  [
+    ClickActionSchema,
+    FillActionSchema,
+    WaitForActionSchema,
+    WaitMsActionSchema,
+  ],
+  {
+    errorMap: () => ({
+      message:
+        "action must be exactly one of { click: <selector> } | { fill: { selector, value } } | { wait_for: <selector> } | { wait_ms: <number> }",
+    }),
+  },
+);
+
 const MockSchema = z.object({
   // URL pattern in Playwright `page.route()` form.
   // E.g., "**/api/forms" or "**/api/forms/*".
@@ -51,6 +93,10 @@ const CaptureSchema = z
     // Wait this many ms after page load before screenshotting (animations,
     // late-rendering charts, etc.). Defaults to manifest's `defaults.settle_ms`.
     settle_ms: z.number().int().nonnegative().optional(),
+    // UI actions to drive after the initial settle but before the screenshot.
+    // Used when the target state isn't reachable by route alone (deep-modal
+    // screenshots, multi-step forms, etc.).
+    actions: z.array(ActionSchema).default([]),
   })
   .default({});
 

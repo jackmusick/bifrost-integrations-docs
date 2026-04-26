@@ -199,6 +199,86 @@ describe("lintManifest", () => {
     ).toBe(true);
   });
 
+  it("accepts entries with a valid actions list", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "with-actions",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: {
+              actions: [
+                { click: 'button[title="Cancel"]' },
+                { wait_for: '[role="dialog"]' },
+                {
+                  fill: { selector: "#field-name", value: "subject" },
+                },
+                { wait_ms: 200 },
+              ],
+            },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("rejects an action with an unknown shape", async () => {
+    writeFileSync(join(root, "src/assets/forms/builder.png"), "fake");
+    writeFileSync(
+      join(root, "src/content/docs/how-to-guides/forms/build.mdx"),
+      "![](../../../assets/forms/builder.png)\n",
+    );
+    writeFileSync(
+      join(root, "screenshots.yaml"),
+      yaml.dump({
+        version: 1,
+        entries: [
+          {
+            id: "bad-action",
+            image: "src/assets/forms/builder.png",
+            route: "/forms/new",
+            capture: {
+              // `hover` is not a supported action — should fail schema.
+              actions: [{ hover: "button.foo" }],
+            },
+            diataxis: {
+              page: "src/content/docs/how-to-guides/forms/build.mdx",
+              type: "how-to",
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = lintManifest({
+      manifestPath: join(root, "screenshots.yaml"),
+      repoRoot: root,
+    });
+    expect(result.ok).toBe(false);
+    expect(
+      result.errors.some((e) => e.includes("schema validation failed")),
+    ).toBe(true);
+  });
+
   it("returns a clear error when manifest is missing", () => {
     const result = lintManifest({
       manifestPath: join(root, "nonexistent.yaml"),

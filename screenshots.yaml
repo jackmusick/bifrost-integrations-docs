@@ -368,13 +368,22 @@ entries:
     image: src/assets/creating-forms/image-5.png
     route: /forms/new
     seed: forms_with_sample_org
-    # NOTE: "Visibility Expressions" should show the Edit Field dialog
-    # with a visibility expression typed in. That dialog is only reached
-    # by closing the Form Info modal, adding a field, and then clicking
-    # the field's edit pencil. The current pipeline does not support that
-    # per-entry sequence — leaving as the route-level capture (Form Info
-    # modal). Re-capture this manually until per-entry actions are
-    # supported.
+    capture:
+      # "Visibility Expressions" — opens the field configuration dialog so
+      # the Visibility Expression input is on screen. Sequence: cancel the
+      # Form Info modal, click the "+" Add Field button to open the field
+      # config dialog (Add Field state), then click the Visibility
+      # Expression label so Playwright auto-scrolls it into view. The Add
+      # Field dialog contains the same visibility-expression input as the
+      # Edit Field flow described in the doc copy, so this still frames
+      # the right control without needing drag-and-drop of a real field.
+      actions:
+        - click: '[role="dialog"] button:has-text("Cancel")'
+        - wait_for: 'button[title="Add Field"]'
+        - click: 'button[title="Add Field"]'
+        - wait_for: '[role="dialog"]:has-text("Add Field")'
+        - click: 'label:has-text("Visibility Expression")'
+        - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/creating-forms.mdx
       type: how-to
@@ -386,11 +395,18 @@ entries:
     image: src/assets/screenshots/visibility-expression.png
     route: /forms/new
     seed: forms_with_sample_org
-    # NOTE: same constraint as creating-forms-image-5 — this should show
-    # the Edit Field dialog with the visibility expression input
-    # highlighted, but reaching that dialog requires closing the Form
-    # Info modal, adding a field, and clicking edit. Leaving as
-    # route-level capture until per-entry actions are supported.
+    capture:
+      # Same target as creating-forms-image-5 — frames the Visibility
+      # Expression input inside the field config dialog. See that entry
+      # for action-by-action rationale; this entry just reuses the same
+      # sequence under a different image path / doc page.
+      actions:
+        - click: '[role="dialog"] button:has-text("Cancel")'
+        - wait_for: 'button[title="Add Field"]'
+        - click: 'button[title="Add Field"]'
+        - wait_for: '[role="dialog"]:has-text("Add Field")'
+        - click: 'label:has-text("Visibility Expression")'
+        - wait_ms: 200
     diataxis:
       page: src/content/docs/how-to-guides/forms/visibility-rules.mdx
       type: how-to
