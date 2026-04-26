@@ -1,0 +1,17 @@
+{
+  "id": "f1f1f1f1-1111-1111-1111-111111111111",
+  "name": "Sample App",
+  "slug": "sample-app",
+  "description": "Reference app used to demonstrate the App Builder permissions controls.",
+  "icon": null,
+  "organization_id": null,
+  "published_at": "2026-04-10T14:00:00.000000+00:00",
+  "created_at": "2026-03-18T10:18:00.000000+00:00",
+  "updated_at": "2026-04-22T09:42:00.000000+00:00",
+  "created_by": "admin@gobifrost.com",
+  "is_published": true,
+  "has_unpublished_changes": false,
+  "access_level": "role_based",
+  "role_ids": [],
+  "repo_path": "apps/sample-app"
+}

@@ -43,13 +43,13 @@
     {"organization_id": "44444444-4444-4444-4444-444444444444", "organization_name": "Initech", "execution_count": 312, "conversation_count": 41, "input_tokens": 352110, "output_tokens": 48912, "ai_cost": "7.70"}
   ],
   "knowledge_storage": [
-    {"namespace": "msp-runbooks", "documents": 412, "chunks": 8420, "bytes": 184200000},
-    {"namespace": "internal-docs", "documents": 188, "chunks": 3210, "bytes": 78400000}
+    {"organization_id": "11111111-1111-1111-1111-111111111111", "organization_name": "Northwind Logistics", "namespace": "msp-runbooks", "document_count": 412, "size_bytes": 184200000, "size_mb": 175.67},
+    {"organization_id": "22222222-2222-2222-2222-222222222222", "organization_name": "Acme Corp", "namespace": "internal-docs", "document_count": 188, "size_bytes": 78400000, "size_mb": 74.77}
   ],
   "knowledge_storage_trends": [
-    {"date": "2026-04-19", "documents": 580, "chunks": 11200, "bytes": 250000000},
-    {"date": "2026-04-22", "documents": 595, "chunks": 11420, "bytes": 256000000},
-    {"date": "2026-04-25", "documents": 600, "chunks": 11630, "bytes": 262600000}
+    {"date": "2026-04-19", "total_documents": 580, "total_size_bytes": 250000000, "total_size_mb": 238.42},
+    {"date": "2026-04-22", "total_documents": 595, "total_size_bytes": 256000000, "total_size_mb": 244.14},
+    {"date": "2026-04-25", "total_documents": 600, "total_size_bytes": 262600000, "total_size_mb": 250.43}
   ],
   "knowledge_storage_as_of": "2026-04-25T18:00:00.000000+00:00"
 }

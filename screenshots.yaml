@@ -536,19 +536,24 @@ entries:
   - id: permissions-app-picker
     image: src/assets/permissions/app-picker.png
     route: /apps/sample-app/edit
-    seed: org_with_one_app
     capture:
       mocks:
         - url: '**/api/organizations'
           body: []
         - url: '**/api/roles'
-          body: []
+          fixture: fixtures/roles-list.json
+        - url: '**/api/applications/sample-app'
+          fixture: fixtures/app-detail-sample.json
+        - url: '**/api/applications/f1f1f1f1-1111-1111-1111-111111111111/files**'
+          fixture: fixtures/app-files-empty.json
+        - url: '**/api/applications/f1f1f1f1-1111-1111-1111-111111111111/dependencies'
+          body: {"dependencies": {}}
       actions:
         - wait_for: 'button[title="Settings"]'
         - click: 'button[title="Settings"]'
         - wait_for: '[role="dialog"]'
-        - wait_for: 'label:has-text("Access")'
-        - scroll_into_view: 'label:has-text("Access")'
+        - wait_for: 'label:has-text("Access Level")'
+        - scroll_into_view: 'label:has-text("Access Level")'
         - wait_ms: 300
     diataxis:
       page: src/content/docs/core-concepts/permissions.md
@@ -663,9 +668,11 @@ entries:
     captured_at: null
   - id: operations-usage-reports-overview
     image: src/assets/operations/usage-reports-overview.png
-    route: /usage
+    route: /reports/usage
     capture:
       mocks:
+        - url: '**/api/reports/usage'
+          fixture: fixtures/usage-report.json
         - url: '**/api/reports/usage?**'
           fixture: fixtures/usage-report.json
         - url: '**/api/organizations'
@@ -677,9 +684,11 @@ entries:
     captured_at: null
   - id: operations-usage-reports-by-model
     image: src/assets/operations/usage-reports-by-model.png
-    route: /usage
+    route: /reports/usage
     capture:
       mocks:
+        - url: '**/api/reports/usage'
+          fixture: fixtures/usage-report.json
         - url: '**/api/reports/usage?**'
           fixture: fixtures/usage-report.json
         - url: '**/api/organizations'
