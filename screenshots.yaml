@@ -121,7 +121,7 @@ entries:
       heading: Create the Form
     captured_at:
       bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
-      timestamp: '2026-04-26T04:37:36.172Z'
+      timestamp: '2026-04-26T04:47:49.939Z'
   - id: creating-forms-image-2
     image: src/assets/creating-forms/image-2.png
     route: /forms
@@ -210,7 +210,7 @@ entries:
       heading: Expected Result
     captured_at:
       bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
-      timestamp: '2026-04-26T04:37:36.605Z'
+      timestamp: '2026-04-26T04:47:50.373Z'
   - id: integrations-image-3
     image: src/assets/integrations/image-3.png
     route: /integrations
@@ -322,8 +322,8 @@ entries:
       type: how-to
       heading: Form Builder
     captured_at:
-      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
-      timestamp: '2026-04-26T04:25:08.521Z'
+      bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
+      timestamp: '2026-04-26T04:47:50.616Z'
   - id: creating-forms-image-4
     image: src/assets/creating-forms/image-4.png
     route: /forms/new
@@ -344,7 +344,7 @@ entries:
       heading: Form Builder
     captured_at:
       bifrost_sha: f26876eb28ddeaa8bc91064dc1085e19f51cf901
-      timestamp: '2026-04-26T04:37:36.894Z'
+      timestamp: '2026-04-26T04:47:50.655Z'
   - id: creating-forms-image-5
     image: src/assets/creating-forms/image-5.png
     route: /forms/new
@@ -393,15 +393,6 @@ entries:
     captured_at:
       bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
       timestamp: '2026-04-26T04:25:08.680Z'
-  - id: cli-help
-    image: src/assets/cli/help.png
-    route: /
-    external: true
-    diataxis:
-      page: src/content/docs/sdk-reference/cli/index.mdx
-      type: reference
-      heading: CLI Reference
-    captured_at: null
   - id: installation-dashboard
     image: src/assets/installation/dashboard.png
     route: /
