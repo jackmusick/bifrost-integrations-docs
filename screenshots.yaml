@@ -103,16 +103,16 @@ entries:
     seed: forms_with_sample_org
     capture:
       callouts:
-        - x: 445
-          'y': 240
-          width: 555
-          height: 60
+        - x: 190
+          'y': 245
+          width: 530
+          height: 75
           label: '1'
           color: '#f59e0b'
-        - x: 445
-          'y': 314
-          width: 555
-          height: 75
+        - x: 190
+          'y': 345
+          width: 530
+          height: 100
           label: '2'
           color: '#f59e0b'
     diataxis:
@@ -128,10 +128,10 @@ entries:
     seed: forms_with_sample_org
     capture:
       callouts:
-        - x: 78
-          'y': 360
-          width: 144
-          height: 44
+        - x: 70
+          'y': 365
+          width: 160
+          height: 45
           label: '1'
           color: '#f59e0b'
     diataxis:
@@ -163,17 +163,25 @@ entries:
     image: src/assets/first-workflow/image-2.png
     route: /workflows
     capture:
+      mocks:
+        - url: '**/api/workflows'
+          fixture: fixtures/workflows-list-with-hello-world.json
+        - url: '**/api/workflows?**'
+          fixture: fixtures/workflows-list-with-hello-world.json
+      # TODO: nudge after pipeline run — coords assume hello_world lands in
+      # the first card slot (top-left) with a 2-column grid. Adjust if the
+      # actual layout shifts.
       callouts:
-        - x: 590
-          'y': 263
-          width: 360
-          height: 251
+        - x: 335
+          'y': 195
+          width: 365
+          height: 275
           label: '1'
           color: '#f59e0b'
-        - x: 590
-          'y': 471
-          width: 360
-          height: 36
+        - x: 350
+          'y': 405
+          width: 335
+          height: 40
           label: '2'
           color: '#3b82f6'
     diataxis:
@@ -287,10 +295,10 @@ entries:
         - url: '**/api/integrations?**'
           fixture: fixtures/integrations-list-with-graph.json
       callouts:
-        - x: 935
-          'y': 252
-          width: 100
-          height: 38
+        - x: 940
+          'y': 255
+          width: 90
+          height: 35
           label: '1'
           color: '#f59e0b'
     diataxis:
@@ -376,6 +384,11 @@ entries:
         - wait_for: '[role="dialog"]:has-text("Add Field")'
         - click: label:has-text("Visibility Expression")
         - wait_ms: 200
+      crop:
+        x: 100
+        'y': 64
+        width: 1340
+        height: 836
     diataxis:
       page: src/content/docs/how-to-guides/forms/visibility-rules.mdx
       type: how-to
