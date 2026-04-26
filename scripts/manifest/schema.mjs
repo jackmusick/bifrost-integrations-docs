@@ -104,6 +104,10 @@ const DefaultsSchema = z
     pad: z.number().int().nonnegative().default(16),
     settle_ms: z.number().int().nonnegative().default(500),
     mocks: z.array(MockSchema).default([]),
+    // Default content-area crop applied to every entry that doesn't define
+    // its own `capture.crop`. Use this to strip sidebar/header chrome from
+    // every screenshot in one place. Per-entry crops still win.
+    crop: RectSchema.optional(),
   })
   .default({});
 

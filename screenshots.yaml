@@ -6,6 +6,14 @@ defaults:
     height: 900
   pad: 16
   settle_ms: 800
+  # Default content-area crop. Strips the 256px-wide sidebar and 64px-tall
+  # top header from every screenshot so docs images don't waste space on
+  # chrome. Per-entry `capture.crop` overrides this.
+  crop:
+    x: 256
+    y: 64
+    width: 1184
+    height: 836
   mocks:
     - url: '**/api/forms'
       fixture: fixtures/forms-list.json
@@ -265,25 +273,21 @@ entries:
     image: src/assets/integrations/image-8.png
     route: /integrations
     capture:
-      # The "Create Integration in Bifrost" doc step shows the OAuth fields
-      # filled in inside the edit dialog. The dialog is reached only by
-      # clicking the pencil icon on a row, so the route alone cannot reach
-      # it. As a stand-in, the callout points at the "+" toolbar button
-      # users click to create a new integration. To capture the actual
-      # dialog content, this entry needs a per-entry click action that the
-      # current pipeline does not yet support.
+      # "Create Integration in Bifrost" — opens the edit dialog on the
+      # Microsoft_Graph row to show its OAuth/config fields. Reached by
+      # clicking the pencil icon on the row; that flow is driven by
+      # per-entry actions below.
       mocks:
         - url: '**/api/integrations'
           fixture: fixtures/integrations-list-with-graph.json
         - url: '**/api/integrations?**'
           fixture: fixtures/integrations-list-with-graph.json
-      callouts:
-        - x: 1378
-          y: 118
-          width: 30
-          height: 30
-          label: '1'
-          color: '#f59e0b'
+      actions:
+        # Click the pencil (Edit) button on the Microsoft_Graph row.
+        - click: 'tr:has-text("Microsoft_Graph") button[title="Edit"]'
+        # Wait for the edit dialog to render before screenshotting.
+        - wait_for: '[role="dialog"]'
+        - wait_ms: 300
     diataxis:
       page: src/content/docs/getting-started/integrations.mdx
       type: tutorial

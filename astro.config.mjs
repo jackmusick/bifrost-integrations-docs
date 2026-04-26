@@ -25,6 +25,14 @@ export default defineConfig({
             },
             favicon: "/src/assets/logo-square.svg",
             customCss: ["./src/styles/custom.css"],
+            head: [
+                {
+                    tag: "script",
+                    attrs: { type: "module" },
+                    content:
+                        "import mediumZoom from 'medium-zoom'; const z = mediumZoom('article img', { background: 'rgba(0,0,0,0.92)' }); document.addEventListener('astro:page-load', () => { z.detach(); z.attach('article img'); });",
+                },
+            ],
             social: [
                 {
                     icon: "github",
