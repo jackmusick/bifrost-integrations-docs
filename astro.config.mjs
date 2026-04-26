@@ -30,7 +30,7 @@ export default defineConfig({
                     tag: "script",
                     attrs: { type: "module" },
                     content:
-                        "import mediumZoom from 'medium-zoom'; const z = mediumZoom('article img', { background: 'rgba(0,0,0,0.92)' }); document.addEventListener('astro:page-load', () => { z.detach(); z.attach('article img'); });",
+                        "import mediumZoom from 'https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/+esm'; const sel = '.sl-markdown-content img'; const z = mediumZoom(sel, { background: 'rgba(0,0,0,0.92)' }); document.addEventListener('astro:page-load', () => { z.detach(); z.attach(sel); });",
                 },
             ],
             social: [
