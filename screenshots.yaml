@@ -122,35 +122,16 @@ entries:
     captured_at:
       bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
       timestamp: '2026-04-26T03:33:48.800Z'
-  - id: creating-forms-image-1
-    image: src/assets/creating-forms/image-1.png
-    route: /forms/new
-    seed: forms_with_sample_org
-    capture:
-      callouts:
-        - x: 932
-          'y': 818
-          width: 70
-          height: 38
-          label: '1'
-          color: '#f59e0b'
-    diataxis:
-      page: src/content/docs/getting-started/creating-forms.mdx
-      type: tutorial
-      heading: Add Fields
-    captured_at:
-      bifrost_sha: 0cfa0ba2b3d546253d572cf9222b6dd42367c311
-      timestamp: '2026-04-26T03:33:48.951Z'
   - id: creating-forms-image-2
     image: src/assets/creating-forms/image-2.png
     route: /forms
     seed: forms_with_sample_org
     capture:
       callouts:
-        - x: 305
-          'y': 425
-          width: 195
-          height: 42
+        - x: 78
+          'y': 360
+          width: 144
+          height: 44
           label: '1'
           color: '#f59e0b'
     diataxis:
@@ -291,10 +272,10 @@ entries:
         - url: '**/api/integrations?**'
           fixture: fixtures/integrations-list-with-graph.json
       callouts:
-        - x: 1198
-          'y': 312
+        - x: 935
+          'y': 252
           width: 100
-          height: 42
+          height: 38
           label: '1'
           color: '#f59e0b'
     diataxis:
