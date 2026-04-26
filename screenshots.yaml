@@ -524,7 +524,7 @@ entries:
         - url: '**/api/organizations'
           body: []
         - url: '**/api/roles'
-          body: []
+          fixture: fixtures/agents-roles-list.json
       actions:
         - wait_for: label:has-text("Access level")
         - scroll_into_view: label:has-text("Access level")
@@ -609,9 +609,9 @@ entries:
         - wait_ms: 200
       crop:
         x: 256
-        'y': 340
+        'y': 290
         width: 1184
-        height: 380
+        height: 430
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
@@ -622,6 +622,9 @@ entries:
   - id: operations-diagnostics-container-table
     image: src/assets/operations/diagnostics-container-table.png
     route: /diagnostics
+    viewport:
+      width: 1440
+      height: 1400
     capture:
       mocks:
         - url: '**/api/platform/workers'
@@ -640,9 +643,9 @@ entries:
         - wait_ms: 200
       crop:
         x: 256
-        'y': 100
+        'y': 800
         width: 1184
-        height: 600
+        height: 500
     diataxis:
       page: src/content/docs/how-to-guides/operations/diagnostics.mdx
       type: how-to
@@ -672,11 +675,9 @@ entries:
     capture:
       mocks:
         - url: '**/api/audit'
-          fixture: fixtures/audit-log-overview.json
-        - url: '**/api/audit?**action=auth.**'
           fixture: fixtures/audit-log-auth-only.json
         - url: '**/api/audit?**'
-          fixture: fixtures/audit-log-overview.json
+          fixture: fixtures/audit-log-auth-only.json
       actions:
         - wait_for: button[role="combobox"]:has-text("All actions")
         - click: button[role="combobox"]:has-text("All actions")
@@ -711,6 +712,9 @@ entries:
   - id: operations-usage-reports-by-model
     image: src/assets/operations/usage-reports-by-model.png
     route: /reports/usage
+    viewport:
+      width: 1440
+      height: 1400
     capture:
       mocks:
         - url: '**/api/reports/usage'
@@ -725,9 +729,9 @@ entries:
         - wait_ms: 300
       crop:
         x: 256
-        'y': 100
+        'y': 600
         width: 1184
-        height: 500
+        height: 700
     diataxis:
       page: src/content/docs/how-to-guides/operations/usage-reports.mdx
       type: how-to
@@ -985,20 +989,6 @@ entries:
     captured_at:
       bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
       timestamp: '2026-04-26T18:19:39.371Z'
-  - id: sso-settings-sso-landing
-    image: src/assets/sso/settings-sso-landing.png
-    route: /settings/sso
-    capture:
-      mocks:
-        - url: '**/api/settings/oauth'
-          fixture: fixtures/oauth-configs-empty.json
-    diataxis:
-      page: src/content/docs/how-to-guides/authentication/sso.mdx
-      type: how-to
-      heading: Open SSO settings
-    captured_at:
-      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:19:41.459Z'
   - id: sso-microsoft-card-empty
     image: src/assets/sso/microsoft-card-empty.png
     route: /settings/sso
