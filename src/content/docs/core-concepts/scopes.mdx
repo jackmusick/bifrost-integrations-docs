@@ -7,6 +7,8 @@ import { Steps, Aside } from "@astrojs/starlight/components";
 
 Scope determines whether a resource is shared across the entire platform (global) or belongs to a specific organization.
 
+Configs marked `secret` are encrypted at rest but follow the same scope cascade as any other config — see [Storing Sensitive Config Values](/how-to-guides/integrations/secrets-management/) for usage details.
+
 ## Understanding Scope
 
 Resources in Bifrost exist at two levels:
@@ -33,10 +35,6 @@ integration = await integrations.get("microsoft-graph")
 if integration and integration.oauth:
     access_token = integration.oauth.access_token
 ```
-
-### Secrets
-
-Secrets themselves are not scoped, but the configurations they're tied to are.
 
 ### Configuration
 
@@ -84,11 +82,38 @@ async def example():
 
 ### Scope Resolution (Cascade)
 
-Bifrost looks for resources in this order:
+When the SDK resolves a resource (config, table, integration mapping, etc.), it walks the cascade in this order:
 
-1. **Organization-level** - Your organization's specific resource
-2. **Global-level** - Platform-wide fallback (if exists)
-3. **Not found** - Returns None or default value
+```text
+        SDK call (e.g. config.get("smtp_server"))
+                          │
+                          ▼
+       ┌──────────────────────────────────┐
+       │ 1. Org lookup                    │
+       │    Does my org have this name?   │
+       └──────────────────────────────────┘
+                          │
+              ┌───────────┴───────────┐
+            yes                      no
+              │                       │
+              ▼                       ▼
+       use org-scoped       ┌──────────────────────────┐
+            value           │ 2. Global lookup         │
+                            │    Does a global exist?  │
+                            └──────────────────────────┘
+                                       │
+                           ┌───────────┴───────────┐
+                         yes                      no
+                           │                       │
+                           ▼                       ▼
+                    use global value      3. None / default
+```
+
+In short:
+
+1. **Organization-level** — Your organization's specific resource
+2. **Global-level** — Platform-wide fallback (if exists)
+3. **Not found** — Returns `None` or default value
 
 If your org has a resource with the same name as a global one, **your org's version takes precedence** and the global one is shadowed. Other orgs still see the global version.
 

@@ -459,3 +459,58 @@ entries:
     captured_at:
       bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
       timestamp: '2026-04-26T04:25:08.945Z'
+  - id: permissions-form-picker
+    image: src/assets/permissions/form-picker.png
+    route: /forms/new
+    seed: forms_with_sample_org
+    capture:
+      actions:
+        - wait_for: 'text="Access"'
+        - scroll_into_view: 'text="Access"'
+    diataxis:
+      page: src/content/docs/core-concepts/permissions.md
+      type: explanation
+      heading: Forms
+    captured_at: null
+  # NOTE: needs seeder workflow_with_role_picker — the workflow-edit page must
+  # show the access_level + roles UI; today the default seed lands on a
+  # workflow with a role-bound access level so the picker is visible.
+  - id: permissions-workflow-picker
+    image: src/assets/permissions/workflow-picker.png
+    route: /workflows
+    seed: org_with_one_workflow
+    capture:
+      actions:
+        - wait_for: 'text="Access"'
+        - scroll_into_view: 'text="Access"'
+    diataxis:
+      page: src/content/docs/core-concepts/permissions.md
+      type: explanation
+      heading: Workflows
+    captured_at: null
+  # NOTE: needs seeder agent_with_role_picker — fleet must contain at least
+  # one agent so the detail/settings page renders the access_level UI.
+  - id: permissions-agent-picker
+    image: src/assets/permissions/agent-picker.png
+    route: /agents
+    seed: org_with_one_agent
+    capture:
+      actions:
+        - wait_for: 'text="Access"'
+    diataxis:
+      page: src/content/docs/core-concepts/permissions.md
+      type: explanation
+      heading: Agents
+    captured_at: null
+  - id: permissions-app-picker
+    image: src/assets/permissions/app-picker.png
+    route: /apps
+    seed: org_with_one_app
+    capture:
+      actions:
+        - wait_for: 'text="Access"'
+    diataxis:
+      page: src/content/docs/core-concepts/permissions.md
+      type: explanation
+      heading: Apps
+    captured_at: null

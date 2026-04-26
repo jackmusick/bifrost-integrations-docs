@@ -175,7 +175,7 @@ export default defineConfig({
                             collapsed: true,
                             items: [
                                 {
-                                    label: "Store API Keys Securely",
+                                    label: "Storing Sensitive Config Values",
                                     slug: "how-to-guides/integrations/secrets-management",
                                 },
                                 {
