@@ -171,13 +171,25 @@ Control who can access the app via the `access_level` setting:
 
 ### Component Level
 
-Hide components conditionally using state:
+Hide components conditionally using the current user's roles. `useUser()` returns a `roles` array plus a `hasRole(role)` helper -- prefer `hasRole` for inline checks:
 
 ```tsx
-{user.role === 'admin' && (
+const user = useUser();
+
+{user.hasRole('Admin') && (
   <Button variant="destructive">Delete All</Button>
 )}
 ```
+
+For declarative gating around a whole subtree, use the `RequireRole` component:
+
+```tsx
+<RequireRole role="Admin">
+  <Button variant="destructive">Delete All</Button>
+</RequireRole>
+```
+
+See the [Code-Based Apps reference](/sdk-reference/app-builder/code-apps) for the full `useUser()` shape and `RequireRole` props.
 
 ## Managing Apps via MCP
 

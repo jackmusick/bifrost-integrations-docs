@@ -1,0 +1,127 @@
+---
+title: Roles Module
+description: SDK reference for role CRUD and user/form assignments
+---
+
+The `roles` module provides CRUD over roles plus user and form assignment helpers. Mutations require platform-admin or organization-admin privileges; reads (`list`, `get`, `list_users`, `list_forms`) work for any authenticated caller in scope.
+
+## Import
+
+```python
+from bifrost import roles
+```
+
+## Method Index
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `roles.create()` | `Role` | Create a role |
+| `roles.get()` | `Role` | Look up by ID |
+| `roles.list()` | `list[Role]` | List roles in the current org |
+| `roles.update()` | `Role` | Patch fields |
+| `roles.delete()` | `None` | Delete (cascades assignments) |
+| `roles.list_users()` | `list[str]` | List user IDs assigned to a role |
+| `roles.list_forms()` | `list[str]` | List form IDs assigned to a role |
+| `roles.assign_users()` | `None` | Assign users to a role |
+| `roles.assign_forms()` | `None` | Assign forms to a role |
+
+## roles.create()
+
+```python
+async def create(name: str, description: str = "") -> Role
+```
+
+```python
+role = await roles.create("Customer Manager", description="Can manage customers")
+```
+
+## roles.get()
+
+```python
+async def get(role_id: str) -> Role
+```
+
+Raises `ValueError` if not found.
+
+## roles.list()
+
+```python
+async def list() -> list[Role]
+```
+
+Lists every role visible to the caller in the current organization.
+
+```python
+for role in await roles.list():
+    print(role.name)
+```
+
+## roles.update()
+
+```python
+async def update(role_id: str, **updates: Any) -> Role
+```
+
+Accepts patchable fields (e.g. `name`, `description`) as keyword arguments. Raises `ValueError` if not found.
+
+```python
+await roles.update("role-123", description="Updated description")
+```
+
+## roles.delete()
+
+```python
+async def delete(role_id: str) -> None
+```
+
+Deletes the role. Cascade removes all role assignments (user-role and form-role rows). Raises `ValueError` if not found.
+
+## roles.list_users()
+
+```python
+async def list_users(role_id: str) -> list[str]
+```
+
+Returns the user IDs assigned to the role.
+
+```python
+ids = await roles.list_users("role-123")
+```
+
+## roles.list_forms()
+
+```python
+async def list_forms(role_id: str) -> list[str]
+```
+
+Returns the form IDs assigned to the role.
+
+## roles.assign_users()
+
+```python
+async def assign_users(role_id: str, user_ids: list[str]) -> None
+```
+
+Assign a batch of users to the role. Raises `ValueError` if the role or any referenced user is missing.
+
+```python
+await roles.assign_users("role-123", ["user-1", "user-2"])
+```
+
+## roles.assign_forms()
+
+```python
+async def assign_forms(role_id: str, form_ids: list[str]) -> None
+```
+
+Assign a batch of forms to the role.
+
+```python
+await roles.assign_forms("role-123", ["form-1", "form-2"])
+```
+
+## Types
+
+### Role
+
+Defined in `bifrost.models`. Fields include `id`, `name`, `description`, `organization_id`, `is_active`, and timestamps. See `bifrost.models` for the canonical definition.

@@ -275,8 +275,20 @@ export default defineConfig({
                                     slug: "sdk-reference/sdk/decorators",
                                 },
                                 {
+                                    label: "Email Module",
+                                    slug: "sdk-reference/sdk/email-module",
+                                },
+                                {
+                                    label: "Executions Module",
+                                    slug: "sdk-reference/sdk/executions-module",
+                                },
+                                {
                                     label: "External SDK",
                                     slug: "sdk-reference/sdk/external-sdk",
+                                },
+                                {
+                                    label: "Files Module",
+                                    slug: "sdk-reference/sdk/files-module",
                                 },
                                 {
                                     label: "Integrations Module",
@@ -287,8 +299,24 @@ export default defineConfig({
                                     slug: "sdk-reference/sdk/knowledge-module",
                                 },
                                 {
+                                    label: "Organizations Module",
+                                    slug: "sdk-reference/sdk/organizations-module",
+                                },
+                                {
+                                    label: "Roles Module",
+                                    slug: "sdk-reference/sdk/roles-module",
+                                },
+                                {
                                     label: "Tables Module",
                                     slug: "sdk-reference/sdk/tables-module",
+                                },
+                                {
+                                    label: "Users Module",
+                                    slug: "sdk-reference/sdk/users-module",
+                                },
+                                {
+                                    label: "Webhooks Module",
+                                    slug: "sdk-reference/sdk/webhooks-module",
                                 },
                             ],
                         },
