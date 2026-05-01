@@ -13,9 +13,48 @@ There are three ways to use AI tools with Bifrost. Pick whichever fits — they 
 
 ## 1. Claude Code with `/bifrost:build`
 
-The fastest path if you use Claude Code. The `/bifrost:build` skill combines local development with the CLI and MCP automatically.
+The fastest path if you use Claude Code. The `/bifrost:build` skill combines local development with the CLI and MCP automatically. A companion `/bifrost:setup` skill walks you through CLI install, login, and MCP wiring on a fresh machine.
+
+### Install the skill
+
+The recommended path is the Claude Code plugin marketplace. It auto-updates when you refresh the marketplace, so you stay in lockstep with the latest skill content without re-running install commands.
+
+Inside Claude Code, run:
+
+```
+/plugin marketplace add jackmusick/bifrost
+/plugin install bifrost@jackmusick-bifrost
+```
+
+That installs the `bifrost:build` and `bifrost:setup` skills. To pull the latest content later, run `/plugin marketplace update jackmusick-bifrost` — or enable auto-update in `/plugin` → **Marketplaces**.
+
+#### Cross-harness install (Copilot CLI, Codex, Cursor, OpenCode, Gemini CLI)
+
+For non-Claude-Code harnesses, install via the Bifrost CLI. It pulls the public skills from GitHub (no clone required) and writes them to both `<cwd>/.claude/skills/` and `<cwd>/.agents/skills/` — the cross-harness portable convention read by Copilot CLI, Codex, Cursor, OpenCode, and Gemini CLI:
+
+```bash
+bifrost skill list                   # show what's currently installed
+bifrost skill update                 # install or refresh all public skills
+bifrost skill update --ref v1.4.2    # pin to a specific release
+bifrost skill remove bifrost-build   # uninstall a skill from both locations
+```
+
+`bifrost skill update` only installs the publicly-distributed skills (`bifrost-build`, `bifrost-setup`) — internal maintainer skills stay in the repo. Re-run it whenever you want the latest content; there's no auto-update, by design.
+
+#### Migrating from a hand-copied skill
+
+Earlier versions of the `bifrost:build` skill were distributed by cloning the bifrost repo and copying `.claude/skills/bifrost-build/` into your project. If you set things up that way, remove the local copy before installing via the plugin or `bifrost skill update` so the two don't drift:
+
+```bash
+rm -rf .claude/skills/bifrost-build .claude/skills/bifrost-setup
+rm -rf .agents/skills/bifrost-build .agents/skills/bifrost-setup
+```
+
+Then run the plugin install or `bifrost skill update` and you're current.
 
 ### Setup
+
+After the skill is installed, wire up the CLI and (optionally) the MCP server:
 
 ```bash
 # Install the SDK from your instance and authenticate
