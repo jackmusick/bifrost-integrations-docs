@@ -177,6 +177,20 @@ export default defineConfig({
                             ],
                         },
                         {
+                            label: "Tables",
+                            collapsed: true,
+                            items: [
+                                {
+                                    label: "Writing Policies",
+                                    slug: "how-to-guides/tables/writing-policies",
+                                },
+                                {
+                                    label: "Reading from Apps",
+                                    slug: "how-to-guides/tables/reading-from-apps",
+                                },
+                            ],
+                        },
+                        {
                             label: "Forms",
                             collapsed: true,
                             items: [

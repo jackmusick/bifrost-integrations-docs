@@ -1,0 +1,175 @@
+---
+title: Writing Table Policies
+description: Recipes for row-level access rules — own-row, role-gated, org-isolated, state-locked, and public-read.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+This guide assumes you know what policies are and the default-deny model. If not, read [Tables: row-level policies](/core-concepts/tables/#row-level-policies) first.
+
+Each policy has a `name`, a list of `actions` it gates, and an optional `when` expression. If `when` is omitted (`null`), the rule grants the listed actions unconditionally to anyone who can reach the table.
+
+## Recipe 1: Own-row read and write
+
+Users may read, update, and delete only the rows they created.
+
+```yaml
+policies:
+  - name: admin_bypass
+    actions: [read, create, update, delete]
+    when: { user: is_platform_admin }
+
+  - name: everyone_can_create
+    actions: [create]
+    when: null
+
+  - name: own_row
+    actions: [read, update, delete]
+    when:
+      eq: [{ row: created_by }, { user: user_id }]
+```
+
+Why it works: `created_by` is set by the platform on insert (column-mapped, not user-supplied), so a user can't lie about ownership.
+
+## Recipe 2: Role-gated read
+
+Only members of the `support` role may read.
+
+```yaml
+policies:
+  - name: admin_bypass
+    actions: [read, create, update, delete]
+    when: { user: is_platform_admin }
+
+  - name: support_can_read
+    actions: [read]
+    when:
+      call: has_role
+      args: ["support"]
+```
+
+Why it works: `has_role` matches against both role names and role IDs on the requesting user, so passing the role's name (or its UUID) both work.
+
+## Recipe 3: Org isolation on a global table
+
+Rows carry an `organization_id` field; users only see rows for their own org.
+
+```yaml
+policies:
+  - name: admin_bypass
+    actions: [read, create, update, delete]
+    when: { user: is_platform_admin }
+
+  - name: own_org_read
+    actions: [read]
+    when:
+      eq: [{ row: organization_id }, { user: organization_id }]
+
+  - name: own_org_write
+    actions: [create, update, delete]
+    when:
+      eq: [{ row: organization_id }, { user: organization_id }]
+```
+
+Why it works: the `eq` clause is the entire isolation mechanism — global tables have no implicit org filter on row data. You must denormalize `organization_id` into the row when inserting.
+
+## Recipe 4: State-locked update
+
+Owners can update rows while open; once `status = "closed"`, nobody (except admins) can edit.
+
+```yaml
+policies:
+  - name: admin_bypass
+    actions: [read, create, update, delete]
+    when: { user: is_platform_admin }
+
+  - name: owner_read
+    actions: [read]
+    when:
+      eq: [{ row: created_by }, { user: user_id }]
+
+  - name: owner_edit_open
+    actions: [update]
+    when:
+      and:
+        - eq: [{ row: created_by }, { user: user_id }]
+        - neq: [{ row: status }, "closed"]
+```
+
+Why it works: `update` is gated against the **pre-image**, so once the stored row has `status = "closed"`, no further updates pass.
+
+## Recipe 5: Read for everyone
+
+Public-read on a small reference table (e.g. a list of regions).
+
+```yaml
+policies:
+  - name: admin_bypass
+    actions: [read, create, update, delete]
+    when: { user: is_platform_admin }
+
+  - name: anyone_reads
+    actions: [read]
+    when: null
+```
+
+Why it works: `when: null` matches every authenticated request that reaches the table.
+
+## Expression vocabulary
+
+A `when` clause is a small AST built from these nodes.
+
+### References
+
+| Node                        | Resolves to                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `{ row: <field> }`          | A field on the row's data, or a column-mapped field: `id`, `created_by`, `updated_by`, `created_at`, `updated_at`, `table_id` |
+| `{ user: <field> }`         | A field on the requester. Allowed: `user_id`, `email`, `organization_id`, `is_platform_admin`, `role_ids`, `role_names`     |
+| `{ call: <fn>, args: [..] }`| A function call. Currently only `has_role` is registered                                                                  |
+
+Literal values are scalars (string, number, boolean) or `null`-via-`is_null`.
+
+### Operators
+
+| Operator                          | Shape                              | Notes                                                                                          |
+| --------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `eq`, `neq`                       | `[a, b]`                           | Compare two operands. **Reject literal `null`** — use `is_null` for null checks                |
+| `lt`, `lte`, `gt`, `gte`          | `[a, b]`                           | Numeric / string comparison; missing fields evaluate as false                                  |
+| `and`, `or`                       | `[expr, expr, ...]` (2+ items)     | Logical composition                                                                            |
+| `not`                             | `<expr>` (single, not a list)      | Negation                                                                                       |
+| `in`                              | `[operand, [v1, v2, ...]]`         | Membership in a literal scalar list                                                            |
+| `is_null`                         | `<operand>` (single)               | True when the operand resolves to `null`                                                       |
+| `{ call: <fn>, args: [..] }`      | n/a                                | Currently `has_role` (single string arg)                                                       |
+
+<Aside type="note">
+There's no shorthand for function calls. `{ has_role: "support" }` is **not**
+valid — it must be `{ call: has_role, args: ["support"] }`.
+</Aside>
+
+## Common pitfalls
+
+- **`update` checks the OLD row.** A user can't lock themselves out of a row by mutating it — the policy resolves against the pre-image. To prevent edits past a certain state, gate `update` on the pre-image (Recipe 4).
+- **Global tables have no implicit org filter.** If you want cross-org isolation, you MUST add the `eq` clause on `organization_id` (Recipe 3). A missing rule means every user on the platform sees every row.
+- **`eq` and `neq` reject literal `null`.** SQL and the Python evaluator disagree on `NULL = NULL`, so the validator forces you to use `is_null` instead. The validator will reject the policy at create time if you try.
+- **Removing a rule cannot revoke an existing grant.** Rules compose with OR. If a row is currently visible because of rule A, deleting rule A removes that grant, but if rule B also matches, the row stays visible. There's no "deny" rule type.
+- **Don't rely on the seed.** The `admin_bypass` rule is editable. If you remove it (e.g. to enforce strict audit on a sensitive table), platform admins lose access too — make sure another rule covers the operations they need.
+
+## Where to learn more
+
+<LinkCard
+  title="Tables: row-level policies"
+  href="/core-concepts/tables/#row-level-policies"
+  description="The model — default-deny, additive OR, pre-image gating, audit on deny."
+/>
+
+<LinkCard
+  title="Reading tables from an app"
+  href="/how-to-guides/tables/reading-from-apps/"
+  description="Use useTable for live-updating UI; the same policies apply over the websocket fan-out."
+/>
+
+<LinkCard
+  title="Audit Log"
+  href="/how-to-guides/operations/audit-log/"
+  description="Policy denials write `policy.deny` rows so you can trace gating decisions."
+/>
