@@ -1,0 +1,109 @@
+---
+title: Reading Tables from an App
+description: Use the useTable hook to read and live-subscribe to a table from a custom Bifrost app.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+This guide covers reading and writing tables from a **custom app** (the React/TSX surface that runs inside Bifrost). For workflows, see the [Tables Module SDK reference](/sdk-reference/sdk/tables-module/) — the API and access model are different.
+
+## What `useTable` does
+
+`useTable` is a React hook that loads a table snapshot via REST and then keeps it in sync via a websocket subscription. Insert, update, and delete events apply to the local state automatically; your component just renders `rows`.
+
+The same row-level policies that gate REST also gate the websocket fan-out. A row the user can't read is never in the snapshot and is never delivered as an event.
+
+## Basic usage
+
+```tsx
+import { useTable } from "bifrost";
+
+export function TicketList({ tableId }: { tableId: string }) {
+  const { rows, loading, error } = useTable(tableId);
+
+  if (loading) return <div>Loading…</div>;
+  if (error) return <div>Failed to load: {error.message}</div>;
+
+  return (
+    <ul>
+      {rows.map((r) => (
+        <li key={r.id}>
+          {String(r.title)} — {String(r.status)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+`rows` is an array of flat objects: JSONB fields from the row's `data` are spread to the top level alongside column-mapped fields (`id`, `created_by`, `updated_by`, `created_at`, `updated_at`, `table_id`). This matches the shape websocket events deliver, so live updates merge cleanly with the snapshot.
+
+## Filtering and pagination
+
+Pass a `where` expression (the same AST used in policies), a `limit`, and an `offset`:
+
+```tsx
+const { rows } = useTable("tickets", {
+  where: { eq: [{ row: "status" }, "open"] },
+  limit: 50,
+});
+```
+
+The `where` clause runs on top of the policy filter, not in place of it. Users still only see rows their policies grant.
+
+## Live updates from reassignment
+
+When a row that was previously hidden becomes visible — for example, an admin changes `assignee` so the policy now matches — the user receives an `insert` event and the row appears in the UI without a refetch. Conversely, if a row is mutated out of visibility, the user receives a `delete` event and it disappears.
+
+This is "visibility-gain via reassignment," and it's why `useTable` doesn't need a refresh button.
+
+## Writing from an app
+
+For mutations, use the imperative `tables` client from the same SDK. It's a thin REST wrapper that respects the same policies as the hook.
+
+```tsx
+import { tables } from "bifrost";
+
+await tables.insert("tickets", { title: "New ticket", status: "open" });
+await tables.update("tickets", rowId, { status: "closed" });
+await tables.delete("tickets", rowId);
+```
+
+Operations that the user lacks permission for throw `Error("Access denied")`. Catch it and show a friendly message — the platform also writes a `policy.deny` row to the audit log automatically.
+
+## Apps vs. workflows: which surface?
+
+| Use case                                  | Surface                                   |
+| ----------------------------------------- | ----------------------------------------- |
+| Live-updating UI in a custom app          | `useTable` hook                           |
+| One-shot read in an app (no live updates) | `tables.query()` from the imperative SDK  |
+| Read or write from a workflow             | `sdk.tables.get("name")` then `.query()` / `.insert()` etc. |
+| Server-to-server batch jobs               | Workflow SDK (runs as the workflow's principal) |
+
+App requests run as the **logged-in user**, so all policies evaluate against that user's `user_id`, `organization_id`, and roles. Workflow requests run as the **workflow's execution context** — typically a service principal — so own-row patterns based on `{ user: user_id }` won't work the way you'd expect from a workflow. Design your policies with both surfaces in mind.
+
+<Aside type="caution">
+Don't bypass the hook with raw `fetch` calls in app code. The SDK applies the
+CSRF token, credentials cookie, and consistent error handling. Direct fetches
+will fail CSRF on writes.
+</Aside>
+
+## Where to learn more
+
+<LinkCard
+  title="Tables Module (SDK reference)"
+  href="/sdk-reference/sdk/tables-module/"
+  description="Full API for reading and writing tables from workflows."
+/>
+
+<LinkCard
+  title="Writing table policies"
+  href="/how-to-guides/tables/writing-policies/"
+  description="The rules that determine which rows useTable returns."
+/>
+
+<LinkCard
+  title="Tables: row-level policies"
+  href="/core-concepts/tables/#row-level-policies"
+  description="How the gate composes across REST, the SDK, and the websocket fan-out."
+/>
