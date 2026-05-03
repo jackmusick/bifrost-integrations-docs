@@ -185,6 +185,10 @@ export default defineConfig({
                                     slug: "how-to-guides/tables/writing-policies",
                                 },
                                 {
+                                    label: "Editing Policies in the UI",
+                                    slug: "how-to-guides/tables/editing-policies",
+                                },
+                                {
                                     label: "Reading from Apps",
                                     slug: "how-to-guides/tables/reading-from-apps",
                                 },

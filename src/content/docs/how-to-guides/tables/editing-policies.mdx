@@ -1,0 +1,75 @@
+---
+title: Editing Policies in the UI
+description: Use the in-app policy editor to author and validate row-level access rules without hand-editing YAML.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+The Tables UI ships an in-app policy editor that round-trips between JSON and YAML and validates against the server before you save. Use it when authoring policies for a table you can reach in the UI; for headless / CLI / manifest workflows, see [Writing Table Policies](/how-to-guides/tables/writing-policies/).
+
+## Open the editor
+
+1. Navigate to **Tables**, pick the table, click **Edit**.
+2. Scroll to the **Policies** section. Empty tables show `{"policies": []}` pre-seeded — no manual wrapping required.
+
+## Tabs
+
+The editor has two tabs over a single shared document:
+
+- **JSON** — the canonical form, schema-friendly, what the server stores.
+- **YAML** — the same document in YAML for readability and easier diffs against `.bifrost/tables.yaml`.
+
+Switch tabs to reformat. If the buffer doesn't parse, the switch is blocked and the parse error is shown inline below the tabs.
+
+## Insert a template
+
+Above the tabs, the **Insert template ▾** dropdown appends a starter policy: `admin_bypass`, `own_row`, `own_org`, or `role_gated_read`. The new policy lands at the end of the `policies` array, both tabs reflect the change immediately.
+
+## Reference panel
+
+Click **Reference** (top-right of the editor) for a side panel covering:
+
+- **USER fields** — every value `{ user: ... }` accepts (`user_id`, `email`, `organization_id`, `is_platform_admin`, `role_ids`, `role_names`).
+- **ROW fields** — column names plus the `data.<path>` form for JSONB.
+- **Operators** — `eq`, `neq`, `lt`/`lte`/`gt`/`gte`, `in`, `is_null`, `and`, `or`, `not`, `call`.
+- **Functions** — currently `has_role`.
+- **Worked examples** — 16 copy-paste-ready policies covering every operator and the canonical patterns (own-row, own-org, range, set-membership, has-role, manager-reads-reports, cross-org provider). Each example renders with full `{"policies": [...]}` wrapping, so the **Copy** button gives you something you can paste directly into a fresh editor or `.bifrost/tables.yaml`.
+- **Footguns** — the small list of gotchas that bites every author once: `null` in `eq`/`neq` rejected, empty `in` lists rejected, the `not + is_null` "is set" idiom, missing-JSONB-path semantics.
+
+## Live validation
+
+As you type, valid documents are sent to the server's validator (debounced ~300ms) and any structural or AST errors land below the editor with the exact JSONPath of the offending node:
+
+```
+$.policies[0].when.eq[1]: eq does not accept null literals (NULL semantics differ between evaluator and SQL pushdown); use is_null instead
+```
+
+The validation endpoint runs the same Pydantic validator the create / update endpoints use, so a passing preview means the server will also accept the document on save. Invalid drafts can be saved by leaving the buffer in a parse-error state — the **Insert template** action and **Add policy** are disabled while a parse error is unresolved, so you don't accidentally clobber a half-written draft.
+
+## Saving
+
+The dialog's **Update** / **Create** button serializes whatever's in the active tab. Validation runs again on submit; a server-side rejection surfaces as a form error.
+
+<Aside type="note">
+The editor is for authoring. Policies are evaluated at every read and write — see [Tables: row-level policies](/core-concepts/tables/#row-level-policies) for the runtime semantics.
+</Aside>
+
+## Where to learn more
+
+<LinkCard
+  title="Writing Table Policies"
+  href="/how-to-guides/tables/writing-policies/"
+  description="The recipe collection — own-row, role-gated, org-isolated, state-locked, public-read."
+/>
+
+<LinkCard
+  title="Tables: row-level policies"
+  href="/core-concepts/tables/#row-level-policies"
+  description="Default-deny, additive OR, pre-image gating, audit on deny."
+/>
+
+<LinkCard
+  title="Reading tables from an app"
+  href="/how-to-guides/tables/reading-from-apps/"
+  description="useTable for live-updating UI; the same policies apply over the websocket fan-out."
+/>
