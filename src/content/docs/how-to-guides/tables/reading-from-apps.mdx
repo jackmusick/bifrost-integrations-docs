@@ -5,7 +5,7 @@ description: Use the useTable hook to read and live-subscribe to a table from a 
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
 
-This guide covers reading and writing tables from a **custom app** (the React/TSX surface that runs inside Bifrost). For workflows, see the [Tables Module SDK reference](/sdk-reference/sdk/tables-module/) — the API and access model are different.
+This guide covers reading and writing tables from a **custom app** (the React/TSX surface that runs inside Bifrost). For workflows, see the [Tables Module SDK reference](/sdk-reference/sdk/tables-module/) — the access model is the same; only the surface differs.
 
 ## What `useTable` does
 
@@ -18,8 +18,8 @@ The same row-level policies that gate REST also gate the websocket fan-out. A ro
 ```tsx
 import { useTable } from "bifrost";
 
-export function TicketList({ tableId }: { tableId: string }) {
-  const { rows, loading, error } = useTable(tableId);
+export function TicketList() {
+  const { rows, loading, error } = useTable("tickets");
 
   if (loading) return <div>Loading…</div>;
   if (error) return <div>Failed to load: {error.message}</div>;
@@ -38,18 +38,88 @@ export function TicketList({ tableId }: { tableId: string }) {
 
 `rows` is an array of flat objects: JSONB fields from the row's `data` are spread to the top level alongside column-mapped fields (`id`, `created_by`, `updated_by`, `created_at`, `updated_at`, `table_id`). This matches the shape websocket events deliver, so live updates merge cleanly with the snapshot.
 
-## Filtering and pagination
+## Filtering with `where`
 
-Pass a `where` expression (the same AST used in policies), a `limit`, and an `offset`:
+`useTable` accepts a `where` filter in the same **dict-shorthand DSL** the Python SDK uses — one filter syntax across both surfaces.
+
+```tsx
+// Equality
+useTable("notes",    { where: { client_id: clientId } });
+
+// Comparison operators
+useTable("invoices", { where: { amount: { gte: 100, lt: 1000 } } });
+
+// Substring (case-insensitive)
+useTable("clients",  { where: { name: { contains: "acme" } } });
+
+// IN
+useTable("tickets",  { where: { status: { in: ["open", "pending"] } } });
+
+// Null check
+useTable("tasks",    { where: { deleted_at: { is_null: true } } });
+
+// Multiple conditions combine with AND
+useTable("notes", {
+  where: {
+    client_id: clientId,
+    pinned: true,
+  },
+});
+```
+
+Operators: `eq`, `neq` / `ne`, `gt`, `gte`, `lt`, `lte`, `in`, `is_null`, `has_key`, `contains`, `starts_with`, `ends_with`. The full list with examples is in the [Tables module reference's Filter Operators section](/sdk-reference/sdk/tables-module/#filter-operators).
+
+The `where` clause runs on top of the policy filter, not in place of it. Users still only see rows their policies grant.
+
+<Aside type="note">
+A few operators (`contains`, `starts_with`, `ends_with`, `has_key`) work for one-shot
+queries but cannot be expressed as a live-subscribe filter — the policy `Expr` AST has
+no equivalent. Using them in `useTable.where` raises a clear error via `error`. For
+those cases, use `tables.query()` directly (no live updates) or filter client-side.
+</Aside>
+
+## Sorting and pagination
+
+Pass `order_by` / `order_dir` for sort, `limit` / `offset` for one-shot pagination:
 
 ```tsx
 const { rows } = useTable("tickets", {
-  where: { eq: [{ row: "status" }, "open"] },
+  where: { status: "open" },
+  order_by: "created_at",
+  order_dir: "desc",
   limit: 50,
 });
 ```
 
-The `where` clause runs on top of the policy filter, not in place of it. Users still only see rows their policies grant.
+The server caps `limit` at 1000. For tables that may grow past that, use `useTablePaged` instead — it loops with `offset` and `skip_count: true` after the first page.
+
+```tsx
+import { useTablePaged } from "bifrost";
+
+export function ContactsList() {
+  const { rows, loadMore, hasMore, loading } = useTablePaged("contacts", {
+    pageSize: 100,
+  });
+  return (
+    <>
+      <ul>{rows.map((r) => <li key={r.id}>{String(r.name)}</li>)}</ul>
+      {hasMore && <button onClick={loadMore} disabled={loading}>Load more</button>}
+    </>
+  );
+}
+```
+
+Live updates apply to whatever's been loaded.
+
+## Scope: org-scoped apps
+
+When called inside an **org-scoped app** (one whose `app.organization_id` is set), `useTable` and `tables.*` automatically scope to the app's org — same convention as org-scoped workflows always running as their org regardless of who triggered them. Apps marked **global** fall back to caller's-org behavior.
+
+You don't need to thread an org id through every call. To override the default (provider admins targeting another org), pass `scope` explicitly:
+
+```tsx
+useTable("notes", { scope: "11111111-2222-3333-4444-555555555555" });
+```
 
 ## Live updates from reassignment
 
@@ -57,9 +127,13 @@ When a row that was previously hidden becomes visible — for example, an admin 
 
 This is "visibility-gain via reassignment," and it's why `useTable` doesn't need a refresh button.
 
+## Subscribe errors surface visibly
+
+If the server rejects the websocket subscription — table not found in scope, policies missing, access denied — `useTable` surfaces the rejection through `error`. It does **not** silently leave the snapshot showing while live updates never arrive. Render `error.message` and you'll see the cause.
+
 ## Writing from an app
 
-For mutations, use the imperative `tables` client from the same SDK. It's a thin REST wrapper that respects the same policies as the hook.
+For mutations, use the imperative `tables` client from the same SDK. Same policies, same scope behavior as the hook.
 
 ```tsx
 import { tables } from "bifrost";
@@ -69,13 +143,36 @@ await tables.update("tickets", rowId, { status: "closed" });
 await tables.delete("tickets", rowId);
 ```
 
-Operations that the user lacks permission for throw `Error("Access denied")`. Catch it and show a friendly message — the platform also writes a `policy.deny` row to the audit log automatically.
+### Error classes
+
+Operations throw distinct errors so you can react appropriately:
+
+```tsx
+import { tables, TableAccessDeniedError, TableNotFoundError } from "bifrost";
+
+try {
+  await tables.insert("tickets", data);
+} catch (e) {
+  if (e instanceof TableAccessDeniedError) {
+    // policy denied — user shouldn't see/do this
+  } else if (e instanceof TableNotFoundError) {
+    // the table doesn't exist in this scope
+  } else {
+    throw e;
+  }
+}
+```
+
+For row-level reads/updates (`tables.get`, `tables.update`, `tables.delete` with a single id), a missing target returns `null` / `false` rather than throwing — that case is "row may not exist," which is normal. Access-denied still throws `TableAccessDeniedError`.
+
+The platform also writes a `policy.deny` row to the audit log automatically when a 403 fires, so you don't need to duplicate that signal.
 
 ## Apps vs. workflows: which surface?
 
 | Use case                                  | Surface                                   |
 | ----------------------------------------- | ----------------------------------------- |
 | Live-updating UI in a custom app          | `useTable` hook                           |
+| Paginated list in a custom app            | `useTablePaged` hook                      |
 | One-shot read in an app (no live updates) | `tables.query()` from the imperative SDK  |
 | Read or write from a workflow             | `sdk.tables.get("name")` then `.query()` / `.insert()` etc. |
 | Server-to-server batch jobs               | Workflow SDK (runs as the workflow's principal) |
@@ -93,7 +190,7 @@ will fail CSRF on writes.
 <LinkCard
   title="Tables Module (SDK reference)"
   href="/sdk-reference/sdk/tables-module/"
-  description="Full API for reading and writing tables from workflows."
+  description="Full API for reading and writing tables from workflows. Same `where` DSL as the browser hook."
 />
 
 <LinkCard
