@@ -23,10 +23,10 @@ Inside Claude Code, run:
 
 ```
 /plugin marketplace add jackmusick/bifrost
-/plugin install bifrost@jackmusick-bifrost
+/plugin install bifrost@bifrost
 ```
 
-That installs the `bifrost:build` and `bifrost:setup` skills. To pull the latest content later, run `/plugin marketplace update jackmusick-bifrost` — or enable auto-update in `/plugin` → **Marketplaces**.
+That installs the `bifrost:build` and `bifrost:setup` skills. To pull the latest content later, run `/plugin marketplace update bifrost` — or enable auto-update in `/plugin` → **Marketplaces**.
 
 #### Cross-harness install (Copilot CLI, Codex, Cursor, OpenCode, Gemini CLI)
 
