@@ -5,50 +5,85 @@ description: Configure AI providers for workflows
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-Configure OpenAI or Anthropic as your LLM provider to enable AI features in workflows.
+Configure an LLM provider to enable AI features in workflows, agents, and chat.
 
-## Supported Providers
+## Supported providers
 
-| Provider | Models |
-|----------|--------|
-| **OpenAI** | GPT-4o, GPT-4, GPT-3.5 Turbo |
-| **Anthropic** | Claude 3.5 Sonnet, Claude Opus 4.5 |
+Pick **OpenAI** or **Anthropic** as the provider type. Available models are fetched live from the provider after you save the API key — Bifrost does not ship a hard-coded model list, so you always see what your account actually has access to.
 
-## Configure LLM Provider
+The provider type controls which SDK Bifrost uses to talk to the endpoint. Any service that speaks the OpenAI or Anthropic wire format works under the matching provider type, even if it isn't OpenAI or Anthropic itself — see [OpenAI-compatible endpoints](#openai-compatible-endpoints) below.
+
+## Configure an LLM provider
 
 <Steps>
 
-1. Navigate to **Settings** > **AI Configuration**
+1. Navigate to **Settings** > **AI Configuration**.
 
-2. Select your provider (OpenAI or Anthropic)
+2. Select **OpenAI** or **Anthropic**.
 
-3. Enter your API key
+3. Leave **API Endpoint** at its default for the official provider, or set a custom URL for a compatible endpoint.
 
-4. Click **Test Connection** to verify and fetch available models
+4. Paste your API key.
 
-5. Save the configuration
+5. Click **Test Connection**. Bifrost lists the models your key can access and caches them.
+
+6. Pick a default model and save.
+
+</Steps>
+
+## OpenAI-compatible endpoints
+
+The **API Endpoint** field overrides the base URL passed to the provider SDK. Anything that implements the OpenAI or Anthropic API surface will work — OpenRouter, Azure OpenAI, Together, Groq, Ollama, vLLM, LM Studio, etc.
+
+### Example: OpenRouter
+
+OpenRouter exposes an OpenAI-compatible API and gives you a single key for hundreds of models across many providers.
+
+<Steps>
+
+1. Set **Provider** to **OpenAI**.
+
+2. Set **API Endpoint** to `https://openrouter.ai/api/v1`.
+
+3. Paste your OpenRouter key (`sk-or-...`) into **API Key**.
+
+4. Click **Test Connection**. Bifrost calls OpenRouter's `/models` endpoint and populates the model dropdown with everything available to your key — `anthropic/claude-...`, `openai/gpt-...`, `meta-llama/...`, and so on.
+
+5. Pick a default model (the OpenRouter model ID, e.g. `anthropic/claude-sonnet-4-5`) and save.
 
 </Steps>
 
 <Aside type="tip">
-After testing the connection, Bifrost fetches and caches the list of available models from your provider.
+OpenRouter model IDs include the upstream provider as a prefix (`openai/gpt-4o`, `anthropic/claude-sonnet-4-5`). Use the full prefixed ID when overriding `model=` per call.
 </Aside>
 
-## Embedding Configuration
+### Other compatible endpoints
+
+| Service | Provider type | API Endpoint |
+|---------|---------------|--------------|
+| Azure OpenAI | OpenAI | `https://<resource>.openai.azure.com/openai/deployments/<deployment>` |
+| Ollama (local) | OpenAI | `http://localhost:11434/v1` |
+| LM Studio (local) | OpenAI | `http://localhost:1234/v1` |
+| Groq | OpenAI | `https://api.groq.com/openai/v1` |
+| Together | OpenAI | `https://api.together.xyz/v1` |
+
+The endpoint override also works under the Anthropic provider type for any service that implements Anthropic's Messages API.
+
+## Embedding configuration
 
 For knowledge base / RAG features, configure embeddings:
 
 <Steps>
 
-1. In **Settings** > **AI Configuration**, scroll to **Embeddings**
+1. In **Settings** > **AI Configuration**, scroll to **Embeddings**.
 
-2. Choose to use the same provider as LLM or configure separately
+2. Choose to use the same provider as the LLM or configure separately.
 
-3. For OpenAI, embeddings use `text-embedding-3-small` (1536 dimensions)
+3. For OpenAI, embeddings use `text-embedding-3-small` (1536 dimensions).
 
 </Steps>
 
-## Usage in Workflows
+## Usage in workflows
 
 Once configured, use AI in your workflows:
 
@@ -61,18 +96,18 @@ async def summarize_ticket(description: str):
     return {"summary": response.content}
 ```
 
-## Model Overrides
+## Model overrides
 
-Override the default model per-request:
+Override the default model per call. Use whatever model ID your configured provider exposes:
 
 ```python
 response = await ai.complete(
     "Complex analysis task",
-    model="gpt-4o"  # or "claude-3-5-sonnet-latest"
+    model="anthropic/claude-sonnet-4-5",  # OpenRouter-style ID
 )
 ```
 
-## Usage Tracking
+## Usage tracking
 
 Bifrost tracks all AI usage:
 
@@ -82,22 +117,22 @@ Bifrost tracks all AI usage:
 
 View usage reports in **Settings** > **Usage Reports**.
 
-## Pricing Configuration
+## Pricing configuration
 
 Configure per-model pricing in **Settings** > **AI Pricing**:
 
 | Field | Description |
 |-------|-------------|
 | Provider | OpenAI or Anthropic |
-| Model | Model display name |
+| Model | Model ID as returned by the provider |
 | Input Price | Cost per 1M input tokens |
 | Output Price | Cost per 1M output tokens |
 
 <Aside type="note">
-If pricing isn't configured for a model, usage is still tracked but costs show as $0.
+If pricing isn't configured for a model, usage is still tracked but costs show as $0. For OpenRouter, set pricing using the prefixed model ID (e.g. `anthropic/claude-sonnet-4-5`) so it matches what the SDK reports.
 </Aside>
 
-## Next Steps
+## Next steps
 
-- [Using AI in Workflows](/how-to-guides/ai/using-ai-in-workflows) - Completions and streaming
-- [Knowledge Bases](/how-to-guides/ai/knowledge-bases) - RAG with vector search
+- [Using AI in Workflows](/how-to-guides/ai/using-ai-in-workflows) — Completions and streaming
+- [Knowledge Bases](/how-to-guides/ai/knowledge-bases) — RAG with vector search
