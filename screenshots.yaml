@@ -278,8 +278,8 @@ entries:
       type: tutorial
       heading: Create Integration in Bifrost
     captured_at:
-      bifrost_sha: 9135a16ade3f0368f02767992f6a78c11159499f
-      timestamp: '2026-04-26T04:25:08.324Z'
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T02:17:01.854Z'
   - id: integrations-image-7
     image: src/assets/integrations/image-7.png
     route: /integrations
@@ -590,8 +590,8 @@ entries:
       type: how-to
       heading: Open the dashboard
     captured_at:
-      bifrost_sha: 055bed9ac7556430b77e884cc4bd80480a4f255d
-      timestamp: '2026-04-26T19:48:52.659Z'
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T02:17:02.134Z'
   - id: operations-diagnostics-memory-chart
     image: src/assets/operations/diagnostics-memory-chart.png
     route: /diagnostics
@@ -655,8 +655,8 @@ entries:
       type: how-to
       heading: Container table
     captured_at:
-      bifrost_sha: 055bed9ac7556430b77e884cc4bd80480a4f255d
-      timestamp: '2026-04-26T19:48:52.503Z'
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T02:17:02.054Z'
   - id: operations-audit-log-overview
     image: src/assets/operations/audit-log-overview.png
     route: /audit
@@ -872,8 +872,8 @@ entries:
       type: how-to
       heading: View the dashboard
     captured_at:
-      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:19:37.074Z'
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T02:17:00.579Z'
   - id: agents-reviewing-runs-flipbook
     image: src/assets/agents/reviewing-runs-flipbook.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/review
@@ -924,8 +924,8 @@ entries:
       type: how-to
       heading: Open the workbench
     captured_at:
-      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:19:37.500Z'
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T02:17:00.794Z'
   - id: agents-run-history
     image: src/assets/agents/run-history.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111?tab=runs
@@ -946,8 +946,8 @@ entries:
       type: how-to
       heading: Search runs by content
     captured_at:
-      bifrost_sha: 921ecf5cc2ff6403bdece9ea54f0b960ff2103a3
-      timestamp: '2026-04-26T18:19:37.401Z'
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T02:17:00.724Z'
   - id: agents-run-detail-delegation
     image: src/assets/agents/run-detail-delegation.png
     route: /agents/aaaa1111-1111-1111-1111-111111111111/runs/bbbb2222-2222-2222-2222-222222222222
@@ -1096,8 +1096,8 @@ entries:
       type: how-to
       heading: Open Security settings
     captured_at:
-      bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
-      timestamp: '2026-04-26T17:52:23.965Z'
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T02:17:02.311Z'
   - id: passkeys-add-dialog
     image: src/assets/passkeys/add-dialog.png
     route: /user-settings/security
