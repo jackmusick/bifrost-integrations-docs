@@ -117,6 +117,7 @@ export default defineConfig({
                             slug: "core-concepts/integrations",
                         },
                         { label: "Events", slug: "core-concepts/events" },
+                        { label: "MCP", slug: "core-concepts/mcp" },
                         {
                             label: "Permissions",
                             slug: "core-concepts/permissions",
@@ -297,6 +298,14 @@ export default defineConfig({
                                 {
                                     label: "Agents as MCP",
                                     slug: "how-to-guides/mcp/agents-as-mcp",
+                                },
+                                {
+                                    label: "Connecting external MCP servers",
+                                    slug: "how-to-guides/mcp/external-servers",
+                                },
+                                {
+                                    label: "Personal MCP identity",
+                                    slug: "how-to-guides/mcp/per-user-mcp-credentials",
                                 },
                             ],
                         },

@@ -61,6 +61,11 @@ const ScrollIntoViewActionSchema = z
 const PressKeyActionSchema = z
   .object({ press_key: z.string().min(1) })
   .strict();
+// SPA history push — useful for deep-linking past a Vite proxy rule that
+// would otherwise intercept hard navigation.
+const GotoSpaActionSchema = z
+  .object({ goto_spa: z.string().startsWith("/") })
+  .strict();
 
 const ActionSchema = z.union(
   [
@@ -71,11 +76,12 @@ const ActionSchema = z.union(
     WaitMsActionSchema,
     ScrollIntoViewActionSchema,
     PressKeyActionSchema,
+    GotoSpaActionSchema,
   ],
   {
     errorMap: () => ({
       message:
-        "action must be exactly one of { click: <selector> } | { fill: { selector, value } } | { wait_for: <selector> } | { wait_for_hidden: <selector> } | { wait_ms: <number> } | { scroll_into_view: <selector> } | { press_key: <key> }",
+        "action must be exactly one of { click: <selector> } | { fill: { selector, value } } | { wait_for: <selector> } | { wait_for_hidden: <selector> } | { wait_ms: <number> } | { scroll_into_view: <selector> } | { press_key: <key> } | { goto_spa: <path> }",
     }),
   },
 );
@@ -156,6 +162,17 @@ const EntrySchema = z.object({
     })
     .optional(),
   capture: CaptureSchema,
+  // Optional SPA navigation: load `from` first, then click the link with
+  // the given text to reach `route` via in-app routing. Use for routes
+  // that share a prefix with a Vite proxy rule and would otherwise be
+  // intercepted by hard navigation in the test stack.
+  nav_via: z
+    .object({
+      from: z.string().startsWith("/"),
+      click: z.string().min(1),
+    })
+    .strict()
+    .optional(),
   diataxis: DiataxisSchema,
   source_globs: z.array(z.string().min(1)).default([]),
   captured_at: CapturedAtSchema.default(null),
