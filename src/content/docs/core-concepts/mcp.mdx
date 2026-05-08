@@ -1,0 +1,60 @@
+---
+title: MCP (Model Context Protocol)
+description: Bifrost is symmetric on MCP — it exposes its own tools as an MCP server and consumes external MCP servers as a client.
+---
+
+import { LinkCard, Aside } from '@astrojs/starlight/components';
+
+[Model Context Protocol](https://modelcontextprotocol.io) is the protocol AI clients use to discover and call tools on a remote server. Bifrost speaks both sides:
+
+- **As a server** — Bifrost exposes its workflows, knowledge, and platform actions as MCP tools that Claude Desktop, Copilot, Cursor, and other MCP-aware clients can call.
+- **As a client** — Bifrost connects to remote MCP servers (Microsoft 365 Copilot Graph, a self-hosted HaloPSA bridge, anything that speaks streamable HTTP) and surfaces their tools to Bifrost agents and chat.
+
+The two sides are independent. You can enable either, both, or neither.
+
+## When to use which
+
+- Your AI client (Claude, Copilot, Cursor) needs to read or write data in Bifrost → **server side**. See [Server Setup](/how-to-guides/mcp/server-setup/).
+- A Bifrost agent needs to call tools that live outside Bifrost (M365 Graph, internal company APIs wrapped in an MCP server) → **client side**. See [Connecting external MCP servers](/how-to-guides/mcp/external-servers/).
+
+## How the client side fits together
+
+Three concepts:
+
+- **Server template** (platform-level) — the URL, OAuth provider, and discovery snapshot for an external MCP server. Defined once, shared across organizations.
+- **Connection** (per-organization) — an organization's binding to a server template, including the OAuth client credentials and two visibility flags (Chat / Autonomous).
+- **Per-agent grants** — which connections each agent is allowed to use. Default-deny: a new connection is invisible to agents until you grant it on each agent's settings page.
+
+This three-layer split lets a platform admin register a server once, hand out connections to organizations, and then have org admins decide which agents see which tools.
+
+## Auth resolution
+
+When an agent invokes an external MCP tool, Bifrost picks the right token using these rules in order:
+
+1. The user has a personal connection (delegated identity) → use the user's token. Vendor sees the user.
+2. No personal connection but the connection has **Available in user chat** on and a healthy service token → use the shared service token.
+3. No personal connection, no fallback → chat surfaces an inline **Connect** card. Autonomous runs raise an error.
+4. Autonomous run, **Available to autonomous agents** is on, healthy service token → use the service token.
+5. Autonomous run, flag off → the tool is filtered out at planning time and never invoked.
+
+For service-to-service `client_credentials` flows, paths 1 and 3 don't apply — there is no user identity to delegate. Bifrost only attempts paths 2/4/5.
+
+## Where to learn more
+
+<LinkCard
+  title="Connecting external MCP servers"
+  href="/how-to-guides/mcp/external-servers/"
+  description="Register a server template, set up OAuth, and grant connections to agents."
+/>
+
+<LinkCard
+  title="Connecting your personal MCP identity"
+  href="/how-to-guides/mcp/per-user-mcp-credentials/"
+  description="End-user guide to connecting a personal token so vendors see your identity, not the service account."
+/>
+
+<LinkCard
+  title="Configuring Bifrost's MCP server"
+  href="/how-to-guides/mcp/server-setup/"
+  description="The other direction — let Claude, Copilot, and other AI clients reach Bifrost."
+/>

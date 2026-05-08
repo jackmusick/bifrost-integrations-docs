@@ -1175,3 +1175,144 @@ entries:
     captured_at:
       bifrost_sha: 464ee04267973c19b49ddbcdb98feee15588aca8
       timestamp: '2026-04-26T17:52:24.141Z'
+  - id: mcp-external-servers-list
+    image: src/assets/mcp/external-servers-list.png
+    route: /mcp-servers
+    nav_via:
+      from: /
+      click: MCP Servers
+    capture:
+      mocks:
+        - url: '**/api/mcp-servers'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/mcp-servers?**'
+          fixture: fixtures/mcp-external-servers-list.json
+      actions:
+        - wait_for: text="Microsoft 365 Copilot"
+        - wait_ms: 200
+    diataxis:
+      page: src/content/docs/how-to-guides/mcp/external-servers.mdx
+      type: how-to
+      heading: Step 1
+    captured_at:
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T03:34:00.718Z'
+  - id: mcp-external-server-detail
+    image: src/assets/mcp/external-server-detail.png
+    route: /mcp-servers/11111111-1111-1111-1111-111111111111
+    nav_via:
+      from: /
+      click: MCP Servers
+    capture:
+      mocks:
+        - url: '**/api/mcp-servers'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/mcp-servers?**'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/mcp-servers/11111111-1111-1111-1111-111111111111'
+          fixture: fixtures/mcp-external-server-detail.json
+      actions:
+        - goto_spa: /mcp-servers/11111111-1111-1111-1111-111111111111
+        - wait_for: text="Microsoft 365 Copilot"
+        - wait_ms: 300
+    diataxis:
+      page: src/content/docs/how-to-guides/mcp/external-servers.mdx
+      type: how-to
+      heading: Step 2
+    captured_at:
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T03:34:00.779Z'
+  - id: mcp-external-connection-edit
+    image: src/assets/mcp/external-connection-edit.png
+    route: /mcp-servers/11111111-1111-1111-1111-111111111111/connections/cccccccc-cccc-cccc-cccc-cccccccccccc/edit
+    nav_via:
+      from: /
+      click: MCP Servers
+    capture:
+      mocks:
+        - url: '**/api/mcp-servers'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/mcp-servers?**'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/mcp-servers/11111111-1111-1111-1111-111111111111'
+          fixture: fixtures/mcp-external-server-detail.json
+        - url: '**/api/mcp-connections'
+          fixture: fixtures/mcp-connections-list-org.json
+        - url: '**/api/mcp-connections/cccccccc-cccc-cccc-cccc-cccccccccccc'
+          fixture: fixtures/mcp-external-connection-detail.json
+      actions:
+        - goto_spa: /mcp-servers/11111111-1111-1111-1111-111111111111/connections/cccccccc-cccc-cccc-cccc-cccccccccccc/edit
+        - wait_ms: 1500
+        - wait_for: text="Available in user chat"
+        - wait_ms: 300
+    diataxis:
+      page: src/content/docs/how-to-guides/mcp/external-servers.mdx
+      type: how-to
+      heading: Step 3
+    captured_at:
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T03:34:00.837Z'
+  - id: mcp-agent-connections-panel
+    image: src/assets/mcp/agent-connections-panel.png
+    route: /agents/aaaa1111-1111-1111-1111-111111111111?tab=settings
+    capture:
+      mocks:
+        - url: '**/api/agents'
+          fixture: fixtures/agents-fleet-list.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111'
+          fixture: fixtures/agent-detail-triage-org.json
+        - url: '**/api/agents/aaaa1111-1111-1111-1111-111111111111/stats**'
+          fixture: fixtures/agent-stats-triage.json
+        - url: '**/api/organizations'
+          body: []
+        - url: '**/api/mcp-connections'
+          fixture: fixtures/mcp-connections-list-org.json
+        - url: '**/api/mcp-connections?**'
+          fixture: fixtures/mcp-connections-list-org.json
+        - url: '**/api/mcp-connections/cccccccc-cccc-cccc-cccc-cccccccccccc'
+          fixture: fixtures/mcp-external-connection-detail.json
+        - url: '**/api/mcp-connections/ffffffff-ffff-ffff-ffff-ffffffffffff'
+          fixture: fixtures/mcp-external-connection-detail.json
+        - url: '**/api/mcp-connections/99999999-9999-9999-9999-999999999999'
+          fixture: fixtures/mcp-external-connection-detail.json
+        - url: '**/api/mcp-servers'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/mcp-servers?**'
+          fixture: fixtures/mcp-external-servers-list.json
+      actions:
+        - wait_ms: 1500
+        - wait_for: text="External MCP tools"
+        - scroll_into_view: text="External MCP tools"
+        - wait_ms: 300
+    diataxis:
+      page: src/content/docs/how-to-guides/mcp/external-servers.mdx
+      type: how-to
+      heading: Step 4
+    captured_at:
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T03:34:00.902Z'
+  - id: mcp-user-connections
+    image: src/assets/mcp/user-connections.png
+    route: /user-settings/connections
+    capture:
+      mocks:
+        - url: '**/api/mcp-connections'
+          fixture: fixtures/mcp-connections-list-org.json
+        - url: '**/api/mcp-connections?**'
+          fixture: fixtures/mcp-connections-list-org.json
+        - url: '**/api/mcp-servers'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/mcp-servers?**'
+          fixture: fixtures/mcp-external-servers-list.json
+        - url: '**/api/me/mcp-connections'
+          fixture: fixtures/mcp-user-credentials-mixed.json
+      actions:
+        - wait_ms: 1500
+        - wait_for: text=My Connections
+    diataxis:
+      page: src/content/docs/how-to-guides/mcp/per-user-mcp-credentials.mdx
+      type: how-to
+      heading: Connect from settings
+    captured_at:
+      bifrost_sha: f168bc8f4bf415a8e1d8791a62c052f8639eeddb
+      timestamp: '2026-05-08T03:34:00.966Z'
